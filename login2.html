@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استعادة كلمة المرور الآمنة | The Leader In English</title>
+    <title>استعادة كلمة المرور | The Leader In English</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; caret-color: transparent; }
         input { caret-color: #d4af37; }
@@ -58,48 +59,40 @@
             position: absolute;
             top: 0; left: 0; right: 0;
             height: 3px;
-            background: linear-gradient(90deg, #d4af37, #25D366, #d4af37);
+            background: linear-gradient(90deg, #d4af37, #60a5fa, #d4af37);
         }
-        .brand-header { text-align: center; margin-bottom: 25px; }
-        .brand-header h1 { font-size: 24px; font-weight: 900; color: #f8fafc; margin-bottom: 5px; }
+        .brand-header { text-align: center; margin-bottom: 22px; }
+        .brand-header h1 { font-size: 22px; font-weight: 900; color: #f8fafc; margin-bottom: 4px; }
         .brand-header h1 span { color: #d4af37; }
         
-        .form-group { margin-bottom: 18px; }
+        .auth-step { display: none; }
+        .auth-step.active { display: block; }
+
+        .form-group { margin-bottom: 16px; position: relative; }
         .form-group label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
-        
-        .input-wrapper {
-            position: relative;
-            display: flex;
-            align-items: center;
-        }
         .form-control {
             width: 100%;
             background: rgba(30, 41, 59, 0.6);
             border: 1.5px solid #334155;
             border-radius: 12px;
-            padding: 12px 14px;
+            padding: 12px 16px;
             color: #fff;
             font-size: 14px;
             outline: none;
             transition: all 0.3s ease;
         }
         .form-control:focus { border-color: #d4af37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15); }
-        
-        .password-toggle {
+        .password-icon {
             position: absolute;
-            left: 14px;
-            cursor: pointer;
+            left: 15px;
+            top: 42px;
             color: #94a3b8;
-            font-size: 16px;
-            transition: color 0.3s;
-            z-index: 10;
-            caret-color: transparent;
+            cursor: pointer;
         }
-        .password-toggle:hover { color: #d4af37; }
-
+        
         .btn {
             width: 100%;
-            padding: 13px;
+            padding: 12px;
             border-radius: 12px;
             font-size: 15px;
             font-weight: 700;
@@ -107,21 +100,17 @@
             transition: all 0.3s ease;
             border: none;
             margin-top: 10px;
-            text-align: center;
-            text-decoration: none;
-            display: block;
         }
         .btn-primary { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #0b0f19; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
         .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        
-        .btn-whatsapp { background: linear-gradient(135deg, #25D366, #128C7E); color: #fff; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3); display: none; }
-        .btn-whatsapp:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
-        .btn-secondary { background: rgba(51, 65, 85, 0.5); color: #cbd5e1; margin-top: 8px; }
-        .btn-secondary:hover { background: rgba(51, 65, 85, 0.8); color: #fff; }
-
-        .auth-step { display: none; }
-        .auth-step.active { display: block; }
+        .btn-secondary {
+            background: transparent;
+            border: 1.5px solid #334155;
+            color: #cbd5e1;
+            margin-top: 8px;
+        }
+        .btn-secondary:hover { background: rgba(30, 41, 59, 0.5); color: #fff; }
 
         .developer-credit {
             margin-top: 20px;
@@ -149,47 +138,35 @@
     <div class="platform-card">
         <div class="brand-header">
             <h1>The Leader <span>In English</span></h1>
-            <p id="pageSubtitle" style="font-size: 13px; color: #94a3b8;">استعادة كلمة المرور الآمنة</p>
+            <p id="pageSubtitle" style="font-size: 13px; color: #94a3b8;">استعادة كلمة المرور</p>
         </div>
 
-        <!-- الخطوة الأولى: إدخال الإيميل/الموبايل لطلب الاستعادة -->
-        <div id="stepPhone" class="auth-step active">
+        <!-- الخطوة الأولى: إدخال الإيميل -->
+        <div id="stepEmail" class="auth-step active">
             <div class="form-group">
-                <label><i class="fa-solid fa-envelope"></i> أدخل البريد الإلكتروني (Gmail)</label>
-                <input type="email" id="resetEmail" class="form-control" placeholder="example@gmail.com">
+                <label><i class="fa-solid fa-envelope"></i> البريد الإلكتروني المسجل</label>
+                <input type="email" id="resetEmail" class="form-control" placeholder="name@example.com">
             </div>
-            <button type="button" class="btn btn-primary" id="generateBtn">إرسال رابط الاستعادة الآمن ✉</button>
+            <button type="button" class="btn btn-primary" id="generateBtn">التحقق من البريد <i class="fa-solid fa-arrow-left"></i></button>
             <button type="button" class="btn btn-secondary" id="backToLoginBtn">العودة لتسجيل الدخول</button>
         </div>
 
-        <!-- الخطوة الثانية: تعيين كلمة المرور الجديدة -->
+        <!-- الخطوة الثانية: كلمة المرور الجديدة -->
         <div id="stepNewPassword" class="auth-step">
-            <div class="form-group" style="text-align: center; margin-bottom: 20px; color: #10b981; font-size: 14px; font-weight: 700;">
-                <i class="fa-solid fa-shield-check"></i> تم التحقق بنجاح! أدخل كلمة المرور الجديدة.
-            </div>
             <div class="form-group">
                 <label><i class="fa-solid fa-lock"></i> كلمة المرور الجديدة</label>
-                <div class="input-wrapper">
-                    <input type="password" id="newPasswordInput" class="form-control" placeholder="أدخل الباسورد الجديد">
-                    <i class="fa-solid fa-eye password-toggle" id="togglePassword"></i>
-                </div>
+                <input type="password" id="newPasswordInput" class="form-control" placeholder="أدخل كلمة المرور الجديدة">
+                <i class="fa-solid fa-eye password-icon" id="togglePassword"></i>
             </div>
-            <button type="button" class="btn btn-primary" id="updatePasswordBtn">حفظ كلمة المرور الجديدة <i class="fa-solid fa-check"></i></button>
+            <button type="button" class="btn btn-primary" id="updatePasswordBtn">تحديث كلمة المرور <i class="fa-solid fa-check"></i></button>
         </div>
-
     </div>
 
     <div class="developer-credit">
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
-    <!-- مكتبة Supabase للاتصال السحابي -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SUPABASE_URL = 'https://gttmvtzsbzcmyjfpavwk.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_a865uHBhaj8j0488nCLJnw_M7e3BQuh';
-        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
@@ -211,9 +188,9 @@
             document.getElementById('pageSubtitle').innerText = subtitleText;
         }
 
-        document.addEventListener('DOMContentLoaded', async function() {
-            
-            // زر إظهار/إخفاء الباسورد
+        let resetTargetEmail = "";
+
+        document.addEventListener('DOMContentLoaded', function() {
             const togglePassword = document.getElementById('togglePassword');
             if(togglePassword) {
                 togglePassword.addEventListener('click', function() {
@@ -230,71 +207,52 @@
                 });
             }
 
-            // زر العودة لتسجيل الدخول
-            const backBtn = document.getElementById('backToLoginBtn');
-            if(backBtn) {
-                backBtn.addEventListener('click', function() {
-                    window.location.href = 'login.html';
-                });
-            }
+            document.getElementById('backToLoginBtn').addEventListener('click', function() {
+                window.location.href = 'login.html';
+            });
 
-            // التحقق من حالة جلسة استعادة كلمة المرور القادمة من Supabase
-            const hash = window.location.hash;
-            if (hash && hash.includes('type=recovery')) {
-                switchStep('stepNewPassword', 'إنشاء كلمة مرور جديدة');
-            }
+            document.getElementById('generateBtn').addEventListener('click', function() {
+                let email = document.getElementById('resetEmail').value.trim();
+                if(!email) {
+                    showToast("الرجاء إدخال البريد الإلكتروني!", true);
+                    return;
+                }
 
-            // زر إرسال طلب استعادة كلمة المرور عبر Supabase
-            const generateBtn = document.getElementById('generateBtn');
-            if(generateBtn) {
-                generateBtn.addEventListener('click', async function() {
-                    let emailInput = document.getElementById('resetEmail');
-                    let email = emailInput ? emailInput.value.trim() : '';
+                let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
+                let userExists = users.some(u => u.email === email);
 
-                    if(!email) {
-                        showToast("الرجاء إدخال البريد الإلكتروني!", true);
-                        return;
-                    }
+                if(userExists) {
+                    resetTargetEmail = email;
+                    showToast("تم التعرف على الحساب بنجاح!");
+                    setTimeout(() => {
+                        switchStep('stepNewPassword', 'إنشاء كلمة مرور جديدة');
+                    }, 1000);
+                } else {
+                    showToast("هذا البريد غير مسجل لدينا!", true);
+                }
+            });
 
-                    const { data, error } = await _supabase.auth.resetPasswordForEmail(email, {
-                        redirectTo: window.location.href.split('#')[0],
-                    });
+            document.getElementById('updatePasswordBtn').addEventListener('click', function() {
+                let newPassword = document.getElementById('newPasswordInput').value.trim();
+                if(!newPassword || newPassword.length < 3) {
+                    showToast("كلمة المرور يجب ألا تقل عن 3 أحرف!", true);
+                    return;
+                }
 
-                    if (error) {
-                        showToast("حدث خطأ، تأكد من صحة البريد الإلكتروني المسجل.", true);
-                    } else {
-                        showToast("تم إرسال رابط الاستعادة إلى بريدك الإلكتروني بنجاح!");
-                    }
-                });
-            }
+                let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
+                let userIndex = users.findIndex(u => u.email === resetTargetEmail);
 
-            // زر حفظ وتحديث كلمة المرور الجديدة في Supabase
-            const updatePasswordBtn = document.getElementById('updatePasswordBtn');
-            if(updatePasswordBtn) {
-                updatePasswordBtn.addEventListener('click', async function() {
-                    let newPasswordInput = document.getElementById('newPasswordInput');
-                    let newPassword = newPasswordInput ? newPasswordInput.value.trim() : '';
-
-                    if(!newPassword) {
-                        showToast("الرجاء إدخال كلمة المرور الجديدة!", true);
-                        return;
-                    }
-
-                    const { data, error } = await _supabase.auth.updateUser({
-                        password: newPassword
-                    });
-
-                    if (error) {
-                        showToast("فشل تحديث كلمة المرور، حاول مجدداً.", true);
-                    } else {
-                        showToast("تم تغيير كلمة المرور بنجاح! جاري تحويلك...");
-                        setTimeout(() => {
-                            window.location.href = 'login.html';
-                        }, 2000);
-                    }
-                });
-            }
-
+                if(userIndex !== -1) {
+                    users[userIndex].password = newPassword;
+                    localStorage.setItem('leader_users', JSON.stringify(users));
+                    showToast("تم تغيير كلمة المرور بنجاح! جاري تحويلك...");
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+                } else {
+                    showToast("حدث خطأ ما، حاول مجدداً.", true);
+                }
+            });
         });
     </script>
 </body>
