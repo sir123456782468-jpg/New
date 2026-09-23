@@ -6,11 +6,11 @@
     <title>إنشاء حساب جديد | The Leader In English</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- مكتبة EmailJS للإرسال الحقيقي -->
+    <!-- مكتبة EmailJS -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
         (function() {
-            emailjs.init("YOUR_PUBLIC_KEY"); // حط هنا الـ Public Key بتاعك من EmailJS
+            emailjs.init("gU8jVHuVqdaZT6CD1");
         })();
     </script>
     
@@ -143,7 +143,7 @@
             <button type="button" class="btn btn-primary" onclick="startRegistration()">إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i></button>
         </div>
 
-        <!-- الخطوة الثانية: إدخال كود التحقق المُرسل للإيميل -->
+        <!-- الخطوة الثانية: إدخال كود التحقق -->
         <div id="step2" class="step-container">
             <div style="text-align: center; margin-bottom: 20px;">
                 <i class="fa-solid fa-shield-halved" style="font-size: 40px; color: #d4af37; margin-bottom: 10px;"></i>
@@ -157,7 +157,7 @@
             <button type="button" class="btn btn-primary" onclick="verifyCode()">تحقق من الكود <i class="fa-solid fa-check"></i></button>
         </div>
 
-        <!-- الخطوة الثالثة: تأكيد كلمة المرور مرتين بعد التحقق الناجح -->
+        <!-- الخطوة الثالثة: تأكيد كلمة المرور مرتين -->
         <div id="step3" class="step-container">
             <div style="text-align: center; margin-bottom: 20px;">
                 <i class="fa-solid fa-lock-open" style="font-size: 40px; color: #10b981; margin-bottom: 10px;"></i>
@@ -212,11 +212,9 @@
                 return;
             }
 
-            // توليد كود عشوائي من 6 أرقام
             generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
             tempData = { fullName, email, phone, password };
 
-            // إرسال الكود عبر EmailJS
             let templateParams = {
                 to_email: email,
                 to_name: fullName,
@@ -225,14 +223,12 @@
 
             showToast("جاري إرسال كود التحقق إلى إيميلك...");
 
-            // استبدل YOUR_SERVICE_ID و YOUR_TEMPLATE_ID بالبيانات بتاعتك في إيميل جيه إس
-            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+            emailjs.send('service_seljmns', 'template_5lj7i0g', templateParams)
                 .then(function(response) {
                     showToast("تم إرسال الكود بنجاح إلى بريدك!");
                     document.getElementById('step1').classList.remove('active');
                     document.getElementById('step2').classList.add('active');
                 }, function(error) {
-                    // في حال فضل فشل الإرسال لأي سبب، هنوفر الكود افتراضياً للتجربة لو حابب أو نبهه
                     showToast("حدث خطأ في الإرسال، الكود التجريبي: " + generatedCode, true);
                     document.getElementById('step1').classList.remove('active');
                     document.getElementById('step2').classList.add('active');
@@ -264,11 +260,10 @@
                 return;
             }
 
-            tempData.password = pass1; // اعتماد الباسورد المؤكد
+            tempData.password = pass1;
 
             let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
             
-            // تحقق لو الإيميل مسجل قبل كده
             if(users.some(u => u.email === tempData.email)) {
                 showToast("هذا البريد الإلكتروني مسجل مسبقاً!", true);
                 return;
