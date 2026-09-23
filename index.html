@@ -63,7 +63,7 @@
         .typing-title {
             font-size: 48px;
             font-weight: 900;
-            color: #b8860b; /* لون دهبي رايق وواضح */
+            color: #b8860b;
             margin-bottom: 15px;
             min-height: 70px;
             letter-spacing: 1px;
@@ -95,7 +95,7 @@
             100% { width: 280px; box-shadow: 0 0 20px #d4af37, 0 0 30px #b8860b; }
         }
 
-        /* أزرار Sign In و Sign Up (على اليمين والشمال أو جنب بعض بشكل فخم) */
+        /* أزرار Sign In و Sign Up */
         .actions-wrapper {
             display: flex;
             gap: 30px;
@@ -123,7 +123,6 @@
             overflow: hidden;
         }
 
-        /* إضاءة الليد اللي بتلف حوالين الزرار وتنبض */
         .led-btn::after {
             content: '';
             position: absolute;
@@ -159,14 +158,12 @@
             color: #0f172a;
         }
 
-        /* الفوتر السفلي البسيط */
         .footer-note {
             font-size: 13px;
             color: #64748b;
             font-weight: 600;
         }
 
-        /* تجاوب الشاشات الصغيرة */
         @media (max-width: 768px) {
             .typing-title { font-size: 32px; min-height: 50px; }
             .instructor-brand { top: 15px; left: 15px; font-size: 13px; padding: 6px 12px; }
@@ -185,13 +182,9 @@
 
     <!-- المحتوى الرئيسي -->
     <div class="hero-container">
-        <!-- العنوان المتحرك -->
         <h1 class="typing-title" id="typingText"></h1>
-        
-        <!-- خط الليد المتحرك -->
         <div class="led-line"></div>
 
-        <!-- الأزرار بإنارة ليد -->
         <div class="actions-wrapper">
             <a href="login.html" class="led-btn">
                 <i class="fa-solid fa-right-to-bracket"></i> تسجيل الدخول (Sign In)
@@ -202,16 +195,29 @@
         </div>
     </div>
 
-    <!-- الفوتر -->
     <div class="footer-note">
         جميع الحقوق محفوظة © The Leader In English
     </div>
 
+    <!-- استدعاء مكتبة Supabase للتحقق من الجلسة -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        // كود الكتابة حرف بحرف (Typing Effect)
+        const SUPABASE_URL = 'https://gttmvtzsbzcmyjfpavwk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_a865uHBhaj8j0488nCLJnw_M7e3BQuh';
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // التحقق لو الطالب مسجل دخول بالفعل، نحوله للوحة التحكم مباشرة
+        async function checkActiveSession() {
+            const { data: { session } } = await _supabase.auth.getSession();
+            if (session) {
+                window.location.href = 'dashboard.html'; // اسم صفحة لوحة التحكم بتاعتك
+            }
+        }
+
+        // كود الكتابة حرف بحرف
         const textToType = "The Leader In English";
         let index = 0;
-        const speed = 110; // سرعة الكتابة بالمللي ثانية
+        const speed = 110;
 
         function typeWriter() {
             if (index < textToType.length) {
@@ -221,9 +227,9 @@
             }
         }
 
-        // بدء الأنيميشن أول ما الصفحة تفتح
         window.onload = function() {
             setTimeout(typeWriter, 500);
+            checkActiveSession(); // فحص الجلسة أول ما الصفحة تفتح
         };
     </script>
 </body>
