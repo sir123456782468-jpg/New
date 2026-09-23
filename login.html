@@ -6,6 +6,8 @@
     <title>تسجيل الدخول | The Leader In English</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <!-- مكتبة EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; caret-color: transparent; }
@@ -80,21 +82,9 @@
         }
         .form-control:focus { border-color: #d4af37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15); }
         
-        .forgot-password-container {
-            text-align: left;
-            margin-top: -8px;
-            margin-bottom: 15px;
-        }
-        .forgot-password-container a {
-            font-size: 12px;
-            color: #60a5fa;
-            text-decoration: none;
-            transition: color 0.2s ease;
-        }
-        .forgot-password-container a:hover {
-            color: #d4af37;
-            text-decoration: underline;
-        }
+        .forgot-link { text-align: left; margin-top: -8px; margin-bottom: 15px; }
+        .forgot-link a { font-size: 12px; color: #60a5fa; text-decoration: none; cursor: pointer; }
+        .forgot-link a:hover { color: #d4af37; text-decoration: underline; }
 
         .btn {
             width: 100%;
@@ -105,13 +95,18 @@
             cursor: pointer;
             transition: all 0.3s ease;
             border: none;
-            margin-top: 5px;
+            margin-top: 10px;
         }
         .btn-primary { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #0b0f19; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
         .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+        .btn-secondary { background: rgba(51, 65, 85, 0.5); color: #cbd5e1; margin-top: 8px; }
+        .btn-secondary:hover { background: rgba(51, 65, 85, 0.8); color: #fff; }
 
         .switch-auth { text-align: center; margin-top: 20px; font-size: 13px; color: #94a3b8; }
         .switch-auth a { color: #d4af37; text-decoration: none; font-weight: 700; }
+
+        .auth-section { display: none; }
+        .auth-section.active { display: block; }
 
         .developer-credit {
             margin-top: 20px;
@@ -139,28 +134,52 @@
     <div class="platform-card">
         <div class="brand-header">
             <h1>The Leader <span>In English</span></h1>
-            <p style="font-size: 13px; color: #94a3b8;">تسجيل الدخول إلى حسابك</p>
+            <p id="sectionSubtitle" style="font-size: 13px; color: #94a3b8;">تسجيل الدخول إلى حسابك</p>
         </div>
 
-        <div class="form-group">
-            <label><i class="fa-solid fa-envelope"></i> البريد الإلكتروني</label>
-            <input type="text" id="loginEmail" class="form-control" placeholder="example@gmail.com">
-        </div>
-        <div class="form-group">
-            <label><i class="fa-solid fa-lock"></i> كلمة المرور</label>
-            <input type="password" id="loginPassword" class="form-control" placeholder="أدخل كلمة المرور">
+        <!-- القسم الأول: تسجيل الدخول العادي -->
+        <div id="loginSection" class="auth-section active">
+            <div class="form-group">
+                <label><i class="fa-solid fa-envelope"></i> البريد الإلكتروني</label>
+                <input type="text" id="loginEmail" class="form-control" placeholder="example@gmail.com">
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-lock"></i> كلمة المرور</label>
+                <input type="password" id="loginPassword" class="form-control" placeholder="أدخل كلمة المرور">
+            </div>
+            <div class="forgot-link">
+                <a onclick="switchSection('forgotSection')">نسيت كلمة المرور؟</a>
+            </div>
+            <button type="button" class="btn btn-primary" onclick="handleLogin()">دخول للمنصة <i class="fa-solid fa-arrow-left"></i></button>
+            <div class="switch-auth">
+                ليس لديك حساب؟ <a href="register.html">أنشئ حساباً جديداً</a>
+            </div>
         </div>
 
-        <!-- رابط نسيت كلمة المرور -->
-        <div class="forgot-password-container">
-            <a href="reset-password.html">نسيت كلمة المرور؟</a>
+        <!-- القسم الثاني: إرسال الكود لاستعادة الباسورد -->
+        <div id="forgotSection" class="auth-section">
+            <div class="form-group">
+                <label><i class="fa-solid fa-envelope"></i> أخل بريدك المسجل</label>
+                <input type="email" id="resetEmail" class="form-control" placeholder="example@gmail.com">
+            </div>
+            <button type="button" class="btn btn-primary" id="sendCodeBtn" onclick="sendResetCode()">إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i></button>
+            <button type="button" class="btn btn-secondary" onclick="switchSection('loginSection')">العودة لتسجيل الدخول</button>
         </div>
 
-        <button type="button" class="btn btn-primary" onclick="handleLogin()">دخول للمنصة <i class="fa-solid fa-arrow-left"></i></button>
-
-        <div class="switch-auth">
-            ليس لديك حساب؟ <a href="register.html">أنشئ حساباً جديداً</a>
+        <!-- القسم الثالث: إدخال الكود وتغيير الباسورد -->
+        <div id="newPasswordSection" class="auth-section">
+            <div class="form-group">
+                <label><i class="fa-solid fa-shield-keyhole"></i> كود التحقق (6 أرقام)</label>
+                <input type="text" id="verificationCodeInput" class="form-control" placeholder="أدخل الكود الوصل لبريدك" maxlength="6">
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-lock"></i> كلمة المرور الجديدة</label>
+                <input type="password" id="newPasswordInput" class="form-control" placeholder="أدخل الباسورد الجديد">
+            </div>
+            <button type="button" class="btn btn-primary" onclick="verifyAndResetPassword()">تغيير كلمة المرور <i class="fa-solid fa-check"></i></button>
+            <button type="button" class="btn btn-secondary" onclick="switchSection('loginSection')">إلغاء</button>
         </div>
+
     </div>
 
     <div class="developer-credit">
@@ -168,6 +187,14 @@
     </div>
 
     <script>
+        // تهيئة EmailJS بالمفتاح الخاص بك
+        (function(){
+            emailjs.init("gU8jVHuVqdaZT6CD1");
+        })();
+
+        let generatedCode = null;
+        let targetEmailForReset = null;
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
@@ -183,6 +210,22 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
+        // التنقل السلس بين الأقسام الـ 3 داخل نفس الصفحة
+        function switchSection(sectionId) {
+            document.querySelectorAll('.auth-section').forEach(sec => sec.classList.remove('active'));
+            document.getElementById(sectionId).classList.add('active');
+
+            let subtitle = document.getElementById('sectionSubtitle');
+            if(sectionId === 'loginSection') {
+                subtitle.innerText = "تسجيل الدخول إلى حسابك";
+            } else if(sectionId === 'forgotSection') {
+                subtitle.innerText = "استعادة كلمة المرور عبر البريد";
+            } else if(sectionId === 'newPasswordSection') {
+                subtitle.innerText = "تعيين كلمة مرور جديدة";
+            }
+        }
+
+        // 1. تسجيل الدخول العادي
         function handleLogin() {
             let email = document.getElementById('loginEmail').value.trim();
             let password = document.getElementById('loginPassword').value;
@@ -199,10 +242,83 @@
                 localStorage.setItem('current_student', JSON.stringify(matchedUser));
                 showToast("أهلاً بك يا " + matchedUser.fullName + "!");
                 setTimeout(() => {
-                    // window.location.href = "dashboard.html"; // وجهه للوحة التحكم بتاعتك
+                    // window.location.href = "dashboard.html";
                 }, 2000);
             } else {
                 showToast("البريد أو كلمة المرور غير صحيحة!", true);
+            }
+        }
+
+        // 2. إرسال الكود عبر EmailJS (القسم الثاني)
+        function sendResetCode() {
+            let email = document.getElementById('resetEmail').value.trim();
+            if(!email) {
+                showToast("الرجاء إدخال البريد الإلكتروني!", true);
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
+            let user = users.find(u => u.email === email);
+
+            if(!user) {
+                showToast("هذا البريد غير مسجل في المنصة!", true);
+                return;
+            }
+
+            targetEmailForReset = email;
+            generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+            let btn = document.getElementById('sendCodeBtn');
+            btn.innerHTML = 'جاري الإرسال... <i class="fa-solid fa-spinner fa-spin"></i>';
+            btn.disabled = true;
+
+            let templateParams = {
+                to_email: email,
+                to_name: user.fullName || 'طالبنا العزيز',
+                reset_code: generatedCode
+            };
+
+            emailjs.send("Service_seljmns", "template_ltej5td", templateParams)
+                .then(function(response) {
+                    showToast("تم إرسال كود التحقق لبريدك بنجاح!");
+                    btn.innerHTML = 'إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i>';
+                    btn.disabled = false;
+                    switchSection('newPasswordSection'); // النقل للقسم التالت
+                }, function(error) {
+                    showToast("حدث خطأ في الإرسال، حاول لاحقاً.", true);
+                    btn.innerHTML = 'إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i>';
+                    btn.disabled = false;
+                });
+        }
+
+        // 3. التحقق من الكود وتغيير الباسورد (القسم الثالث)
+        function verifyAndResetPassword() {
+            let enteredCode = document.getElementById('verificationCodeInput').value.trim();
+            let newPassword = document.getElementById('newPasswordInput').value;
+
+            if(!enteredCode || !newPassword) {
+                showToast("الرجاء إدخال الكود وكلمة المرور الجديدة!", true);
+                return;
+            }
+
+            if(enteredCode !== generatedCode) {
+                showToast("كود التحقق غير صحيح!", true);
+                return;
+            }
+
+            let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
+            let userIndex = users.findIndex(u => u.email === targetEmailForReset);
+
+            if(userIndex !== -1) {
+                users[userIndex].password = newPassword;
+                localStorage.setItem('leader_users', JSON.stringify(users));
+                showToast("تم تغيير كلمة المرور بنجاح! سجل دخولك الآن.");
+                setTimeout(() => {
+                    switchSection('loginSection');
+                    document.getElementById('loginEmail').value = targetEmailForReset;
+                }, 2000);
+            } else {
+                showToast("حدث خطأ ما، حاول مجدداً.", true);
             }
         }
     </script>
