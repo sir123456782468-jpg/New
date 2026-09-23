@@ -160,7 +160,7 @@
     </div>
 
     <script>
-        // تهيئة EmailJS بنفس المفتاح المعتمد
+        // تهيئة EmailJS بالمفتاح المعتمد
         (function(){
             emailjs.init("gU8jVHuVqdaZT6CD1");
         })();
@@ -196,7 +196,6 @@
                 return;
             }
 
-            // فحص شامل في كلاً من مفتاحي التخزين المحتملين لضمان إيجاد الإيميل
             let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
             if (users.length === 0) {
                 users = JSON.parse(localStorage.getItem('users') || '[]');
@@ -216,13 +215,16 @@
             btn.innerHTML = 'جاري الإرسال... <i class="fa-solid fa-spinner fa-spin"></i>';
             btn.disabled = true;
 
-            // توحيد صيغ الإرسال لتتوافق مع أي Template مستخدم (يقبل to_email و email في نفس الوقت)
+            // حقن جميع أسماء المتغيرات المحتملة لتتوافق مع أي Template بنسبة 100%
             let templateParams = {
                 to_email: email,
                 email: email,
+                user_email: email,
                 to_name: user.fullName || user.name || 'طالبنا العزيز',
+                name: user.fullName || user.name || 'طالبنا العزيز',
                 reset_code: generatedCode,
-                code: generatedCode
+                code: generatedCode,
+                message: "كود التحقق الخاص بك هو: " + generatedCode
             };
 
             emailjs.send("service_seljmns", "Template_5lj7i0g", templateParams)
@@ -232,8 +234,8 @@
                     btn.disabled = false;
                     switchStep('stepNewPassword', 'تعيين كلمة مرور جديدة');
                 }, function(error) {
-                    console.error('EmailJS Error:', error);
-                    showToast("حدث خطأ في الإرسال، تأكد من الاتصال بالإنترنت.", true);
+                    console.error('EmailJS Error Details:', error);
+                    showToast("خطأ في الإرسال: " + (error.text || "تأكد من إعدادات EmailJS"), true);
                     btn.innerHTML = 'إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i>';
                     btn.disabled = false;
                 });
@@ -253,7 +255,6 @@
                 return;
             }
 
-            // تحديث الباسورد في كلا الجدولين باللوكال ستورج لضمان الحفظ الصحيح
             let keyToUpdate = localStorage.getItem('leader_users') ? 'leader_users' : 'users';
             let users = JSON.parse(localStorage.getItem(keyToUpdate) || '[]');
             let userIndex = users.findIndex(u => u.email === targetEmailForReset);
@@ -261,15 +262,7 @@
             if(userIndex !== -1) {
                 users[userIndex].password = newPassword;
                 localStorage.setItem(keyToUpdate, JSON.stringify(users));
-                // تحديثه في النسخة الأخرى احتياطياً لو موجودة
-                let otherKey = keyToUpdate === 'leader_users' ? 'users' : 'leader_users';
-                let otherUsers = JSON.parse(localStorage.getItem(otherKey) || '[]');
-                let otherIndex = otherUsers.findIndex(u => u.email === targetEmailForReset);
-                if(otherIndex !== -1) {
-                    otherUsers[otherIndex].password = newPassword;
-                    localStorage.setItem(otherKey, JSON.stringify(otherUsers));
-                }
-
+                
                 showToast("تم تغيير كلمة المرور بنجاح! جاري تحويلك...");
                 setTimeout(() => {
                     window.location.href = 'login.html';
