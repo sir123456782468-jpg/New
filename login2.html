@@ -215,7 +215,6 @@
             btn.innerHTML = 'جاري الإرسال... <i class="fa-solid fa-spinner fa-spin"></i>';
             btn.disabled = true;
 
-            // حقن جميع أسماء المتغيرات المحتملة لتتوافق مع أي Template بنسبة 100%
             let templateParams = {
                 to_email: email,
                 email: email,
@@ -227,7 +226,8 @@
                 message: "كود التحقق الخاص بك هو: " + generatedCode
             };
 
-            emailjs.send("service_seljmns", "Template_5lj7i0g", templateParams)
+            // استخدام الـ Template ID الجديد الصحيح
+            emailjs.send("service_seljmns", "Template_axqic1s", templateParams)
                 .then(function(response) {
                     showToast("تم إرسال كود التحقق لبريدك بنجاح!");
                     btn.innerHTML = 'إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i>';
