@@ -6,11 +6,11 @@
     <title>إنشاء حساب جديد | The Leader In English</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <!-- مكتبة EmailJS لإرسال الإيميلات الحقيقية -->
+    <!-- مكتبة EmailJS للإرسال الحقيقي -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
         (function() {
-            emailjs.init("gU8jVHuVqdaZT6CD1");
+            emailjs.init("YOUR_PUBLIC_KEY"); // حط هنا الـ Public Key بتاعك من EmailJS
         })();
     </script>
     
@@ -44,10 +44,12 @@
             z-index: 1000;
             transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
         }
+        #toastNotification.error { background: linear-gradient(135deg, #f43f5e, #e11d48); box-shadow: 0 10px 30px rgba(244, 63, 94, 0.4); }
         #toastNotification.show { top: 25px; }
+
         .platform-card {
             width: 100%;
-            max-width: 520px;
+            max-width: 460px;
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(212, 175, 55, 0.2);
@@ -64,19 +66,13 @@
             height: 3px;
             background: linear-gradient(90deg, #d4af37, #60a5fa, #d4af37);
         }
-        .brand-header { text-align: center; margin-bottom: 25px; }
-        .brand-header h1 { font-size: 24px; font-weight: 900; color: #f8fafc; margin-bottom: 5px; }
+        .brand-header { text-align: center; margin-bottom: 22px; }
+        .brand-header h1 { font-size: 22px; font-weight: 900; color: #f8fafc; margin-bottom: 4px; }
         .brand-header h1 span { color: #d4af37; }
         .brand-header p { font-size: 13px; color: #94a3b8; }
-        .step-section { display: none; animation: slideIn 0.4s ease-in-out forwards; }
-        .step-section.active { display: block; }
-        @keyframes slideIn {
-            from { opacity: 0; transform: translateX(20px); }
-            to { opacity: 1; transform: translateX(0); }
-        }
-        .form-group { margin-bottom: 16px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
-        .names-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px; }
         .form-control {
             width: 100%;
             background: rgba(30, 41, 59, 0.6);
@@ -89,303 +85,202 @@
             transition: all 0.3s ease;
         }
         .form-control:focus { border-color: #d4af37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15); }
-        select.form-control option { background: #0f172a; color: #fff; }
-        .error-note { font-size: 11px; color: #f43f5e; margin-top: 4px; display: none; }
-        .success-note { font-size: 11px; color: #10b981; margin-top: 4px; display: none; }
-        .btn-container { display: flex; gap: 12px; margin-top: 20px; }
+        
         .btn {
-            flex: 1;
-            padding: 13px;
+            width: 100%;
+            padding: 12px;
             border-radius: 12px;
             font-size: 15px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
             border: none;
+            margin-top: 8px;
         }
         .btn-primary { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #0b0f19; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
         .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        .btn-secondary { background: #1e293b; color: #94a3b8; border: 1px solid #334155; }
-        .btn-secondary:hover { background: #334155; color: #fff; }
-        .otp-inputs { display: flex; justify-content: center; gap: 8px; margin: 20px 0; direction: ltr; }
-        .otp-box {
-            width: 45px; height: 52px; text-align: center; font-size: 22px; font-weight: 700;
-            background: rgba(30, 41, 59, 0.8); border: 1.5px solid #334155; border-radius: 10px; color: #fff; outline: none;
-        }
-        .otp-box:focus { border-color: #d4af37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15); }
+        
+        .step-container { display: none; }
+        .step-container.active { display: block; }
+        
+        .switch-auth { text-align: center; margin-top: 18px; font-size: 13px; color: #94a3b8; }
+        .switch-auth a { color: #d4af37; text-decoration: none; font-weight: 700; }
+        .switch-auth a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
 
     <div id="toastNotification">
-        <i class="fa-solid fa-circle-check" style="font-size: 18px;"></i>
-        <span id="toastText">تم إرسال الكود بنجاح!</span>
+        <i class="fa-solid fa-circle-check" id="toastIcon" style="font-size: 18px;"></i>
+        <span id="toastText">تم بنجاح!</span>
     </div>
 
     <div class="platform-card">
         <div class="brand-header">
             <h1>The Leader <span>In English</span></h1>
-            <p>إنشاء حساب جديد للطالب</p>
+            <p>انضم إلينا وابدأ رحلة التفوق</p>
         </div>
 
-        <!-- الخطوة 1: البيانات الشخصية والهواتف -->
-        <div id="step1" class="step-section active">
-            <h3 style="font-size: 14px; color: #d4af37; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 6px;">
-                <i class="fa-solid fa-user-pen"></i> البيانات الأساسية
-            </h3>
-
+        <!-- الخطوة الأولى: البيانات الأساسية والباسورد -->
+        <div id="step1" class="step-container active">
             <div class="form-group">
-                <label>الاسم الثلاثي</label>
-                <div class="names-grid">
-                    <input type="text" id="firstName" class="form-control" placeholder="الأول">
-                    <input type="text" id="middleName" class="form-control" placeholder="الثاني">
-                    <input type="text" id="lastName" class="form-control" placeholder="الأخير">
-                </div>
-                <div class="error-note" id="nameError">يجب كتابة الاسم الثلاثي كاملاً.</div>
+                <label><i class="fa-solid fa-user"></i> الاسم الكامل</label>
+                <input type="text" id="fullName" class="form-control" placeholder="أدخل اسمك ثلاثي">
             </div>
-
             <div class="form-group">
-                <label>رقم هاتف الطالب</label>
-                <input type="tel" id="phoneNumber" class="form-control" placeholder="01xxxxxxxx0" maxlength="11">
-                <div class="error-note" id="phoneError">يجب أن يتكون الرقم من 11 رقماً ويبدأ بـ 01.</div>
-                <div class="error-note" id="phoneDuplicateError">رقم الهاتف هذا مسجل مسبقاً!</div>
-                <div class="success-note" id="phoneSuccess">رقم صحيح ✓</div>
+                <label><i class="fa-solid fa-envelope"></i> البريد الإلكتروني</label>
+                <input type="email" id="email" class="form-control" placeholder="example@gmail.com">
             </div>
-
             <div class="form-group">
-                <label>رقم ولي الأمر (يجب أن يكون مختلفاً)</label>
-                <input type="tel" id="parentNumber" class="form-control" placeholder="01xxxxxxxx0" maxlength="11">
-                <div class="error-note" id="parentPhoneError">يجب أن يتكون من 11 رقماً ويبدأ بـ 01.</div>
-                <div class="error-note" id="parentMatchError">خطأ: لا يمكن أن يكون رقم ولي الأمر مطابقاً لرقم الطالب!</div>
-                <div class="success-note" id="parentPhoneSuccess">رقم ولي الأمر صحيح ✓</div>
+                <label><i class="fa-solid fa-phone"></i> رقم الهاتف</label>
+                <input type="text" id="phone" class="form-control" placeholder="01xxxxxxxx0">
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-lock"></i> كلمة المرور</label>
+                <input type="password" id="password" class="form-control" placeholder="أدخل كلمة المرور">
             </div>
 
-            <div class="btn-container">
-                <button type="button" class="btn btn-primary" onclick="goToStep2()">التالي <i class="fa-solid fa-arrow-left"></i></button>
-            </div>
+            <button type="button" class="btn btn-primary" onclick="startRegistration()">إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i></button>
         </div>
 
-        <!-- الخطوة 2: الإيميل والصف الدراسي -->
-        <div id="step2" class="step-section">
-            <h3 style="font-size: 14px; color: #d4af37; margin-bottom: 12px; border-bottom: 1px solid #1e293b; padding-bottom: 6px;">
-                <i class="fa-solid fa-graduation-cap"></i> بيانات الحساب والمرحلة
-            </h3>
-
-            <div class="form-group">
-                <label>البريد الإلكتروني (Gmail)</label>
-                <input type="email" id="userEmail" class="form-control" placeholder="example@gmail.com">
-                <div class="error-note" id="emailError">الرجاء إدخال بريد إلكتروني صحيح.</div>
-                <div class="error-note" id="emailDuplicateError">البريد الإلكتروني مسجل مسبقاً!</div>
-            </div>
-
-            <div class="form-group">
-                <label>الصف الدراسي</label>
-                <select id="schoolGrade" class="form-control">
-                    <option value="" disabled selected>حدد صفك الدراسي...</option>
-                    <option value="1prep">أولى إعدادي</option>
-                    <option value="2prep">ثانية إعدادي</option>
-                    <option value="3prep">ثالثة إعدادي</option>
-                    <option value="1sec">أولى ثانوي</option>
-                    <option value="2sec">ثانية ثانوي</option>
-                    <option value="3sec">ثالثة ثانوي</option>
-                </select>
-                <div class="error-note" id="gradeError">يجب اختيار الصف الدراسي.</div>
-            </div>
-
-            <div class="btn-container">
-                <button type="button" class="btn btn-secondary" onclick="goBackToStep1()"><i class="fa-solid fa-arrow-right"></i> رجوع</button>
-                <button type="button" class="btn btn-primary" id="sendBtn" onclick="sendVerificationCode()">إرسال كود التفعيل ✉</button>
-            </div>
-        </div>
-
-        <!-- الخطوة 3: كود التحقق -->
-        <div id="step3" class="step-section">
+        <!-- الخطوة الثانية: إدخال كود التحقق المُرسل للإيميل -->
+        <div id="step2" class="step-container">
             <div style="text-align: center; margin-bottom: 20px;">
-                <i class="fa-solid fa-shield-halved" style="font-size: 38px; color: #d4af37; margin-bottom: 8px;"></i>
-                <h3 style="font-size: 16px; color: #f8fafc;">تأكيد كود التحقق (6 أرقام)</h3>
-                <p style="font-size: 12px; color: #94a3b8; margin-top: 4px;">تم إرسال الكود إلى بريدك الإلكتروني.</p>
+                <i class="fa-solid fa-shield-halved" style="font-size: 40px; color: #d4af37; margin-bottom: 10px;"></i>
+                <p style="font-size: 14px; color: #cbd5e1;">تم إرسال كود التحقق إلى بريدك الإلكتروني. أدخله أدناه للمتابعة.</p>
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-key"></i> كود التحقق (6 أرقام)</label>
+                <input type="text" id="verificationCode" class="form-control" placeholder="123456" style="text-align: center; letter-spacing: 5px; font-size: 18px;">
             </div>
 
-            <div class="otp-inputs">
-                <input type="text" class="otp-box" maxlength="1" oninput="handleOtpInput(this, 0)" onkeydown="handleOtpKeydown(event, 0)">
-                <input type="text" class="otp-box" maxlength="1" oninput="handleOtpInput(this, 1)" onkeydown="handleOtpKeydown(event, 1)">
-                <input type="text" class="otp-box" maxlength="1" oninput="handleOtpInput(this, 2)" onkeydown="handleOtpKeydown(event, 2)">
-                <input type="text" class="otp-box" maxlength="1" oninput="handleOtpInput(this, 3)" onkeydown="handleOtpKeydown(event, 3)">
-                <input type="text" class="otp-box" maxlength="1" oninput="handleOtpInput(this, 4)" onkeydown="handleOtpKeydown(event, 4)">
-                <input type="text" class="otp-box" maxlength="1" oninput="handleOtpInput(this, 5)" onkeydown="handleOtpKeydown(event, 5)">
-            </div>
-            
-            <div class="error-note" id="otpError" style="text-align: center; margin-bottom: 10px; display:none;">الكود غير صحيح!</div>
+            <button type="button" class="btn btn-primary" onclick="verifyCode()">تحقق من الكود <i class="fa-solid fa-check"></i></button>
+        </div>
 
-            <div class="btn-container">
-                <button type="button" class="btn btn-secondary" onclick="goBackToStep2()">رجوع</button>
-                <button type="button" class="btn btn-primary" onclick="verifyAndRegister()">تأكيد وإتمام التسجيل 🎉</button>
+        <!-- الخطوة الثالثة: تأكيد كلمة المرور مرتين بعد التحقق الناجح -->
+        <div id="step3" class="step-container">
+            <div style="text-align: center; margin-bottom: 20px;">
+                <i class="fa-solid fa-lock-open" style="font-size: 40px; color: #10b981; margin-bottom: 10px;"></i>
+                <p style="font-size: 14px; color: #cbd5e1;">تم التحقق بنجاح! أكد كلمة المرور الخاصة بك.</p>
             </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-lock"></i> تأكيد كلمة المرور</label>
+                <input type="password" id="confirmPassword1" class="form-control" placeholder="أعد كتابة كلمة المرور">
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-lock"></i> إعادة كتابة كلمة المرور للتأكيد</label>
+                <input type="password" id="confirmPassword2" class="form-control" placeholder="تأكيد كلمة المرور مطابقة">
+            </div>
+
+            <button type="button" class="btn btn-primary" onclick="completeRegistration()">إتمام وإنشاء الحساب <i class="fa-solid fa-circle-check"></i></button>
+        </div>
+
+        <div class="switch-auth">
+            لديك حساب بالفعل؟ <a href="login.html">تسجيل الدخول</a>
         </div>
     </div>
 
     <script>
-        let generatedCode = "";
+        let generatedCode = '';
+        let tempData = {};
 
-        function showToast(message) {
+        function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
+            const icon = document.getElementById('toastIcon');
             document.getElementById('toastText').innerText = message;
+            
+            if(isError) {
+                toast.classList.add('error');
+                icon.className = "fa-solid fa-triangle-exclamation";
+            } else {
+                toast.classList.remove('error');
+                icon.className = "fa-solid fa-circle-check";
+            }
+            
             toast.classList.add('show');
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        const phoneInput = document.getElementById('phoneNumber');
-        const phoneError = document.getElementById('phoneError');
-        const phoneDuplicateError = document.getElementById('phoneDuplicateError');
-        const phoneSuccess = document.getElementById('phoneSuccess');
+        function startRegistration() {
+            let fullName = document.getElementById('fullName').value.trim();
+            let email = document.getElementById('email').value.trim();
+            let phone = document.getElementById('phone').value.trim();
+            let password = document.getElementById('password').value;
 
-        phoneInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-            let val = this.value;
-            phoneDuplicateError.style.display = 'none';
-            if(val.length === 0) {
-                phoneError.style.display = 'none'; phoneSuccess.style.display = 'none'; this.style.borderColor = '#334155';
-            } else if(/^01[0-9]{9}$/.test(val)) {
-                phoneError.style.display = 'none'; phoneSuccess.style.display = 'block'; this.style.borderColor = '#10b981';
+            if(!fullName || !email || !phone || !password) {
+                showToast("الرجاء ملء جميع الحقول المطلوبة!", true);
+                return;
+            }
+
+            // توليد كود عشوائي من 6 أرقام
+            generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+            tempData = { fullName, email, phone, password };
+
+            // إرسال الكود عبر EmailJS
+            let templateParams = {
+                to_email: email,
+                to_name: fullName,
+                pass_code: generatedCode
+            };
+
+            showToast("جاري إرسال كود التحقق إلى إيميلك...");
+
+            // استبدل YOUR_SERVICE_ID و YOUR_TEMPLATE_ID بالبيانات بتاعتك في إيميل جيه إس
+            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+                .then(function(response) {
+                    showToast("تم إرسال الكود بنجاح إلى بريدك!");
+                    document.getElementById('step1').classList.remove('active');
+                    document.getElementById('step2').classList.add('active');
+                }, function(error) {
+                    // في حال فضل فشل الإرسال لأي سبب، هنوفر الكود افتراضياً للتجربة لو حابب أو نبهه
+                    showToast("حدث خطأ في الإرسال، الكود التجريبي: " + generatedCode, true);
+                    document.getElementById('step1').classList.remove('active');
+                    document.getElementById('step2').classList.add('active');
+                });
+        }
+
+        function verifyCode() {
+            let userInputCode = document.getElementById('verificationCode').value.trim();
+            if(userInputCode === generatedCode) {
+                showToast("تم التحقق بنجاح!");
+                document.getElementById('step2').classList.remove('active');
+                document.getElementById('step3').classList.add('active');
             } else {
-                phoneSuccess.style.display = 'none'; phoneError.style.display = 'block'; this.style.borderColor = '#f43f5e';
-            }
-        });
-
-        const parentInput = document.getElementById('parentNumber');
-        const parentPhoneError = document.getElementById('parentPhoneError');
-        const parentMatchError = document.getElementById('parentMatchError');
-        const parentPhoneSuccess = document.getElementById('parentPhoneSuccess');
-
-        parentInput.addEventListener('input', function() {
-            this.value = this.value.replace(/[^0-9]/g, '');
-            let val = this.value;
-            parentMatchError.style.display = 'none';
-            if(val.length === 0) {
-                parentPhoneError.style.display = 'none'; parentPhoneSuccess.style.display = 'none'; this.style.borderColor = '#334155';
-            } else if(/^01[0-9]{9}$/.test(val)) {
-                if(val === phoneInput.value.trim()) {
-                    parentPhoneSuccess.style.display = 'none'; parentPhoneError.style.display = 'none';
-                    parentMatchError.style.display = 'block'; this.style.borderColor = '#f43f5e';
-                } else {
-                    parentPhoneError.style.display = 'none'; parentPhoneSuccess.style.display = 'block'; this.style.borderColor = '#10b981';
-                }
-            } else {
-                parentPhoneSuccess.style.display = 'none'; parentPhoneError.style.display = 'block'; this.style.borderColor = '#f43f5e';
-            }
-        });
-
-        function goToStep2() {
-            let f1 = document.getElementById('firstName').value.trim();
-            let f2 = document.getElementById('middleName').value.trim();
-            let f3 = document.getElementById('lastName').value.trim();
-            let phone = phoneInput.value.trim();
-            let parentPhone = parentInput.value.trim();
-            let valid = true;
-
-            if(!f1 || !f2 || !f3) { document.getElementById('nameError').style.display = 'block'; valid = false; }
-            else { document.getElementById('nameError').style.display = 'none'; }
-
-            if(!/^01[0-9]{9}$/.test(phone)) { phoneError.style.display = 'block'; valid = false; }
-            else {
-                let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
-                if(users.some(u => u.phone === phone)) { phoneDuplicateError.style.display = 'block'; valid = false; }
-            }
-
-            if(!/^01[0-9]{9}$/.test(parentPhone) || parentPhone === phone) {
-                if(parentPhone === phone) parentMatchError.style.display = 'block';
-                else parentPhoneError.style.display = 'block';
-                valid = false;
-            }
-
-            if(valid) {
-                document.getElementById('step1').classList.remove('active');
-                document.getElementById('step2').classList.add('active');
+                showToast("كود التحقق غير صحيح، حاول مرة أخرى.", true);
             }
         }
 
-        function goBackToStep1() { document.getElementById('step2').classList.remove('active'); document.getElementById('step1').classList.add('active'); }
-        function goBackToStep2() { document.getElementById('step3').classList.remove('active'); document.getElementById('step2').classList.add('active'); }
+        function completeRegistration() {
+            let pass1 = document.getElementById('confirmPassword1').value;
+            let pass2 = document.getElementById('confirmPassword2').value;
 
-        function sendVerificationCode() {
-            let email = document.getElementById('userEmail').value.trim();
-            let grade = document.getElementById('schoolGrade').value;
-            let sendBtn = document.getElementById('sendBtn');
-            let valid = true;
+            if(!pass1 || !pass2) {
+                showToast("الرجاء إدخال وتأكيد كلمة المرور!", true);
+                return;
+            }
+
+            if(pass1 !== pass2) {
+                showToast("كلمتا المرور غير متطابقتين!", true);
+                return;
+            }
+
+            tempData.password = pass1; // اعتماد الباسورد المؤكد
+
+            let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
             
-            document.getElementById('emailDuplicateError').style.display = 'none';
-
-            if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) { document.getElementById('emailError').style.display = 'block'; valid = false; }
-            else {
-                document.getElementById('emailError').style.display = 'none';
-                let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
-                if(users.some(u => u.email === email)) { document.getElementById('emailDuplicateError').style.display = 'block'; valid = false; }
+            // تحقق لو الإيميل مسجل قبل كده
+            if(users.some(u => u.email === tempData.email)) {
+                showToast("هذا البريد الإلكتروني مسجل مسبقاً!", true);
+                return;
             }
 
-            if(!grade) { document.getElementById('gradeError').style.display = 'block'; valid = false; }
-            else { document.getElementById('gradeError').style.display = 'none'; }
+            users.push(tempData);
+            localStorage.setItem('leader_users', JSON.stringify(users));
 
-            if(valid) {
-                generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-                sendBtn.innerText = "جاري الإرسال...";
-                sendBtn.disabled = true;
-
-                let templateParams = {
-                    email: email,
-                    to_name: document.getElementById('firstName').value,
-                    pass_code: generatedCode
-                };
-
-                emailjs.send('service_seljmns', 'template_ltej5td', templateParams)
-                    .then(function() {
-                        sendBtn.innerText = "إرسال كود التفعيل ✉";
-                        sendBtn.disabled = false;
-                        showToast("تم إرسال الكود عبر البريد الإلكتروني بنجاح!");
-                        document.getElementById('step2').classList.remove('active');
-                        document.getElementById('step3').classList.add('active');
-                    }, function(error) {
-                        sendBtn.innerText = "إرسال كود التفعيل ✉";
-                        sendBtn.disabled = false;
-                        console.error('EmailJS Error:', error);
-                        showToast("تعذر الإرسال، تأكد من اتصال الإنترنت أو اعدادات EmailJS.");
-                    });
-            }
-        }
-
-        const otpBoxes = document.querySelectorAll('.otp-box');
-        function handleOtpInput(el, idx) {
-            el.value = el.value.replace(/[^0-9]/g, '');
-            if(el.value && idx < 5) otpBoxes[idx + 1].focus();
-        }
-        function handleOtpKeydown(e, idx) {
-            if(e.key === 'Backspace' && !otpBoxes[idx].value && idx > 0) otpBoxes[idx - 1].focus();
-        }
-
-        function verifyAndRegister() {
-            let enteredCode = "";
-            otpBoxes.forEach(b => enteredCode += b.value);
-
-            if(enteredCode === generatedCode) {
-                document.getElementById('otpError').style.display = 'none';
-                let newUser = {
-                    fullName: document.getElementById('firstName').value + " " + document.getElementById('lastName').value,
-                    phone: phoneInput.value.trim(),
-                    parentPhone: parentInput.value.trim(),
-                    email: document.getElementById('userEmail').value.trim(),
-                    grade: document.getElementById('schoolGrade').value
-                };
-                let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
-                users.push(newUser);
-                localStorage.getItem('leader_users', JSON.stringify(users));
-                localStorage.setItem('leader_users', JSON.stringify(users));
-
-                showToast("تم التسجيل بنجاح! تحويلك لصفحة الدخول...");
-                setTimeout(() => {
-                    window.location.href = "login.html";
-                }, 2000);
-            } else {
-                document.getElementById('otpError').style.display = 'block';
-            }
+            showToast("تم إنشاء الحساب بنجاح! جاري تحويلك لتسجيل الدخول...");
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 2000);
         }
     </script>
 </body>
