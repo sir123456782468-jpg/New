@@ -3,13 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>إنشاء حساب - الخطوة الأولى | The Leader In English</title>
+    <title>التحقق من البريد - الخطوة الثانية | The Leader In English</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
-    <script type="text/javascript">
-        (function() { emailjs.init("gU8jVHuVqdaZT6CD1"); })();
-    </script>
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; caret-color: transparent; }
@@ -48,7 +44,7 @@
 
         .platform-card {
             width: 100%;
-            max-width: 500px;
+            max-width: 440px;
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(212, 175, 55, 0.2);
@@ -65,22 +61,22 @@
             height: 3px;
             background: linear-gradient(90deg, #d4af37, #60a5fa, #d4af37);
         }
-        .brand-header { text-align: center; margin-bottom: 20px; }
+        .brand-header { text-align: center; margin-bottom: 22px; }
         .brand-header h1 { font-size: 22px; font-weight: 900; color: #f8fafc; margin-bottom: 4px; }
         .brand-header h1 span { color: #d4af37; }
-        .brand-header p { font-size: 13px; color: #94a3b8; }
         
-        .names-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
-        .form-group { margin-bottom: 12px; }
-        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 4px; }
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px; }
         .form-control {
             width: 100%;
             background: rgba(30, 41, 59, 0.6);
             border: 1.5px solid #334155;
-            border-radius: 10px;
-            padding: 10px 12px;
+            border-radius: 12px;
+            padding: 12px 14px;
             color: #fff;
-            font-size: 13px;
+            font-size: 16px;
+            text-align: center;
+            letter-spacing: 5px;
             outline: none;
             transition: all 0.3s ease;
         }
@@ -90,7 +86,7 @@
             width: 100%;
             padding: 12px;
             border-radius: 12px;
-            font-size: 14px;
+            font-size: 15px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -99,10 +95,7 @@
         }
         .btn-primary { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #0b0f19; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
         .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-        
-        .switch-auth { text-align: center; margin-top: 15px; font-size: 13px; color: #94a3b8; }
-        .switch-auth a { color: #d4af37; text-decoration: none; font-weight: 700; }
-        
+
         .developer-credit {
             margin-top: 20px;
             text-align: center;
@@ -129,51 +122,22 @@
     <div class="platform-card">
         <div class="brand-header">
             <h1>The Leader <span>In English</span></h1>
-            <p>خطوة واحدة تفصلك عن التفوق (1/3)</p>
+            <p style="font-size: 13px; color: #94a3b8;">أدخل كود التحقق المرسل (2/3)</p>
         </div>
 
         <div class="form-group">
-            <label><i class="fa-solid fa-user"></i> اسم الطالب الثلاثي</label>
-            <div class="names-grid">
-                <input type="text" id="name1" class="form-control" placeholder="الاسم الأول">
-                <input type="text" id="name2" class="form-control" placeholder="الاسم الثاني">
-                <input type="text" id="name3" class="form-control" placeholder="الاسم الثالث">
-            </div>
+            <label><i class="fa-solid fa-key"></i> كود التحقق المكون من 6 أرقام</label>
+            <input type="text" id="verificationCode" class="form-control" maxlength="6" placeholder="------">
         </div>
 
-        <div class="form-group">
-            <label><i class="fa-solid fa-phone"></i> رقم هاتف الطالب</label>
-            <input type="text" id="phone" class="form-control" placeholder="01xxxxxxxxx">
-        </div>
-
-        <div class="form-group">
-            <label><i class="fa-solid fa-user-shield"></i> رقم ولي الأمر</label>
-            <input type="text" id="guardianPhone" class="form-control" placeholder="01xxxxxxxxx">
-        </div>
-
-        <div class="form-group">
-            <label><i class="fa-solid fa-envelope"></i> البريد الإلكتروني</label>
-            <input type="email" id="email" class="form-control" placeholder="example@gmail.com">
-        </div>
-
-        <button type="button" class="btn btn-primary" onclick="proceedToVerification()">إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i></button>
-
-        <div class="switch-auth">
-            لديك حساب بالفعل؟ <a href="login.html">تسجيل الدخول</a>
-        </div>
+        <button type="button" class="btn btn-primary" onclick="verifyCode()">تحقق وتابع للخطوة الأخيرة <i class="fa-solid fa-arrow-left"></i></button>
     </div>
 
     <div class="developer-credit">
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
-    <!-- مكتبة Supabase للتخزين السحابي -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        const SUPABASE_URL = 'https://gttmvtzsbzcmyjfpavwk.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_a865uHBhaj8j0488nCLJnw_M7e3BQuh';
-        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
@@ -189,46 +153,24 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        async function proceedToVerification() {
-            let n1 = document.getElementById('name1').value.trim();
-            let n2 = document.getElementById('name2').value.trim();
-            let n3 = document.getElementById('name3').value.trim();
-            let phone = document.getElementById('phone').value.trim();
-            let guardianPhone = document.getElementById('guardianPhone').value.trim();
-            let email = document.getElementById('email').value.trim();
+        function verifyCode() {
+            let enteredCode = document.getElementById('verificationCode').value.trim();
+            let tempData = JSON.parse(localStorage.getItem('temp_reg_data') || '{}');
 
-            if(!n1 || !n2 || !n3 || !phone || !guardianPhone || !email) {
-                showToast("الرجاء استكمال جميع الحقول المطلوبة!", true);
+            if(!tempData.generatedCode) {
+                showToast("انتهت صلاحية الجلسة، يرجى التسجيل من البداية", true);
+                setTimeout(() => { window.location.href = "register.html"; }, 2000);
                 return;
             }
 
-            let fullName = `${n1} ${n2} ${n3}`;
-            let generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-            let tempData = { fullName, phone, guardianPhone, email, generatedCode };
-            localStorage.setItem('temp_reg_data', JSON.stringify(tempData));
-
-            // حفظ البيانات سحابياً عبر Supabase
-            try {
-                await _supabase.from('pending_registrations').upsert([
-                    { email: email, full_name: fullName, phone: phone, guardian_phone: guardianPhone, verification_code: generatedCode }
-                ], { onConflict: 'email' });
-            } catch (err) {
-                console.log("Cloud sync note:", err);
+            if(enteredCode === tempData.generatedCode) {
+                showToast("تم التحقق بنجاح! جاري تحويلك...");
+                setTimeout(() => {
+                    window.location.href = "register_step3.html";
+                }, 1200);
+            } else {
+                showToast("كود التحقق غير صحيح، حاول مرة أخرى", true);
             }
-
-            let templateParams = { to_email: email, to_name: fullName, pass_code: generatedCode };
-
-            showToast("جاري إرسال كود التحقق إلى بريدك الإلكتروني...");
-
-            emailjs.send('service_seljmns', 'template_5lj7i0g', templateParams)
-                .then(function(response) {
-                    showToast("تم إرسال الكود بنجاح!");
-                    setTimeout(() => { window.location.href = "register_step2.html"; }, 1500);
-                }, function(error) {
-                    showToast("الكود التجريبي: " + generatedCode, true);
-                    setTimeout(() => { window.location.href = "register_step2.html"; }, 2500);
-                });
         }
     </script>
 </body>
