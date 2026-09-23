@@ -149,24 +149,23 @@
     <div class="platform-card">
         <div class="brand-header">
             <h1>The Leader <span>In English</span></h1>
-            <p id="pageSubtitle" style="font-size: 13px; color: #94a3b8;">استعادة كلمة المرور برابط آمن</p>
+            <p id="pageSubtitle" style="font-size: 13px; color: #94a3b8;">استعادة كلمة المرور الآمنة</p>
         </div>
 
-        <!-- الخطوة الأولى: إدخال الموبايل لتوليد الرابط الآمن -->
+        <!-- الخطوة الأولى: إدخال الإيميل/الموبايل لطلب الاستعادة -->
         <div id="stepPhone" class="auth-step active">
             <div class="form-group">
-                <label><i class="fa-solid fa-phone"></i> أدخل رقم الموبايل المسجل</label>
-                <input type="tel" id="resetPhone" class="form-control" placeholder="01012345678">
+                <label><i class="fa-solid fa-envelope"></i> أدخل البريد الإلكتروني (Gmail)</label>
+                <input type="email" id="resetEmail" class="form-control" placeholder="example@gmail.com">
             </div>
-            <button type="button" class="btn btn-primary" id="generateBtn">إنشاء الرابط الآمن عبر الواتساب <i class="fa-brands fa-whatsapp"></i></button>
-            <a href="#" id="whatsappDirectBtn" class="btn btn-whatsapp" target="_blank">اضغط هنا لإرسال الرابط الآمن عبر الواتساب <i class="fa-brands fa-whatsapp"></i></a>
+            <button type="button" class="btn btn-primary" id="generateBtn">إرسال رابط الاستعادة الآمن ✉</button>
             <button type="button" class="btn btn-secondary" id="backToLoginBtn">العودة لتسجيل الدخول</button>
         </div>
 
-        <!-- الخطوة الثانية: تعيين كلمة المرور الجديدة بعد فتح الرابط الآمن -->
+        <!-- الخطوة الثانية: تعيين كلمة المرور الجديدة -->
         <div id="stepNewPassword" class="auth-step">
             <div class="form-group" style="text-align: center; margin-bottom: 20px; color: #10b981; font-size: 14px; font-weight: 700;">
-                <i class="fa-solid fa-shield-check"></i> تم التحقق من الرابط بنجاح! أدخل كلمة المرور الجديدة.
+                <i class="fa-solid fa-shield-check"></i> تم التحقق بنجاح! أدخل كلمة المرور الجديدة.
             </div>
             <div class="form-group">
                 <label><i class="fa-solid fa-lock"></i> كلمة المرور الجديدة</label>
@@ -184,8 +183,12 @@
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
+    <!-- مكتبة Supabase للاتصال السحابي -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
-        let currentResetPhone = null;
+        const SUPABASE_URL = 'https://gttmvtzsbzcmyjfpavwk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_a865uHBhaj8j0488nCLJnw_M7e3BQuh';
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
@@ -208,8 +211,7 @@
             document.getElementById('pageSubtitle').innerText = subtitleText;
         }
 
-        // ربط الأحداث بالكود بشكل آمن لتفادي أي عطل في الأزرار
-        document.addEventListener('DOMContentLoaded', function() {
+        document.addEventListener('DOMContentLoaded', async function() {
             
             // زر إظهار/إخفاء الباسورد
             const togglePassword = document.getElementById('togglePassword');
@@ -236,91 +238,40 @@
                 });
             }
 
-            // فحص الرابط عند تحميل الصفحة (Token Check)
-            const urlParams = new URLSearchParams(window.location.search);
-            const token = urlParams.get('token');
-            const phone = urlParams.get('phone');
-
-            if (token && phone) {
-                let secureLinks = JSON.parse(localStorage.getItem('leader_secure_links') || '{}');
-                let linkData = secureLinks[phone];
-
-                if (!linkData || linkData.token !== token || linkData.used || Date.now() > linkData.expiresAt) {
-                    showToast("هذا الرابط غير صالح أو تم استخدامه من قبل أو انتهت صلاحيته!", true);
-                    setTimeout(() => { window.location.href = 'login.html'; }, 3500);
-                    return;
-                }
-
-                currentResetPhone = phone;
-                linkData.used = true;
-                localStorage.setItem('leader_secure_links', JSON.stringify(secureLinks));
+            // التحقق من حالة جلسة استعادة كلمة المرور القادمة من Supabase
+            const hash = window.location.hash;
+            if (hash && hash.includes('type=recovery')) {
                 switchStep('stepNewPassword', 'إنشاء كلمة مرور جديدة');
             }
 
-            // زر توليد الرابط الآمن
+            // زر إرسال طلب استعادة كلمة المرور عبر Supabase
             const generateBtn = document.getElementById('generateBtn');
             if(generateBtn) {
-                generateBtn.addEventListener('click', function() {
-                    let phoneInput = document.getElementById('resetPhone');
-                    let phone = phoneInput ? phoneInput.value.trim() : '';
+                generateBtn.addEventListener('click', async function() {
+                    let emailInput = document.getElementById('resetEmail');
+                    let email = emailInput ? emailInput.value.trim() : '';
 
-                    if(!phone) {
-                        showToast("الرجاء إدخال رقم الموبايل!", true);
+                    if(!email) {
+                        showToast("الرجاء إدخال البريد الإلكتروني!", true);
                         return;
                     }
 
-                    // للتسهيل أثناء التجربة: لو مفيش مستخدمين متسجلين في الداتا، هنسجل الرقم ده مؤقتاً عشان التيست يشتغل معاك فوراً
-                    let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
-                    if (users.length === 0) {
-                        users = JSON.parse(localStorage.getItem('users') || '[]');
+                    const { data, error } = await _supabase.auth.resetPasswordForEmail(email, {
+                        redirectTo: window.location.href.split('#')[0],
+                    });
+
+                    if (error) {
+                        showToast("حدث خطأ، تأكد من صحة البريد الإلكتروني المسجل.", true);
+                    } else {
+                        showToast("تم إرسال رابط الاستعادة إلى بريدك الإلكتروني بنجاح!");
                     }
-
-                    let user = users.find(u => u.phone === phone || u.mobile === phone);
-
-                    if(!user) {
-                        // لو الرقم مش مسجل، هنبهه بس هنسمح بالتجربة لو حابب، أو نطلعه رسالة واضحة
-                        showToast("رقم الموبايل غير مسجل، تأكد من الرقم!", true);
-                        return;
-                    }
-
-                    let uniqueToken = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
-                    let expiresAt = Date.now() + (5 * 60 * 1000);
-
-                    let secureLinks = JSON.parse(localStorage.getItem('leader_secure_links') || '{}');
-                    secureLinks[phone] = {
-                        token: uniqueToken,
-                        expiresAt: expiresAt,
-                        used: false
-                    };
-                    localStorage.setItem('leader_secure_links', JSON.stringify(secureLinks));
-
-                    let currentBaseUrl = window.location.href.split('?')[0];
-                    let secureResetLink = `${currentBaseUrl}?token=${uniqueToken}&phone=${phone}`;
-
-                    let studentName = user.fullName || user.name || 'طالبنا العزيز';
-                    let message = `مرحباً ${studentName}، رابط الاستخدام الواحد الآمن لتغيير كلمة المرور الخاصة بك:\n${secureResetLink}\n\n⚠️ (هذا الرابط صالح لمدة 5 دقائق فقط).`;
-                    
-                    let formattedPhone = phone;
-                    if (formattedPhone.startsWith('01')) {
-                        formattedPhone = '2' + formattedPhone;
-                    }
-
-                    let whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
-
-                    let waBtn = document.getElementById('whatsappDirectBtn');
-                    if(waBtn) {
-                        waBtn.href = whatsappUrl;
-                        waBtn.style.display = 'block';
-                    }
-
-                    showToast("تم إنشاء الرابط الآمن بنجاح! اضغط على زر الواتساب لإرساله.");
                 });
             }
 
-            // زر حفظ كلمة المرور الجديدة
+            // زر حفظ وتحديث كلمة المرور الجديدة في Supabase
             const updatePasswordBtn = document.getElementById('updatePasswordBtn');
             if(updatePasswordBtn) {
-                updatePasswordBtn.addEventListener('click', function() {
+                updatePasswordBtn.addEventListener('click', async function() {
                     let newPasswordInput = document.getElementById('newPasswordInput');
                     let newPassword = newPasswordInput ? newPasswordInput.value.trim() : '';
 
@@ -329,20 +280,17 @@
                         return;
                     }
 
-                    let keyToUpdate = localStorage.getItem('leader_users') ? 'leader_users' : 'users';
-                    let users = JSON.parse(localStorage.getItem(keyToUpdate) || '[]');
-                    let userIndex = users.findIndex(u => u.phone === currentResetPhone || u.mobile === currentResetPhone);
+                    const { data, error } = await _supabase.auth.updateUser({
+                        password: newPassword
+                    });
 
-                    if(userIndex !== -1) {
-                        users[userIndex].password = newPassword;
-                        localStorage.setItem(keyToUpdate, JSON.stringify(users));
-                        
+                    if (error) {
+                        showToast("فشل تحديث كلمة المرور، حاول مجدداً.", true);
+                    } else {
                         showToast("تم تغيير كلمة المرور بنجاح! جاري تحويلك...");
                         setTimeout(() => {
                             window.location.href = 'login.html';
                         }, 2000);
-                    } else {
-                        showToast("حدث خطأ ما، حاول مجدداً.", true);
                     }
                 });
             }
