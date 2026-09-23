@@ -167,7 +167,13 @@
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
+    <!-- مكتبة Supabase للتخزين السحابي -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        const SUPABASE_URL = 'https://gttmvtzsbzcmyjfpavwk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_a865uHBhaj8j0488nCLJnw_M7e3BQuh';
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
@@ -183,7 +189,7 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        function proceedToVerification() {
+        async function proceedToVerification() {
             let n1 = document.getElementById('name1').value.trim();
             let n2 = document.getElementById('name2').value.trim();
             let n3 = document.getElementById('name3').value.trim();
@@ -201,6 +207,15 @@
 
             let tempData = { fullName, phone, guardianPhone, email, generatedCode };
             localStorage.setItem('temp_reg_data', JSON.stringify(tempData));
+
+            // تخزين البيانات مؤقتاً في جدول سحابي عبر Supabase (اختياري كنسخة احتياطية سحابية)
+            try {
+                await _supabase.from('pending_registrations').upsert([
+                    { email: email, full_name: fullName, phone: phone, guardian_phone: guardianPhone, verification_code: generatedCode }
+                ], { onConflict: 'email' });
+            } catch (err) {
+                console.log("Cloud sync note:", err);
+            }
 
             let templateParams = { to_email: email, to_name: fullName, pass_code: generatedCode };
 
