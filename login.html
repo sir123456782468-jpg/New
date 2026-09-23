@@ -150,7 +150,13 @@
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
+    <!-- مكتبة Supabase للاتصال السحابي -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        const SUPABASE_URL = 'https://gttmvtzsbzcmyjfpavwk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_a865uHBhaj8j0488nCLJnw_M7e3BQuh';
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
@@ -166,7 +172,7 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        function handleLogin() {
+        async function handleLogin() {
             let email = document.getElementById('loginEmail').value.trim();
             let password = document.getElementById('loginPassword').value;
 
@@ -175,17 +181,19 @@
                 return;
             }
 
-            let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
-            let matchedUser = users.find(u => u.email === email && u.password === password);
+            // استخدام Supabase Auth لتسجيل الدخول السحابي
+            const { data, error } = await _supabase.auth.signInWithPassword({
+                email: email,
+                password: password,
+            });
 
-            if(matchedUser) {
-                localStorage.setItem('current_student', JSON.stringify(matchedUser));
-                showToast("أهلاً بك يا " + matchedUser.fullName + "!");
-                setTimeout(() => {
-                    // window.location.href = "dashboard.html";
-                }, 2000);
-            } else {
+            if (error) {
                 showToast("البريد أو كلمة المرور غير صحيحة!", true);
+            } else {
+                showToast("أهلاً بك يا بطل! جاري تحويلك...");
+                setTimeout(() => {
+                    window.location.href = "dashboard.html";
+                }, 1500);
             }
         }
     </script>
