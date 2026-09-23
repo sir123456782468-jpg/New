@@ -68,6 +68,12 @@
         
         .form-group { margin-bottom: 18px; }
         .form-group label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 6px; }
+        
+        .input-wrapper {
+            position: relative;
+            display: flex;
+            align-items: center;
+        }
         .form-control {
             width: 100%;
             background: rgba(30, 41, 59, 0.6);
@@ -81,6 +87,18 @@
         }
         .form-control:focus { border-color: #d4af37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15); }
         
+        .password-toggle {
+            position: absolute;
+            left: 14px;
+            cursor: pointer;
+            color: #94a3b8;
+            font-size: 16px;
+            transition: color 0.3s;
+            z-index: 10;
+            caret-color: transparent;
+        }
+        .password-toggle:hover { color: #d4af37; }
+
         .btn {
             width: 100%;
             padding: 13px;
@@ -147,7 +165,10 @@
             </div>
             <div class="form-group">
                 <label><i class="fa-solid fa-lock"></i> كلمة المرور الجديدة</label>
-                <input type="password" id="newPasswordInput" class="form-control" placeholder="أدخل الباسورد الجديد">
+                <div class="input-wrapper">
+                    <input type="password" id="newPasswordInput" class="form-control" placeholder="أدخل الباسورد الجديد">
+                    <i class="fa-solid fa-eye password-toggle" id="togglePassword" onclick="togglePasswordVisibility()"></i>
+                </div>
             </div>
             <button type="button" class="btn btn-primary" onclick="verifyAndResetPassword()">تغيير كلمة المرور <i class="fa-solid fa-check"></i></button>
             <button type="button" class="btn btn-secondary" onclick="window.location.href='login.html'">إلغاء</button>
@@ -189,6 +210,21 @@
             document.getElementById('pageSubtitle').innerText = subtitleText;
         }
 
+        // دالة إظهار وإخفاء كلمة المرور عبر أيقونة العين
+        function togglePasswordVisibility() {
+            const passwordInput = document.getElementById('newPasswordInput');
+            const toggleIcon = document.getElementById('togglePassword');
+            if (passwordInput.type === 'password') {
+                passwordInput.type = 'text';
+                toggleIcon.classList.remove('fa-eye');
+                toggleIcon.classList.add('fa-eye-slash');
+            } else {
+                passwordInput.type = 'password';
+                toggleIcon.classList.remove('fa-eye-slash');
+                toggleIcon.classList.add('fa-eye');
+            }
+        }
+
         function sendResetCode() {
             let email = document.getElementById('resetEmail').value.trim();
             if(!email) {
@@ -226,8 +262,8 @@
                 message: "كود التحقق الخاص بك هو: " + generatedCode
             };
 
-            // استخدام الـ Template ID الجديد الصحيح
-            emailjs.send("service_seljmns", "Template_axqic1s", templateParams)
+            // استخدام الـ Service ID والـ Template ID الجديدين
+            emailjs.send("service_b6xhfhp", "Template_axqic1s", templateParams)
                 .then(function(response) {
                     showToast("تم إرسال كود التحقق لبريدك بنجاح!");
                     btn.innerHTML = 'إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i>';
