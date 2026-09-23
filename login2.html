@@ -160,7 +160,7 @@
     </div>
 
     <script>
-        // تهيئة EmailJS
+        // تهيئة EmailJS بنفس المفتاح المعتمد
         (function(){
             emailjs.init("gU8jVHuVqdaZT6CD1");
         })();
@@ -189,7 +189,6 @@
             document.getElementById('pageSubtitle').innerText = subtitleText;
         }
 
-        // إرسال الكود باستخدام التمبلت الجديد Template_5lj7i0g
         function sendResetCode() {
             let email = document.getElementById('resetEmail').value.trim();
             if(!email) {
@@ -197,7 +196,12 @@
                 return;
             }
 
+            // فحص شامل في كلاً من مفتاحي التخزين المحتملين لضمان إيجاد الإيميل
             let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
+            if (users.length === 0) {
+                users = JSON.parse(localStorage.getItem('users') || '[]');
+            }
+            
             let user = users.find(u => u.email === email);
 
             if(!user) {
@@ -212,10 +216,13 @@
             btn.innerHTML = 'جاري الإرسال... <i class="fa-solid fa-spinner fa-spin"></i>';
             btn.disabled = true;
 
+            // توحيد صيغ الإرسال لتتوافق مع أي Template مستخدم (يقبل to_email و email في نفس الوقت)
             let templateParams = {
                 to_email: email,
-                to_name: user.fullName || 'طالبنا العزيز',
-                reset_code: generatedCode
+                email: email,
+                to_name: user.fullName || user.name || 'طالبنا العزيز',
+                reset_code: generatedCode,
+                code: generatedCode
             };
 
             emailjs.send("service_seljmns", "Template_5lj7i0g", templateParams)
@@ -226,7 +233,7 @@
                     switchStep('stepNewPassword', 'تعيين كلمة مرور جديدة');
                 }, function(error) {
                     console.error('EmailJS Error:', error);
-                    showToast("حدث خطأ في الإرسال، تأكد من الاتصال.", true);
+                    showToast("حدث خطأ في الإرسال، تأكد من الاتصال بالإنترنت.", true);
                     btn.innerHTML = 'إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i>';
                     btn.disabled = false;
                 });
@@ -246,12 +253,23 @@
                 return;
             }
 
-            let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
+            // تحديث الباسورد في كلا الجدولين باللوكال ستورج لضمان الحفظ الصحيح
+            let keyToUpdate = localStorage.getItem('leader_users') ? 'leader_users' : 'users';
+            let users = JSON.parse(localStorage.getItem(keyToUpdate) || '[]');
             let userIndex = users.findIndex(u => u.email === targetEmailForReset);
 
             if(userIndex !== -1) {
                 users[userIndex].password = newPassword;
-                localStorage.setItem('leader_users', JSON.stringify(users));
+                localStorage.setItem(keyToUpdate, JSON.stringify(users));
+                // تحديثه في النسخة الأخرى احتياطياً لو موجودة
+                let otherKey = keyToUpdate === 'leader_users' ? 'users' : 'leader_users';
+                let otherUsers = JSON.parse(localStorage.getItem(otherKey) || '[]');
+                let otherIndex = otherUsers.findIndex(u => u.email === targetEmailForReset);
+                if(otherIndex !== -1) {
+                    otherUsers[otherIndex].password = newPassword;
+                    localStorage.setItem(otherKey, JSON.stringify(otherUsers));
+                }
+
                 showToast("تم تغيير كلمة المرور بنجاح! جاري تحويلك...");
                 setTimeout(() => {
                     window.location.href = 'login.html';
