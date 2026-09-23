@@ -136,14 +136,20 @@
             <input type="password" id="pass2" class="form-control" placeholder="أعد كتابة كلمة المرور" oninput="checkMatch()">
         </div>
 
-        <button type="button" class="btn btn-primary" onclick="finalizeRegistration()">إنتمام التسجيل ودخول المنصة <i class="fa-solid fa-circle-check"></i></button>
+        <button type="button" class="btn btn-primary" onclick="finalizeRegistration()">إتمام التسجيل ودخول المنصة <i class="fa-solid fa-circle-check"></i></button>
     </div>
 
     <div class="developer-credit">
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
+    <!-- مكتبة Supabase للتخزين السحابي -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <script>
+        const SUPABASE_URL = 'https://gttmvtzsbzcmyjfpavwk.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_a865uHBhaj8j0488nCLJnw_M7e3BQuh';
+        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
@@ -178,7 +184,7 @@
             }
         }
 
-        function finalizeRegistration() {
+        async function finalizeRegistration() {
             let p1 = document.getElementById('pass1').value;
             let p2 = document.getElementById('pass2').value;
 
@@ -210,6 +216,21 @@
             users.push(tempData);
             localStorage.setItem('leader_users', JSON.stringify(users));
             localStorage.removeItem('temp_reg_data');
+
+            // حفظ المستخدم نهائياً سحابياً عبر Supabase
+            try {
+                await _supabase.from('users').upsert([
+                    { 
+                        email: tempData.email, 
+                        full_name: tempData.fullName, 
+                        phone: tempData.phone, 
+                        guardian_phone: tempData.guardianPhone, 
+                        password: tempData.password 
+                    }
+                ], { onConflict: 'email' });
+            } catch (err) {
+                console.log("Cloud sync note:", err);
+            }
 
             showToast("تم إنشاء حسابك بنجاح يا بطل!");
             setTimeout(() => {
