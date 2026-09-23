@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>استعادة كلمة المرور عبر الواتساب | The Leader In English</title>
+    <title>استعادة كلمة المرور الآمنة | The Leader In English</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
@@ -107,11 +107,14 @@
             transition: all 0.3s ease;
             border: none;
             margin-top: 10px;
+            text-align: center;
+            text-decoration: none;
+            display: block;
         }
         .btn-primary { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #0b0f19; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
         .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
         
-        .btn-whatsapp { background: linear-gradient(135deg, #25D366, #128C7E); color: #fff; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3); display: none; text-decoration: none; text-align: center; }
+        .btn-whatsapp { background: linear-gradient(135deg, #25D366, #128C7E); color: #fff; box-shadow: 0 4px 15px rgba(37, 211, 102, 0.3); display: none; }
         .btn-whatsapp:hover { filter: brightness(1.1); transform: translateY(-1px); }
 
         .btn-secondary { background: rgba(51, 65, 85, 0.5); color: #cbd5e1; margin-top: 8px; }
@@ -146,25 +149,24 @@
     <div class="platform-card">
         <div class="brand-header">
             <h1>The Leader <span>In English</span></h1>
-            <p id="pageSubtitle" style="font-size: 13px; color: #94a3b8;">استعادة كلمة المرور عبر الواتساب</p>
+            <p id="pageSubtitle" style="font-size: 13px; color: #94a3b8;">استعادة كلمة المرور برابط آمن</p>
         </div>
 
-        <!-- الخطوة الأولى: إدخال رقم الموبايل -->
+        <!-- الخطوة الأولى: إدخال الموبايل لتوليد الرابط الآمن -->
         <div id="stepPhone" class="auth-step active">
             <div class="form-group">
                 <label><i class="fa-solid fa-phone"></i> أدخل رقم الموبايل المسجل</label>
                 <input type="tel" id="resetPhone" class="form-control" placeholder="01012345678">
             </div>
-            <button type="button" class="btn btn-primary" onclick="generateWhatsAppCode()">إرسال كود التحقق عبر الواتساب <i class="fa-brands fa-whatsapp"></i></button>
-            <a href="#" id="whatsappDirectBtn" class="btn btn-whatsapp" target="_blank">اضغط هنا لإرسال الكود عبر الواتساب <i class="fa-brands fa-whatsapp"></i></a>
+            <button type="button" class="btn btn-primary" onclick="generateSecureLink()">إنشاء الرابط الآمن عبر الواتساب <i class="fa-brands fa-whatsapp"></i></button>
+            <a href="#" id="whatsappDirectBtn" class="btn btn-whatsapp" target="_blank">اضغط هنا لإرسال الرابط الآمن عبر الواتساب <i class="fa-brands fa-whatsapp"></i></a>
             <button type="button" class="btn btn-secondary" onclick="window.location.href='login.html'">العودة لتسجيل الدخول</button>
         </div>
 
-        <!-- الخطوة الثانية: إدخال الكود والباسورد الجديد -->
+        <!-- الخطوة الثانية: تعيين كلمة المرور الجديدة بعد فتح الرابط الآمن -->
         <div id="stepNewPassword" class="auth-step">
-            <div class="form-group">
-                <label><i class="fa-solid fa-shield-keyhole"></i> كود التحقق (6 أرقام)</label>
-                <input type="text" id="verificationCodeInput" class="form-control" placeholder="أدخل الكود الذي ظهر لك" maxlength="6">
+            <div class="form-group" style="text-align: center; margin-bottom: 20px; color: #10b981; font-size: 14px; font-weight: 700;">
+                <i class="fa-solid fa-shield-check"></i> تم التحقق من الرابط بنجاح! أدخل كلمة المرور الجديدة.
             </div>
             <div class="form-group">
                 <label><i class="fa-solid fa-lock"></i> كلمة المرور الجديدة</label>
@@ -173,8 +175,7 @@
                     <i class="fa-solid fa-eye password-toggle" id="togglePassword" onclick="togglePasswordVisibility()"></i>
                 </div>
             </div>
-            <button type="button" class="btn btn-primary" onclick="verifyAndResetPassword()">تغيير كلمة المرور <i class="fa-solid fa-check"></i></button>
-            <button type="button" class="btn btn-secondary" onclick="window.location.href='login.html'">إلغاء</button>
+            <button type="button" class="btn btn-primary" onclick="updatePasswordWithToken()">حفظ كلمة المرور الجديدة <i class="fa-solid fa-check"></i></button>
         </div>
 
     </div>
@@ -184,8 +185,7 @@
     </div>
 
     <script>
-        let generatedCode = null;
-        let targetPhoneForReset = null;
+        let currentResetPhone = null;
 
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
@@ -222,7 +222,33 @@
             }
         }
 
-        function generateWhatsAppCode() {
+        // عند فتح الصفحة، نتأكد هل جاي مع الرابط Token ولا لأ
+        window.onload = function() {
+            const urlParams = new URLSearchParams(window.location.search);
+            const token = urlParams.get('token');
+            const phone = urlParams.get('phone');
+
+            if (token && phone) {
+                // جلب الروابط المخزنة للتأكد من صلاحيتها
+                let secureLinks = JSON.parse(localStorage.getItem('leader_secure_links') || '{}');
+                let linkData = secureLinks[phone];
+
+                if (!linkData || linkData.token !== token || linkData.used || Date.now() > linkData.expiresAt) {
+                    showToast("هذا الرابط غير صالح أو تم استخدامه من قبل أو انتهت صلاحيته!", true);
+                    setTimeout(() => { window.location.href = 'login.html'; }, 3500);
+                    return;
+                }
+
+                // لو الرابط سليم، نحفظ رقم الموبايل ونفتح شاشة الباسورد الجديد ونحرق (نمسح) التوكن فوراً عشان ميتفتحش تاني
+                currentResetPhone = phone;
+                linkData.used = true; // تم الاستخدام
+                localStorage.setItem('leader_secure_links', JSON.stringify(secureLinks));
+
+                switchStep('stepNewPassword', 'إنشاء كلمة مرور جديدة');
+            }
+        };
+
+        function generateSecureLink() {
             let phone = document.getElementById('resetPhone').value.trim();
             if(!phone) {
                 showToast("الرجاء إدخال رقم الموبايل!", true);
@@ -234,7 +260,6 @@
                 users = JSON.parse(localStorage.getItem('users') || '[]');
             }
             
-            // البحث برقم الموبايل (سواء مخزون باسم phone أو mobile)
             let user = users.find(u => u.phone === phone || u.mobile === phone);
 
             if(!user) {
@@ -242,14 +267,27 @@
                 return;
             }
 
-            targetPhoneForReset = phone;
-            generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+            // توليد رمز Token عشوائي وآمن وطويل
+            let uniqueToken = Math.random().toString(36.substring(2)) + Math.random().toString(36).substring(2);
+            let expiresAt = Date.now() + (5 * 60 * 1000); // صالح لمدة 5 دقائق فقط
+
+            // تخزين التوكن في التخزين المحلي للتحقق منه لاحقاً
+            let secureLinks = JSON.parse(localStorage.getItem('leader_secure_links') || '{}');
+            secureLinks[phone] = {
+                token: uniqueToken,
+                expiresAt: expiresAt,
+                used: false
+            };
+            localStorage.setItem('leader_secure_links', JSON.stringify(secureLinks));
+
+            // بناء رابط الاستخدام الواحد
+            let currentBaseUrl = window.location.href.split('?')[0];
+            let secureResetLink = `${currentBaseUrl}?token=${uniqueToken}&phone=${phone}`;
 
             // تجهيز نص رسالة الواتساب
             let studentName = user.fullName || user.name || 'طالبنا العزيز';
-            let message = `مرحباً ${studentName}، طلبتم استعادة كلمة المرور لمنصة The Leader In English.\nكود التحقق الخاص بك هو: *${generatedCode}*\nيرجى إدخاله في الموقع لتغيير كلمة المرور.`;
+            let message = `مرحباً ${studentName}، رابط الاستخدام الواحد الآمن لتغيير كلمة المرور الخاصة بك على منصة The Leader In English:\n${secureResetLink}\n\n⚠️ (هذا الرابط صالح لمدة 5 دقائق فقط ويُستخدم مرة واحدة فقط).`;
             
-            // تحويل الرقم لصيغة دولية (مصر +20) لو مش مكتوب بالدولي
             let formattedPhone = phone;
             if (formattedPhone.startsWith('01')) {
                 formattedPhone = '2' + formattedPhone;
@@ -257,36 +295,24 @@
 
             let whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
 
-            // إظهار زر الواتساب المباشر للطالب
             let waBtn = document.getElementById('whatsappDirectBtn');
             waBtn.href = whatsappUrl;
             waBtn.style.display = 'block';
 
-            showToast("تم توليد كود التحقق! اضغط على زر الواتساب لإرساله واستلامه.");
-            
-            // الانتقال لخطوة إدخال الكود
-            setTimeout(() => {
-                switchStep('stepNewPassword', 'أدخل الكود الذي وصلك على الواتساب');
-            }, 1500);
+            showToast("تم إنشاء الرابط الآمن بنجاح! اضغط على زر الواتساب لإرساله واستلامه.");
         }
 
-        function verifyAndResetPassword() {
-            let enteredCode = document.getElementById('verificationCodeInput').value.trim();
+        function updatePasswordWithToken() {
             let newPassword = document.getElementById('newPasswordInput').value;
 
-            if(!enteredCode || !newPassword) {
-                showToast("الرجاء إدخال الكود وكلمة المرور الجديدة!", true);
-                return;
-            }
-
-            if(enteredCode !== generatedCode) {
-                showToast("كود التحقق غير صحيح!", true);
+            if(!newPassword) {
+                showToast("الرجاء إدخال كلمة المرور الجديدة!", true);
                 return;
             }
 
             let keyToUpdate = localStorage.getItem('leader_users') ? 'leader_users' : 'users';
             let users = JSON.parse(localStorage.getItem(keyToUpdate) || '[]');
-            let userIndex = users.findIndex(u => u.phone === targetPhoneForReset || u.mobile === targetPhoneForReset);
+            let userIndex = users.findIndex(u => u.phone === currentResetPhone || u.mobile === currentResetPhone);
 
             if(userIndex !== -1) {
                 users[userIndex].password = newPassword;
