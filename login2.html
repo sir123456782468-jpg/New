@@ -160,7 +160,7 @@
     </div>
 
     <script>
-        // تهيئة EmailJS بالمفتاح الجديد
+        // تهيئة EmailJS بالمفتاح الخاص بك
         (function(){
             emailjs.init("gU8jVHuVqdaZT6CD1");
         })();
@@ -189,7 +189,7 @@
             document.getElementById('pageSubtitle').innerText = subtitleText;
         }
 
-        // إرسال الكود باستخدام القيم الجديدة
+        // إرسال الكود باستخدام القيم والخدمة المحددة
         function sendResetCode() {
             let email = document.getElementById('resetEmail').value.trim();
             if(!email) {
@@ -197,6 +197,7 @@
                 return;
             }
 
+            // البحث في مستخدمين المنصة المخزنين
             let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
             let user = users.find(u => u.email === email);
 
@@ -223,16 +224,17 @@
                     showToast("تم إرسال كود التحقق لبريدك بنجاح!");
                     btn.innerHTML = 'إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i>';
                     btn.disabled = false;
+                    // الانتقال لخطوة إدخال الكود وتغيير الباسورد داخل نفس الصفحة
                     switchStep('stepNewPassword', 'تعيين كلمة مرور جديدة');
                 }, function(error) {
                     console.error('EmailJS Error:', error);
-                    showToast("حدث خطأ في الإرسال، حاول لاحقاً.", true);
+                    showToast("حدث خطأ في الإرسال، تأكد من الاتصال.", true);
                     btn.innerHTML = 'إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i>';
                     btn.disabled = false;
                 });
         }
 
-        // التحقق وتغيير الباسورد
+        // التحقق من الكود وتغيير كلمة المرور في اللوكال ستورج
         function verifyAndResetPassword() {
             let enteredCode = document.getElementById('verificationCodeInput').value.trim();
             let newPassword = document.getElementById('newPasswordInput').value;
@@ -253,7 +255,7 @@
             if(userIndex !== -1) {
                 users[userIndex].password = newPassword;
                 localStorage.setItem('leader_users', JSON.stringify(users));
-                showToast("تم تغيير كلمة المرور بنجاح! جاري تحويلك لتسجيل الدخول...");
+                showToast("تم تغيير كلمة المرور بنجاح! جاري تحويلك...");
                 setTimeout(() => {
                     window.location.href = 'login.html';
                 }, 2000);
