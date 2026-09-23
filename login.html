@@ -8,7 +8,7 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
     <script type="text/javascript">
-        (function() { emailjs.init("YOUR_PUBLIC_KEY"); })();
+        (function() { emailjs.init("gU8jVHuVqdaZT6CD1"); })();
     </script>
     
     <style>
@@ -122,7 +122,7 @@
             <p id="subHeaderText">تسجيل الدخول إلى حسابك</p>
         </div>
 
-        <!-- قسم تسجيل الدخول الأساسي -->
+        <!-- قسم تسجيل الدخول -->
         <div id="loginSection" class="auth-section active">
             <div class="form-group">
                 <label><i class="fa-solid fa-envelope"></i> البريد الإلكتروني أو رقم الهاتف</label>
@@ -139,7 +139,7 @@
             <button type="button" class="btn btn-primary" onclick="handleLogin()">دخول للمنصة <i class="fa-solid fa-arrow-left"></i></button>
         </div>
 
-        <!-- قسم استعادة كلمة المرور عبر الإيميل -->
+        <!-- قسم استعادة كلمة المرور -->
         <div id="recoverySection" class="recovery-section">
             <div id="recStep1">
                 <p style="font-size: 13px; color: #cbd5e1; margin-bottom: 15px; text-align: center;">أدخل بريدك الإلكتروني المسجل لنرسل لك كود استعادة كلمة المرور.</p>
@@ -249,7 +249,7 @@
 
             showToast("جاري إرسال كود الاستعادة...");
 
-            emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', templateParams)
+            emailjs.send('service_seljmns', 'template_5lj7i0g', templateParams)
                 .then(function(response) {
                     showToast("تم إرسال كود الاستعادة إلى إيميلك!");
                     document.getElementById('recStep1').style.display = 'none';
