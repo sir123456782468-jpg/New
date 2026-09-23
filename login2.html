@@ -160,7 +160,7 @@
     </div>
 
     <script>
-        // تهيئة EmailJS بالمفتاح الخاص بك
+        // تهيئة EmailJS
         (function(){
             emailjs.init("gU8jVHuVqdaZT6CD1");
         })();
@@ -189,7 +189,7 @@
             document.getElementById('pageSubtitle').innerText = subtitleText;
         }
 
-        // إرسال الكود باستخدام القيم والخدمة المحددة
+        // إرسال الكود باستخدام التمبلت الجديد Template_5lj7i0g
         function sendResetCode() {
             let email = document.getElementById('resetEmail').value.trim();
             if(!email) {
@@ -197,7 +197,6 @@
                 return;
             }
 
-            // البحث في مستخدمين المنصة المخزنين
             let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
             let user = users.find(u => u.email === email);
 
@@ -219,12 +218,11 @@
                 reset_code: generatedCode
             };
 
-            emailjs.send("service_seljmns", "Template_765l2fq", templateParams)
+            emailjs.send("service_seljmns", "Template_5lj7i0g", templateParams)
                 .then(function(response) {
                     showToast("تم إرسال كود التحقق لبريدك بنجاح!");
                     btn.innerHTML = 'إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i>';
                     btn.disabled = false;
-                    // الانتقال لخطوة إدخال الكود وتغيير الباسورد داخل نفس الصفحة
                     switchStep('stepNewPassword', 'تعيين كلمة مرور جديدة');
                 }, function(error) {
                     console.error('EmailJS Error:', error);
@@ -234,7 +232,6 @@
                 });
         }
 
-        // التحقق من الكود وتغيير كلمة المرور في اللوكال ستورج
         function verifyAndResetPassword() {
             let enteredCode = document.getElementById('verificationCodeInput').value.trim();
             let newPassword = document.getElementById('newPasswordInput').value;
