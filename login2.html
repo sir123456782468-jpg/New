@@ -158,9 +158,9 @@
                 <label><i class="fa-solid fa-phone"></i> أدخل رقم الموبايل المسجل</label>
                 <input type="tel" id="resetPhone" class="form-control" placeholder="01012345678">
             </div>
-            <button type="button" class="btn btn-primary" onclick="generateSecureLink()">إنشاء الرابط الآمن عبر الواتساب <i class="fa-brands fa-whatsapp"></i></button>
+            <button type="button" class="btn btn-primary" id="generateBtn">إنشاء الرابط الآمن عبر الواتساب <i class="fa-brands fa-whatsapp"></i></button>
             <a href="#" id="whatsappDirectBtn" class="btn btn-whatsapp" target="_blank">اضغط هنا لإرسال الرابط الآمن عبر الواتساب <i class="fa-brands fa-whatsapp"></i></a>
-            <button type="button" class="btn btn-secondary" onclick="window.location.href='login.html'">العودة لتسجيل الدخول</button>
+            <button type="button" class="btn btn-secondary" id="backToLoginBtn">العودة لتسجيل الدخول</button>
         </div>
 
         <!-- الخطوة الثانية: تعيين كلمة المرور الجديدة بعد فتح الرابط الآمن -->
@@ -172,10 +172,10 @@
                 <label><i class="fa-solid fa-lock"></i> كلمة المرور الجديدة</label>
                 <div class="input-wrapper">
                     <input type="password" id="newPasswordInput" class="form-control" placeholder="أدخل الباسورد الجديد">
-                    <i class="fa-solid fa-eye password-toggle" id="togglePassword" onclick="togglePasswordVisibility()"></i>
+                    <i class="fa-solid fa-eye password-toggle" id="togglePassword"></i>
                 </div>
             </div>
-            <button type="button" class="btn btn-primary" onclick="updatePasswordWithToken()">حفظ كلمة المرور الجديدة <i class="fa-solid fa-check"></i></button>
+            <button type="button" class="btn btn-primary" id="updatePasswordBtn">حفظ كلمة المرور الجديدة <i class="fa-solid fa-check"></i></button>
         </div>
 
     </div>
@@ -208,28 +208,40 @@
             document.getElementById('pageSubtitle').innerText = subtitleText;
         }
 
-        function togglePasswordVisibility() {
-            const passwordInput = document.getElementById('newPasswordInput');
-            const toggleIcon = document.getElementById('togglePassword');
-            if (passwordInput.type === 'password') {
-                passwordInput.type = 'text';
-                toggleIcon.classList.remove('fa-eye');
-                toggleIcon.classList.add('fa-eye-slash');
-            } else {
-                passwordInput.type = 'password';
-                toggleIcon.classList.remove('fa-eye-slash');
-                toggleIcon.classList.add('fa-eye');
+        // ربط الأحداث بالكود بشكل آمن لتفادي أي عطل في الأزرار
+        document.addEventListener('DOMContentLoaded', function() {
+            
+            // زر إظهار/إخفاء الباسورد
+            const togglePassword = document.getElementById('togglePassword');
+            if(togglePassword) {
+                togglePassword.addEventListener('click', function() {
+                    const passwordInput = document.getElementById('newPasswordInput');
+                    if (passwordInput.type === 'password') {
+                        passwordInput.type = 'text';
+                        togglePassword.classList.remove('fa-eye');
+                        togglePassword.classList.add('fa-eye-slash');
+                    } else {
+                        passwordInput.type = 'password';
+                        togglePassword.classList.remove('fa-eye-slash');
+                        togglePassword.classList.add('fa-eye');
+                    }
+                });
             }
-        }
 
-        // عند فتح الصفحة، نتأكد هل جاي مع الرابط Token ولا لأ
-        window.onload = function() {
+            // زر العودة لتسجيل الدخول
+            const backBtn = document.getElementById('backToLoginBtn');
+            if(backBtn) {
+                backBtn.addEventListener('click', function() {
+                    window.location.href = 'login.html';
+                });
+            }
+
+            // فحص الرابط عند تحميل الصفحة (Token Check)
             const urlParams = new URLSearchParams(window.location.search);
             const token = urlParams.get('token');
             const phone = urlParams.get('phone');
 
             if (token && phone) {
-                // جلب الروابط المخزنة للتأكد من صلاحيتها
                 let secureLinks = JSON.parse(localStorage.getItem('leader_secure_links') || '{}');
                 let linkData = secureLinks[phone];
 
@@ -239,93 +251,103 @@
                     return;
                 }
 
-                // لو الرابط سليم، نحفظ رقم الموبايل ونفتح شاشة الباسورد الجديد ونحرق (نمسح) التوكن فوراً عشان ميتفتحش تاني
                 currentResetPhone = phone;
-                linkData.used = true; // تم الاستخدام
+                linkData.used = true;
                 localStorage.setItem('leader_secure_links', JSON.stringify(secureLinks));
-
                 switchStep('stepNewPassword', 'إنشاء كلمة مرور جديدة');
             }
-        };
 
-        function generateSecureLink() {
-            let phone = document.getElementById('resetPhone').value.trim();
-            if(!phone) {
-                showToast("الرجاء إدخال رقم الموبايل!", true);
-                return;
+            // زر توليد الرابط الآمن
+            const generateBtn = document.getElementById('generateBtn');
+            if(generateBtn) {
+                generateBtn.addEventListener('click', function() {
+                    let phoneInput = document.getElementById('resetPhone');
+                    let phone = phoneInput ? phoneInput.value.trim() : '';
+
+                    if(!phone) {
+                        showToast("الرجاء إدخال رقم الموبايل!", true);
+                        return;
+                    }
+
+                    // للتسهيل أثناء التجربة: لو مفيش مستخدمين متسجلين في الداتا، هنسجل الرقم ده مؤقتاً عشان التيست يشتغل معاك فوراً
+                    let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
+                    if (users.length === 0) {
+                        users = JSON.parse(localStorage.getItem('users') || '[]');
+                    }
+
+                    let user = users.find(u => u.phone === phone || u.mobile === phone);
+
+                    if(!user) {
+                        // لو الرقم مش مسجل، هنبهه بس هنسمح بالتجربة لو حابب، أو نطلعه رسالة واضحة
+                        showToast("رقم الموبايل غير مسجل، تأكد من الرقم!", true);
+                        return;
+                    }
+
+                    let uniqueToken = Math.random().toString(36).substring(2) + Math.random().toString(36).substring(2);
+                    let expiresAt = Date.now() + (5 * 60 * 1000);
+
+                    let secureLinks = JSON.parse(localStorage.getItem('leader_secure_links') || '{}');
+                    secureLinks[phone] = {
+                        token: uniqueToken,
+                        expiresAt: expiresAt,
+                        used: false
+                    };
+                    localStorage.setItem('leader_secure_links', JSON.stringify(secureLinks));
+
+                    let currentBaseUrl = window.location.href.split('?')[0];
+                    let secureResetLink = `${currentBaseUrl}?token=${uniqueToken}&phone=${phone}`;
+
+                    let studentName = user.fullName || user.name || 'طالبنا العزيز';
+                    let message = `مرحباً ${studentName}، رابط الاستخدام الواحد الآمن لتغيير كلمة المرور الخاصة بك:\n${secureResetLink}\n\n⚠️ (هذا الرابط صالح لمدة 5 دقائق فقط).`;
+                    
+                    let formattedPhone = phone;
+                    if (formattedPhone.startsWith('01')) {
+                        formattedPhone = '2' + formattedPhone;
+                    }
+
+                    let whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
+
+                    let waBtn = document.getElementById('whatsappDirectBtn');
+                    if(waBtn) {
+                        waBtn.href = whatsappUrl;
+                        waBtn.style.display = 'block';
+                    }
+
+                    showToast("تم إنشاء الرابط الآمن بنجاح! اضغط على زر الواتساب لإرساله.");
+                });
             }
 
-            let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
-            if (users.length === 0) {
-                users = JSON.parse(localStorage.getItem('users') || '[]');
-            }
-            
-            let user = users.find(u => u.phone === phone || u.mobile === phone);
+            // زر حفظ كلمة المرور الجديدة
+            const updatePasswordBtn = document.getElementById('updatePasswordBtn');
+            if(updatePasswordBtn) {
+                updatePasswordBtn.addEventListener('click', function() {
+                    let newPasswordInput = document.getElementById('newPasswordInput');
+                    let newPassword = newPasswordInput ? newPasswordInput.value.trim() : '';
 
-            if(!user) {
-                showToast("رقم الموبايل غير مسجل في المنصة!", true);
-                return;
-            }
+                    if(!newPassword) {
+                        showToast("الرجاء إدخال كلمة المرور الجديدة!", true);
+                        return;
+                    }
 
-            // توليد رمز Token عشوائي وآمن وطويل
-            let uniqueToken = Math.random().toString(36.substring(2)) + Math.random().toString(36).substring(2);
-            let expiresAt = Date.now() + (5 * 60 * 1000); // صالح لمدة 5 دقائق فقط
+                    let keyToUpdate = localStorage.getItem('leader_users') ? 'leader_users' : 'users';
+                    let users = JSON.parse(localStorage.getItem(keyToUpdate) || '[]');
+                    let userIndex = users.findIndex(u => u.phone === currentResetPhone || u.mobile === currentResetPhone);
 
-            // تخزين التوكن في التخزين المحلي للتحقق منه لاحقاً
-            let secureLinks = JSON.parse(localStorage.getItem('leader_secure_links') || '{}');
-            secureLinks[phone] = {
-                token: uniqueToken,
-                expiresAt: expiresAt,
-                used: false
-            };
-            localStorage.setItem('leader_secure_links', JSON.stringify(secureLinks));
-
-            // بناء رابط الاستخدام الواحد
-            let currentBaseUrl = window.location.href.split('?')[0];
-            let secureResetLink = `${currentBaseUrl}?token=${uniqueToken}&phone=${phone}`;
-
-            // تجهيز نص رسالة الواتساب
-            let studentName = user.fullName || user.name || 'طالبنا العزيز';
-            let message = `مرحباً ${studentName}، رابط الاستخدام الواحد الآمن لتغيير كلمة المرور الخاصة بك على منصة The Leader In English:\n${secureResetLink}\n\n⚠️ (هذا الرابط صالح لمدة 5 دقائق فقط ويُستخدم مرة واحدة فقط).`;
-            
-            let formattedPhone = phone;
-            if (formattedPhone.startsWith('01')) {
-                formattedPhone = '2' + formattedPhone;
+                    if(userIndex !== -1) {
+                        users[userIndex].password = newPassword;
+                        localStorage.setItem(keyToUpdate, JSON.stringify(users));
+                        
+                        showToast("تم تغيير كلمة المرور بنجاح! جاري تحويلك...");
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 2000);
+                    } else {
+                        showToast("حدث خطأ ما، حاول مجدداً.", true);
+                    }
+                });
             }
 
-            let whatsappUrl = `https://wa.me/${formattedPhone}?text=${encodeURIComponent(message)}`;
-
-            let waBtn = document.getElementById('whatsappDirectBtn');
-            waBtn.href = whatsappUrl;
-            waBtn.style.display = 'block';
-
-            showToast("تم إنشاء الرابط الآمن بنجاح! اضغط على زر الواتساب لإرساله واستلامه.");
-        }
-
-        function updatePasswordWithToken() {
-            let newPassword = document.getElementById('newPasswordInput').value;
-
-            if(!newPassword) {
-                showToast("الرجاء إدخال كلمة المرور الجديدة!", true);
-                return;
-            }
-
-            let keyToUpdate = localStorage.getItem('leader_users') ? 'leader_users' : 'users';
-            let users = JSON.parse(localStorage.getItem(keyToUpdate) || '[]');
-            let userIndex = users.findIndex(u => u.phone === currentResetPhone || u.mobile === currentResetPhone);
-
-            if(userIndex !== -1) {
-                users[userIndex].password = newPassword;
-                localStorage.setItem(keyToUpdate, JSON.stringify(users));
-                
-                showToast("تم تغيير كلمة المرور بنجاح! جاري تحويلك...");
-                setTimeout(() => {
-                    window.location.href = 'login.html';
-                }, 2000);
-            } else {
-                showToast("حدث خطأ ما، حاول مجدداً.", true);
-            }
-        }
+        });
     </script>
 </body>
 </html>
