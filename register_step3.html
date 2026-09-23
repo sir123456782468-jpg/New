@@ -1,0 +1,221 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>كلمة المرور - الخطوة الأخيرة | The Leader In English</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; caret-color: transparent; }
+        input { caret-color: #d4af37; }
+        body {
+            background: #0b0f19;
+            background-image: radial-gradient(circle at 50% 0%, #1e1b4b 0%, #0b0f19 75%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+            color: #f1f5f9;
+        }
+        #toastNotification {
+            position: fixed;
+            top: -100px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: linear-gradient(135deg, #10b981, #059669);
+            color: #fff;
+            padding: 14px 28px;
+            border-radius: 14px;
+            box-shadow: 0 10px 30px rgba(16, 185, 129, 0.4);
+            font-size: 14px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1000;
+            transition: top 0.5s cubic-bezier(0.68, -0.55, 0.27, 1.55);
+        }
+        #toastNotification.error { background: linear-gradient(135deg, #f43f5e, #e11d48); box-shadow: 0 10px 30px rgba(244, 63, 94, 0.4); }
+        #toastNotification.show { top: 25px; }
+
+        .platform-card {
+            width: 100%;
+            max-width: 440px;
+            background: rgba(15, 23, 42, 0.85);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(212, 175, 55, 0.2);
+            border-radius: 28px;
+            padding: 35px;
+            box-shadow: 0 25px 60px rgba(0, 0, 0, 0.6);
+            position: relative;
+            overflow: hidden;
+        }
+        .platform-card::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0;
+            height: 3px;
+            background: linear-gradient(90deg, #d4af37, #60a5fa, #d4af37);
+        }
+        .brand-header { text-align: center; margin-bottom: 22px; }
+        .brand-header h1 { font-size: 22px; font-weight: 900; color: #f8fafc; margin-bottom: 4px; }
+        .brand-header h1 span { color: #d4af37; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px; }
+        .form-control {
+            width: 100%;
+            background: rgba(30, 41, 59, 0.6);
+            border: 1.5px solid #334155;
+            border-radius: 12px;
+            padding: 11px 14px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+            transition: all 0.3s ease;
+        }
+        
+        /* تفعيل تأثير الـ LED حسب الحالة */
+        .form-control.error-led { border-color: #f43f5e !important; box-shadow: 0 0 10px rgba(244, 63, 94, 0.3); }
+        .form-control.success-led { border-color: #10b981 !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
+
+        .btn {
+            width: 100%;
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 15px;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: none;
+            margin-top: 10px;
+        }
+        .btn-primary { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #0b0f19; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
+        .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
+
+        .developer-credit {
+            margin-top: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+        }
+        .developer-credit span {
+            color: #d4af37;
+            font-weight: 700;
+            background: linear-gradient(90deg, #d4af37, #fef08a);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="toastNotification">
+        <i class="fa-solid fa-circle-check" id="toastIcon"></i>
+        <span id="toastText">تم بنجاح!</span>
+    </div>
+
+    <div class="platform-card">
+        <div class="brand-header">
+            <h1>The Leader <span>In English</span></h1>
+            <p style="font-size: 13px; color: #94a3b8;">كلمة المرور النهائية (3/3)</p>
+        </div>
+
+        <div class="form-group">
+            <label><i class="fa-solid fa-lock"></i> كلمة المرور (3 أحرف على الأقل)</label>
+            <input type="password" id="pass1" class="form-control" placeholder="أدخل كلمة المرور" oninput="checkMatch()">
+        </div>
+
+        <div class="form-group">
+            <label><i class="fa-solid fa-lock"></i> تأكيد كلمة المرور</label>
+            <input type="password" id="pass2" class="form-control" placeholder="أعد كتابة كلمة المرور" oninput="checkMatch()">
+        </div>
+
+        <button type="button" class="btn btn-primary" onclick="finalizeRegistration()">إنتمام التسجيل ودخول المنصة <i class="fa-solid fa-circle-check"></i></button>
+    </div>
+
+    <div class="developer-credit">
+        Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
+    </div>
+
+    <script>
+        function showToast(message, isError = false) {
+            const toast = document.getElementById('toastNotification');
+            const icon = document.getElementById('toastIcon');
+            document.getElementById('toastText').innerText = message;
+            if(isError) {
+                toast.classList.add('error');
+                icon.className = "fa-solid fa-triangle-exclamation";
+            } else {
+                toast.classList.remove('error');
+                icon.className = "fa-solid fa-circle-check";
+            }
+            toast.classList.add('show');
+            setTimeout(() => { toast.classList.remove('show'); }, 4000);
+        }
+
+        function checkMatch() {
+            let p1 = document.getElementById('pass1').value;
+            let p2 = document.getElementById('pass2').value;
+            let input2 = document.getElementById('pass2');
+
+            if (p2 === "") {
+                input2.classList.remove('error-led', 'success-led');
+                return;
+            }
+
+            if (p1 === p2 && p1.length >= 3) {
+                input2.classList.remove('error-led');
+                input2.classList.add('success-led');
+            } else {
+                input2.classList.remove('success-led');
+                input2.classList.add('error-led');
+            }
+        }
+
+        function finalizeRegistration() {
+            let p1 = document.getElementById('pass1').value;
+            let p2 = document.getElementById('pass2').value;
+
+            if(p1.length < 3) {
+                showToast("كلمة المرور يجب ألا تقل عن 3 أحرف!", true);
+                return;
+            }
+
+            if(p1 !== p2) {
+                showToast("كلمتا المرور غير متطابقتين!", true);
+                return;
+            }
+
+            let tempData = JSON.parse(localStorage.getItem('temp_reg_data') || '{}');
+            if(!tempData.email) {
+                showToast("حدث خطأ بالبيانات، اعد محاولة التسجيل من البداية", true);
+                setTimeout(() => { window.location.href = "register.html"; }, 2000);
+                return;
+            }
+
+            tempData.password = p1;
+
+            let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
+            if(users.some(u => u.email === tempData.email)) {
+                showToast("هذا البريد مسجل مسبقاً!", true);
+                return;
+            }
+
+            users.push(tempData);
+            localStorage.setItem('leader_users', JSON.stringify(users));
+            localStorage.removeItem('temp_reg_data');
+
+            showToast("تم إنشاء حسابك بنجاح يا بطل!");
+            setTimeout(() => {
+                window.location.href = "login.html";
+            }, 2000);
+        }
+    </script>
+</body>
+</html>
