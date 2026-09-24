@@ -135,7 +135,7 @@
             <input type="password" id="pass2" class="form-control" placeholder="أعد كتابة كلمة المرور" oninput="checkMatch()">
         </div>
 
-        <button type="button" class="btn btn-primary" onclick="finalizeRegistration()">إتمام التسجيل ودخول المنصة <i class="fa-solid fa-circle-check"></i></button>
+        <button type="button" class="btn btn-primary" id="finalizeBtn">إتمام التسجيل ودخول المنصة <i class="fa-solid fa-circle-check"></i></button>
     </div>
 
     <div class="developer-credit">
@@ -144,7 +144,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyCnLE_iSDSByBEmx1ujLWVVHw3Jv2W62Sc",
@@ -159,7 +159,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        window.showToast = function(message, isError = false) {
+        function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
             document.getElementById('toastText').innerText = message;
@@ -193,56 +193,64 @@
             }
         }
 
-        window.finalizeRegistration = async function() {
+        document.getElementById('finalizeBtn').addEventListener('click', async function() {
             let p1 = document.getElementById('pass1').value;
             let p2 = document.getElementById('pass2').value;
 
             if(p1.length < 3) {
-                window.showToast("كلمة المرور يجب ألا تقل عن 3 أحرف!", true);
+                showToast("كلمة المرور يجب ألا تقل عن 3 أحرف!", true);
                 return;
             }
 
             if(p1 !== p2) {
-                window.showTeam ? "" : null;
-                window.showToast("كلمتا المرور غير متطابقتين!", true);
+                showToast("كلمتا المرور غير متطابقتين!", true);
                 return;
             }
 
             let tempData = JSON.parse(localStorage.getItem('temp_reg_data') || '{}');
             if(!tempData.email) {
-                window.showToast("انتهت الجلسة، اعد محاولة التسجيل من البداية", true);
+                showToast("انتهت الجلسة، اعاد محاولة التسجيل من البداية", true);
                 setTimeout(() => { window.location.href = "register.html"; }, 2000);
                 return;
             }
 
-            tempData.password = p1;
+            showToast("جاري فحص الحفظ وإنشاء الحساب...");
 
-            window.showToast("جاري حفظ الحساب في قاعدة البيانات...");
-
-            // الحفظ النهائي في فايرباس (ده اللي هيخلق جدول users لأول مرة في القاعدة عندك)
             try {
                 const safeEmailKey = tempData.email.replace(/\./g, '_');
-                await setDoc(doc(db, "users", safeEmailKey), {
+                
+                // فحص هل الإيميل مسجل مسبقاً في قاعدة البيانات فعلاً ولا لأ
+                const docRef = doc(db, "users", safeEmailKey);
+                const docSnap = await getDoc(docRef);
+
+                if (docSnap.exists()) {
+                    showToast("هذا البريد مسجل بالفعل في النظام!", true);
+                    return;
+                }
+
+                // الحفظ النهائي الحقيقي هنا فقط ولأول مرة!
+                await setDoc(docRef, {
                     email: tempData.email,
                     full_name: tempData.fullName,
                     phone: tempData.phone,
                     guardian_phone: tempData.guardianPhone,
-                    password: tempData.password,
+                    password: p1,
                     createdAt: new Date().toISOString()
                 });
 
+                // تنظيف الـ LocalStorage
                 localStorage.removeItem('temp_reg_data');
 
-                window.showToast("تم إنشاء حسابك بنجاح يا بطل!");
+                showToast("تم إنشاء الحساب بنجاح يا بطل!");
                 setTimeout(() => {
                     window.location.href = "login.html";
-                }, 2000);
+                }, 1500);
 
             } catch (err) {
                 console.error("Firebase Error:", err);
-                window.showToast("حدث خطأ أثناء الحفظ، تأكد من اتصال الإنترنت", true);
+                showToast("حدث خطأ أثناء الحفظ، تأكد من اتصال الإنترنت", true);
             }
-        }
+        });
     </script>
 </body>
 </html>
