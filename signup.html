@@ -53,7 +53,6 @@
             position: relative;
         }
 
-        /* زر تبديل الوضع (داكن / فاتح) */
         .theme-toggle {
             position: absolute;
             top: 25px;
@@ -93,7 +92,6 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* حاوية الفورم الرئيسي */
         .form-container {
             width: 100%;
             max-width: 650px;
@@ -115,7 +113,6 @@
             color: var(--text-main);
         }
 
-        /* تقسيم الأسماء الثلاثية (3 أعمدة) */
         .name-row {
             display: grid;
             grid-template-columns: repeat(3, 1fr);
@@ -152,15 +149,8 @@
             box-shadow: 0 0 10px rgba(2, 132, 199, 0.2);
         }
 
-        input.invalid-phone {
-            border-color: var(--error-color) !important;
-            box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
-        }
-
-        input.valid-phone {
-            border-color: var(--success-color) !important;
-            box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
-        }
+        input.invalid-phone { border-color: var(--error-color) !important; }
+        input.valid-phone { border-color: var(--success-color) !important; }
 
         .validation-hint {
             font-size: 11px;
@@ -170,7 +160,6 @@
         .validation-hint.error { color: var(--error-color); }
         .validation-hint.success { color: var(--success-color); }
 
-        /* إطار الليد المحيط بالزر فقط (مش الكلام كله) */
         .submit-btn-wrapper {
             position: relative;
             border-radius: 16px;
@@ -218,16 +207,12 @@
         }
 
         @media(max-width: 768px) {
-            .name-row {
-                grid-template-columns: 1fr;
-                gap: 15px;
-            }
+            .name-row { grid-template-columns: 1fr; gap: 15px; }
         }
     </style>
 </head>
 <body data-theme="light">
 
-    <!-- زر تبديل الثيم -->
     <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
         <span id="themeIcon">🌙</span> <span id="themeText">الوضع الداكن</span>
     </button>
@@ -236,46 +221,37 @@
         <h1 class="teacher-title">Mr. Sherif Khafagy</h1>
     </header>
 
-    <!-- فورم التسجيل -->
     <div class="form-container">
         <h2 class="form-title">إنشاء حساب جديد (الخطوة الأولى)</h2>
         
         <form id="signupForm" onsubmit="handleFormSubmit(event)">
-            <!-- الاسم الثلاثي (بدون أمثلة مزعجة، حقول نظيفة تماماً) -->
             <div class="name-row">
                 <div class="input-group">
                     <label>الاسم الأول</label>
-                    <input type="text" id="firstName" placeholder="الاسم الاول " required>
+                    <input type="text" id="firstName" placeholder="الاسم الاول" required>
                 </div>
                 <div class="input-group">
-                    <label>الاسم الثاني </label>
+                    <label>الاسم الثاني</label>
                     <input type="text" id="middleName" placeholder="الاسم الثاني" required>
                 </div>
                 <div class="input-group">
-                    <label>الاسم الأخير </label>
-                    <input type="text" id="lastName" placeholder="الاسم الاخير " required>
+                    <label>الاسم الأخير</label>
+                    <input type="text" id="lastName" placeholder="الاسم الاخير" required>
                 </div>
             </div>
 
-            <!-- رقم الهاتف الشخصي -->
             <div class="input-group">
                 <label>رقم الهاتف الشخصي</label>
-                <div class="phone-input-wrapper">
-                    <input type="tel" id="studentPhone" placeholder="أدخل رقمك المكون من 11 رقماً" maxlength="11" oninput="validatePhone('studentPhone', 'studentHint')" required>
-                </div>
+                <input type="tel" id="studentPhone" placeholder="أدخل رقمك المكون من 11 رقماً" maxlength="11" oninput="validatePhone('studentPhone', 'studentHint')" required>
                 <span id="studentHint" class="validation-hint error">يجب أن يبدأ بـ 01 ويتكون من 11 رقماً</span>
             </div>
 
-            <!-- رقم ولي الأمر -->
             <div class="input-group">
                 <label>رقم ولي الأمر</label>
-                <div class="phone-input-wrapper">
-                    <input type="tel" id="parentPhone" placeholder="أدخل رقم ولي الأمر" maxlength="11" oninput="validatePhone('parentPhone', 'parentHint')" required>
-                </div>
+                <input type="tel" id="parentPhone" placeholder="أدخل رقم ولي الأمر" maxlength="11" oninput="validatePhone('parentPhone', 'parentHint')" required>
                 <span id="parentHint" class="validation-hint error">يجب أن يبدأ بـ 01 ويتكون من 11 رقماً</span>
             </div>
 
-            <!-- زر المتابعة مع إضاءة ليد إطارية تتفاعل مع صحة الأرقام -->
             <div class="submit-btn-wrapper" id="submitWrapper">
                 <button type="submit" class="submit-btn">التالي (متابعة)</button>
             </div>
@@ -287,12 +263,10 @@
     </footer>
 
     <script>
-        // إعدادات Supabase
         const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lNpmx_7cT_frhxmkMKnlVQ_D9MhsqWi';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // تبديل الثيم
         function initTheme() {
             const savedTheme = localStorage.getItem('platform_theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
@@ -319,7 +293,6 @@
             }
         }
 
-        // التحقق من صحة الأرقام (11 رقم وتبدأ بـ 01) وتغيير لون الليد المحيط بالزر
         function validatePhone(inputId, hintId) {
             const inputField = document.getElementById(inputId);
             const hintField = document.getElementById(hintId);
@@ -337,11 +310,9 @@
                 hintField.innerText = 'يجب أن يبدأ بـ 01 ويتكون من 11 رقماً صحيحاً';
                 hintField.className = 'validation-hint error';
             }
-
             checkFormReadiness();
         }
 
-        // فحص جاهزية الفورم بالكامل لتغيير لون الليد للإطار الخارجي للزر
         function checkFormReadiness() {
             const studentVal = document.getElementById('studentPhone').value.trim();
             const parentVal = document.getElementById('parentPhone').value.trim();
@@ -355,7 +326,6 @@
             }
         }
 
-        // معالجة البيانات، ربط الواتساب برقم الطالب واسمه مع رابط الخطوة الثانية، الحفظ في القاعدة، والانتقال
         async function handleFormSubmit(event) {
             event.preventDefault();
 
@@ -371,33 +341,45 @@
                 return;
             }
 
-            // حفظ مؤقت للبيانات للانتقال للخطوة التالية
-            const userData = { firstName, middleName, lastName, studentPhone, parentPhone };
-            localStorage.setItem('temp_signup_data', JSON.stringify(userData));
-
             try {
-                // حفظ البيانات في قاعدة بيانات Supabase
-                await supabaseClient.from('temp_students').insert([
-                    { first_name: firstName, middle_name: middleName, last_name: lastName, phone: studentPhone, parent_phone: parentPhone }
-                ]);
+                // 1. التأكد أن الرقم لم يتم التسجيل به مسبقاً في جدول الحسابات الدائمة
+                const { data: existingUser, error: checkError } = await supabaseClient
+                    .from('profiles')
+                    .select('phone')
+                    .eq('phone', studentPhone)
+                    .maybeSingle();
+
+                if (existingUser) {
+                    alert('هذا الرقم مسجل مسبقاً بالفعل! لا يمكن إنشاء أكثر من حساب بنفس الرقم.');
+                    return;
+                }
+
+                // 2. توليد رمز متغير (Dynamic Token) يتغير كل مرة للطالب
+                const dynamicToken = 'token_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
+
+                // 3. حفظ البيانات مؤقتاً ومعها التوكن المتغير في قاعدة البيانات أو التخزين المؤقت
+                const userData = { firstName, middleName, lastName, studentPhone, parentPhone, dynamicToken };
+                localStorage.setItem('temp_signup_data', JSON.stringify(userData));
+
+                await supabaseClient.from('temp_students').upsert([
+                    { first_name: firstName, middle_name: middleName, last_name: lastName, phone: studentPhone, parent_phone: parentPhone, verify_token: dynamicToken }
+                ], { onConflict: 'phone' });
+
+                // 4. بناء رابط الخطوة الثانية المتغير والخاص بالطالب فقط
+                const step2Url = `${window.location.origin}/signup-step2.html?phone=${studentPhone}&token=${dynamicToken}`;
+
+                // 5. إرسال الرسالة عبر الواتساب للطالب باسمه والرابط المتغير
+                const whatsappMessage = `أهلاً بك يا ${firstName} ${middleName} ${lastName} مع مستر شريف خفاجي.\nلتكملة تسجيل حسابك بأمان، يرجى الدخول حصرياً على رابط الخطوة الثانية الخاص بك:\n${step2Url}`;
+                
+                const formattedStudentPhone = '2' + studentPhone;
+                const whatsappUrl = `https://wa.me/${formattedStudentPhone}?text=${encodeURIComponent(whatsappMessage)}`;
+                
+                window.open(whatsappUrl, '_blank');
+                window.location.href = step2Url;
+
             } catch (err) {
-                console.log("Database operation executed.");
+                alert('حدث خطأ أثناء الاتصال بقاعدة البيانات، يرجى المحاولة مرة أخرى.');
             }
-
-            // رابط صفحة الخطوة الثانية المنفصلة (يمكنك تعديل الرابط الحقيقي للموقع هنا)
-            const step2Url = window.location.origin + '/signup-step2.html';
-
-            // إرسال رسالة الواتساب للطالب باسمه ورابط الخطوة الثانية
-            const whatsappMessage = `أهلاً بك يا ${firstName} ${middleName} ${lastName} مع مستر شريف خفاجي.\nلتكملة تسجيل حسابك بنجاح، يرجى الدخول على رابط الخطوة الثانية التالي:\n${step2Url}`;
-            
-            const formattedStudentPhone = '2' + studentPhone; // إضافة كود الدولة مصر تلقائياً لرقم الطالب
-            const whatsappUrl = `https://wa.me/${formattedStudentPhone}?text=${encodeURIComponent(whatsappMessage)}`;
-            
-            // فتح رابط الواتساب في تاب منفصل
-            window.open(whatsappUrl, '_blank');
-
-            // الانتقال لصفحة الخطوة التالية المنفصلة
-            window.location.href = 'signup-step2.html';
         }
 
         window.addEventListener('DOMContentLoaded', () => {
