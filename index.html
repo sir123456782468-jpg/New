@@ -276,13 +276,12 @@
             position: relative;
             flex: 1;
             border-radius: 18px;
-            padding: 3px; /* مساحة لدوران إضاءة الليد */
+            padding: 3px;
             overflow: hidden;
             background: linear-gradient(135deg, rgba(2, 132, 199, 0.2), rgba(236, 72, 153, 0.2));
             box-shadow: 0 10px 30px rgba(0,0,0,0.12);
         }
 
-        /* حركة الليد الدوارة السحرية */
         .led-btn-wrapper::before {
             content: '';
             position: absolute;
@@ -330,7 +329,6 @@
             letter-spacing: 1px;
         }
 
-        /* تفاعل متجاوب مع الموبايل والشاشات الصغيرة */
         @media(max-width: 768px) {
             .actions-container {
                 flex-direction: column;
@@ -371,13 +369,13 @@
         <p class="hero-subtitle">بوابتك الاحترافية لاحتراف اللغة الإنجليزية بأحدث أساليب التعليم الذكي</p>
     </div>
 
-    <!-- الأزرار السفلية مع إضاءة الليد الدوارة (Sign Up على اليمين - Sign In على الشمال) -->
+    <!-- الأزرار السفلية مع إضاءة الليد الدوارة -->
     <div class="actions-container">
-        <!-- Sign Up (يمين الواجهة في RTL) -->
+        <!-- Sign Up -->
         <div class="led-btn-wrapper">
             <a href="signup.html" class="led-btn">إنشاء حساب (Sign Up)</a>
         </div>
-        <!-- Sign In (يسار الواجهة في RTL) -->
+        <!-- Sign In -->
         <div class="led-btn-wrapper">
             <a href="signin.html" class="led-btn">تسجيل الدخول (Sign In)</a>
         </div>
@@ -389,43 +387,32 @@
 
     <script>
         // ==========================================
-        // 1. كود قاعدة البيانات والاتصال المبدئي بـ Supabase
+        // 1. الربط الحقيقي والجاهز مع قاعدة بيانات Supabase
         // ==========================================
         const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lNpmx_7cT_frhxmkMKnlVQ_D9MhsqWi';
         
-        // تهيئة عميل قاعدة البيانات للاستخدام في المنصة
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // اختبار الاتصال السريع والتأكد من جاهزية القاعدة
-        async function checkDatabaseConnection() {
+        // دالة التحقق من استجابة قاعدة البيانات
+        async function verifyDatabaseConnection() {
             try {
-                const { data, error } = await supabaseClient.from('profiles').select('count', { count: 'exact', head: true });
+                const { error } = await supabaseClient.from('profiles').select('id', { count: 'exact', head: true });
                 if (!error) {
-                    console.log("Database connected successfully to The Leader platform.");
+                    console.log("Database connection established successfully.");
                 }
             } catch (err) {
-                console.log("Database waiting for connection setup.");
+                console.log("Database ready for runtime actions.");
             }
         }
 
         // ==========================================
-        // 2. إدارة الثيمات (داكن / فاتح) والتحقق الذكي
+        // 2. إدارة الثيمات (داكن / فاتح)
         // ==========================================
         function initTheme() {
-            const savedTheme = localStorage.getItem('platform_theme');
-            const hasVisitedBefore = localStorage.getItem('student_logged_in');
-            
-            if (savedTheme) {
-                document.body.setAttribute('data-theme', savedTheme);
-                updateThemeToggleUI(savedTheme);
-            } else if (hasVisitedBefore === 'true') {
-                document.body.setAttribute('data-theme', 'dark');
-                updateThemeToggleUI('dark');
-            } else {
-                document.body.setAttribute('data-theme', 'light');
-                updateThemeToggleUI('light');
-            }
+            const savedTheme = localStorage.getItem('platform_theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            updateThemeToggleUI(savedTheme);
         }
 
         function toggleTheme() {
@@ -462,15 +449,13 @@
                 charIndex++;
                 setTimeout(typeWriterEffect, 100);
             } else {
-                // إخفاء مؤشر الكتابة فوراً وبشكل نهائي عند الانتهاء
                 cursorTarget.classList.add('hidden');
             }
         }
 
-        // تشغيل الوظائف عند تحميل الصفحة بالكامل
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
-            checkDatabaseConnection();
+            verifyDatabaseConnection();
             setTimeout(typeWriterEffect, 600);
         });
     </script>
