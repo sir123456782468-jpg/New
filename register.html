@@ -167,24 +167,8 @@
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
-
-        const firebaseConfig = {
-          apiKey: "AIzaSyCnLE_iSDSByBEmx1ujLWVVHw3Jv2W62Sc",
-          authDomain: "the-leader-c2f06.firebaseapp.com",
-          projectId: "the-leader-c2f06",
-          storageBucket: "the-leader-c2f06.firebasestorage.app",
-          messagingSenderId: "693921211082",
-          appId: "1:693921211082:web:640e7e5528a9891d368a33",
-          measurementId: "G-RK4LP1HMJY"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getFirestore(app);
-
-        window.showToast = function(message, isError = false) {
+    <script>
+        function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
             document.getElementById('toastText').innerText = message;
@@ -199,7 +183,7 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        window.proceedToVerification = async function() {
+        function proceedToVerification() {
             let n1 = document.getElementById('name1').value.trim();
             let n2 = document.getElementById('name2').value.trim();
             let n3 = document.getElementById('name3').value.trim();
@@ -208,63 +192,39 @@
             let email = document.getElementById('email').value.trim();
 
             if(!n1 || !n2 || !n3 || !phone || !guardianPhone || !email) {
-                window.showToast("الرجاء استكمال جميع الحقول المطلوبة!", true);
+                showToast("الرجاء استكمال جميع الحقول المطلوبة!", true);
                 return;
             }
 
-            let emailKey = email.toLowerCase().replace(/\./g, '_');
-            window.showToast("جاري التحقق من البريد...");
+            let fullName = `${n1} ${n2} ${n3}`;
+            let generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-            try {
-                // لو الحساب مسجل نهائياً ومنهي كل الخطوات قبل كده
-                const userDocRef = doc(db, "users", emailKey);
-                const userSnap = await getDoc(userDocRef);
-                
-                if (userSnap.exists()) {
-                    window.showToast("هذا البريد مسجل بالفعل، قم بتسجيل الدخول!", true);
-                    return;
-                }
+            // حفظ البيانات في الـ LocalStorage عشان الخطوة الثانية تقراها وتطابق الكود فوراً
+            let tempData = { fullName, phone, guardianPhone, email, generatedCode };
+            localStorage.setItem('temp_reg_data', JSON.stringify(tempData));
 
-                // لو الإيميل معلق (بدون استكمال)، احذفه عشان يبدأ من جديد نظيف
-                const pendingRef = doc(db, "pending_registrations", emailKey);
-                const pendingSnap = await getDoc(pendingRef);
-                if (pendingSnap.exists()) {
-                    await deleteDoc(pendingRef);
-                }
+            showToast("جاري إرسال كود التحقق إلى بريدك الإلكتروني...");
 
-                let fullName = `${n1} ${n2} ${n3}`;
-                let generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-
-                let tempData = { fullName, phone, guardianPhone, email, generatedCode };
-                localStorage.setItem('temp_reg_data', JSON.stringify(tempData));
-
-                // حفظ التسجيل المعلق الجديد برقم الكود
-                await setDoc(pendingRef, {
-                    email: email,
-                    full_name: fullName,
-                    phone: phone,
-                    guardian_phone: guardianPhone,
-                    verification_code: generatedCode,
-                    createdAt: new Date().toISOString()
-                });
-
-                window.showToast("جاري إرسال الكود والانتقال...");
-
-                // إرسال الإيميل في الخلفية
-                emailjs.send('service_seljmns', 'template_5lj7i0g', { to_email: email, to_name: fullName, pass_code: generatedCode })
-                    .catch(err => console.log(err));
-
+            // إرسال الإيميل بشكل مباشر وصريح عبر EmailJS مع انتظار نجاح الإرسال والانتقال السليم
+            emailjs.send('service_seljmns', 'template_5lj7i0g', {
+                to_email: email,
+                to_name: fullName,
+                pass_code: generatedCode
+            })
+            .then(function(response) {
+                showToast("تم إرسال كود التحقق بنجاح!");
                 setTimeout(() => {
                     window.location.href = "register_step2.html";
-                }, 600);
-
-            } catch (err) {
-                // خطوار احتياطية للانتقال السريع لو فيه بطء في النت
-                let fullName = `${n1} ${n2} ${n3}`;
-                let generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-                localStorage.setItem('temp_reg_data', JSON.stringify({ fullName, phone, guardianPhone, email, generatedCode }));
-                setTimeout(() => { window.location.href = "register_step2.html"; }, 500);
-            }
+                }, 1000);
+            })
+            .catch(function(error) {
+                // لو حصل أي خطأ في الاتصال، بنعرض الكود في التوست كضمان تام للمتابعة وعدم تعطيل الطالب
+                console.error("EmailJS Error:", error);
+                showToast("كود التحقق التجريبي: " + generatedCode, true);
+                setTimeout(() => {
+                    window.location.href = "register_step2.html";
+                }, 3000);
+            });
         }
     </script>
 </body>
