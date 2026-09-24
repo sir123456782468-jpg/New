@@ -159,14 +159,15 @@
 
             if(!tempData.generatedCode) {
                 showToast("انتهت صلاحية الجلسة، يرجى التسجيل من البداية", true);
-                setTimeout(() => { window.location.href = "register.html"; }, 2000);
+                setTimeout(() => { window.location.href = "register_4.html"; }, 2000);
                 return;
             }
 
             if(enteredCode === tempData.generatedCode) {
                 showToast("تم التحقق بنجاح! جاري تحويلك...");
                 setTimeout(() => {
-                    window.location.href = "register_step3.html";
+                    // تم تعديلها لتتوافق مع اسم صفحة الخطوة الأخيرة لديك (تأكد لو صفحة الباسورد اسمها register_step3_3.html أو register_step3.html)
+                    window.location.href = "register_step3_3.html";
                 }, 1200);
             } else {
                 showToast("كود التحقق غير صحيح، حاول مرة أخرى", true);
