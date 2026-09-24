@@ -144,7 +144,6 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
         import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
@@ -158,7 +157,6 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const analytics = getAnalytics(app);
         const db = getFirestore(app);
 
         window.showToast = function(message, isError = false) {
@@ -205,30 +203,23 @@
             }
 
             if(p1 !== p2) {
+                window.showTeam ? "" : null;
                 window.showToast("كلمتا المرور غير متطابقتين!", true);
                 return;
             }
 
             let tempData = JSON.parse(localStorage.getItem('temp_reg_data') || '{}');
             if(!tempData.email) {
-                window.showToast("حدث خطأ بالبيانات، اعد محاولة التسجيل من البداية", true);
+                window.showToast("انتهت الجلسة، اعد محاولة التسجيل من البداية", true);
                 setTimeout(() => { window.location.href = "register.html"; }, 2000);
                 return;
             }
 
             tempData.password = p1;
 
-            let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
-            if(users.some(u => u.email === tempData.email)) {
-                window.showToast("هذا البريد مسجل مسبقاً!", true);
-                return;
-            }
+            window.showToast("جاري حفظ الحساب في قاعدة البيانات...");
 
-            users.push(tempData);
-            localStorage.setItem('leader_users', JSON.stringify(users));
-            localStorage.removeItem('temp_reg_data');
-
-            // محاولة الحفظ في فايرباس مع ضمان الانتقال لأجل عدم تعليق المستخدم لو حدث انقطاع بالإنترنت
+            // الحفظ النهائي في فايرباس (ده اللي هيخلق جدول users لأول مرة في القاعدة عندك)
             try {
                 const safeEmailKey = tempData.email.replace(/\./g, '_');
                 await setDoc(doc(db, "users", safeEmailKey), {
@@ -239,14 +230,18 @@
                     password: tempData.password,
                     createdAt: new Date().toISOString()
                 });
-            } catch (err) {
-                console.log("Cloud sync note:", err);
-            }
 
-            window.showToast("تم إنشاء حسابك بنجاح يا بطل!");
-            setTimeout(() => {
-                window.location.href = "login.html";
-            }, 2000);
+                localStorage.removeItem('temp_reg_data');
+
+                window.showToast("تم إنشاء حسابك بنجاح يا بطل!");
+                setTimeout(() => {
+                    window.location.href = "login.html";
+                }, 2000);
+
+            } catch (err) {
+                console.error("Firebase Error:", err);
+                window.showToast("حدث خطأ أثناء الحفظ، تأكد من اتصال الإنترنت", true);
+            }
         }
     </script>
 </body>
