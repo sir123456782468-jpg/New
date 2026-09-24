@@ -79,7 +79,6 @@
             transition: all 0.3s ease;
         }
         
-        /* تفعيل تأثير الـ LED حسب الحالة */
         .form-control.error-led { border-color: #f43f5e !important; box-shadow: 0 0 10px rgba(244, 63, 94, 0.3); }
         .form-control.success-led { border-color: #10b981 !important; box-shadow: 0 0 10px rgba(16, 185, 129, 0.3); }
 
@@ -143,7 +142,6 @@
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
-    <!-- مكتبات Firebase (SDKs) واتصال Firestore -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
         import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
@@ -230,7 +228,7 @@
             localStorage.setItem('leader_users', JSON.stringify(users));
             localStorage.removeItem('temp_reg_data');
 
-            // الحفظ في قاعدة بيانات Firebase Firestore السحابية
+            // محاولة الحفظ في فايرباس مع ضمان الانتقال لأجل عدم تعليق المستخدم لو حدث انقطاع بالإنترنت
             try {
                 const safeEmailKey = tempData.email.replace(/\./g, '_');
                 await setDoc(doc(db, "users", safeEmailKey), {
