@@ -4,9 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>تعيين كلمة المرور - The Leader In English</title>
-    <!-- خطوط عربية وإنجليزية فخمة -->
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
-    <!-- مكتبة Supabase للربط بقاعدة البيانات -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
@@ -53,7 +51,6 @@
             position: relative;
         }
 
-        /* زر تبديل الوضع (داكن / فاتح) */
         .theme-toggle {
             position: absolute;
             top: 25px;
@@ -93,7 +90,6 @@
             -webkit-text-fill-color: transparent;
         }
 
-        /* حاوية الفورم الرئيسي */
         .form-container {
             width: 100%;
             max-width: 550px;
@@ -136,7 +132,7 @@
 
         input {
             width: 100%;
-            padding: 14px 45px 14px 16px; /* مساحة لأيقونة العين */
+            padding: 14px 45px 14px 16px;
             background: var(--input-bg);
             border: 1px solid var(--border-color);
             border-radius: 12px;
@@ -150,15 +146,9 @@
             box-shadow: 0 0 10px rgba(2, 132, 199, 0.2);
         }
 
-        input.invalid-match {
-            border-color: var(--error-color) !important;
-        }
+        input.invalid-match { border-color: var(--error-color) !important; }
+        input.valid-match { border-color: var(--success-color) !important; }
 
-        input.valid-match {
-            border-color: var(--success-color) !important;
-        }
-
-        /* أيقونة العين لإظهار وإخفاء الباسورد */
         .toggle-password {
             position: absolute;
             left: 15px;
@@ -170,9 +160,7 @@
             font-size: 18px;
             color: var(--text-muted);
         }
-        .toggle-password:hover {
-            color: var(--accent-primary);
-        }
+        .toggle-password:hover { color: var(--accent-primary); }
 
         .validation-hint {
             font-size: 11px;
@@ -182,7 +170,6 @@
         .validation-hint.error { color: var(--error-color); }
         .validation-hint.success { color: var(--success-color); }
 
-        /* إطار الليد المحيط بالزر ينور أحمر لحد ما يتطابقوا وتكتمل الشروط */
         .submit-btn-wrapper {
             position: relative;
             border-radius: 16px;
@@ -232,7 +219,6 @@
 </head>
 <body data-theme="light">
 
-    <!-- زر تبديل الثيم -->
     <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
         <span id="themeIcon">🌙</span> <span id="themeText">الوضع الداكن</span>
     </button>
@@ -241,31 +227,27 @@
         <h1 class="teacher-title">Mr. Sherif Khafagy</h1>
     </header>
 
-    <!-- فورم تعيين كلمة المرور -->
     <div class="form-container">
         <h2 class="form-title">تعيين كلمة المرور (الخطوة الثانية)</h2>
         
         <form id="passwordForm" onsubmit="handlePasswordSubmit(event)">
-            <!-- حقل كلمة المرور -->
             <div class="input-group">
                 <label>كلمة المرور</label>
                 <div class="password-wrapper">
                     <input type="password" id="password" placeholder="أدخل كلمة المرور" oninput="validatePasswords()" required>
-                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password', 'eyeIcon1')">👁️</button>
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password')">👁️</button>
                 </div>
             </div>
 
-            <!-- حقل تأكيد كلمة المرور -->
             <div class="input-group">
                 <label>تأكيد كلمة المرور</label>
                 <div class="password-wrapper">
                     <input type="password" id="confirmPassword" placeholder="أعد إدخال كلمة المرور" oninput="validatePasswords()" required>
-                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword', 'eyeIcon2')">👁️</button>
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword')">👁️</button>
                 </div>
                 <span id="matchHint" class="validation-hint error"></span>
             </div>
 
-            <!-- زر إتمام التسجيل مع ليد أحمر يتحول للأخضر عند المطابقة -->
             <div class="submit-btn-wrapper" id="submitWrapper">
                 <button type="submit" class="submit-btn">إتمام إنشاء الحساب</button>
             </div>
@@ -277,12 +259,10 @@
     </footer>
 
     <script>
-        // إعدادات Supabase
         const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lNpmx_7cT_frhxmkMKnlVQ_D9MhsqWi';
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // تبديل الثيم
         function initTheme() {
             const savedTheme = localStorage.getItem('platform_theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
@@ -309,23 +289,16 @@
             }
         }
 
-        // إظهار وإخفاء الباسورد (علامة العين)
-        function togglePasswordVisibility(fieldId, iconId) {
+        function togglePasswordVisibility(fieldId) {
             const field = document.getElementById(fieldId);
-            if (field.type === 'password') {
-                field.type = 'text';
-            } else {
-                field.type = 'password';
-            }
+            field.type = field.type === 'password' ? 'text' : 'password';
         }
 
-        // التحقق من تطابق الباسورد وتلوين الليد المحيط بالزر
         function validatePasswords() {
             const pass = document.getElementById('password').value;
             const confirmPass = document.getElementById('confirmPassword').value;
             const hint = document.getElementById('matchHint');
             const wrapper = document.getElementById('submitWrapper');
-            const passInput = document.getElementById('password');
             const confirmInput = document.getElementById('confirmPassword');
 
             let isValid = true;
@@ -357,14 +330,12 @@
             }
         }
 
-        // إتمام التسجيل والحفظ النهائي بقاعدة البيانات
         async function handlePasswordSubmit(event) {
             event.preventDefault();
 
             const pass = document.getElementById('password').value;
             const confirmPass = document.getElementById('confirmPassword').value;
 
-            // التحقق الذكي من عدد الحروف قبل الإرسال
             if (pass.length < 4) {
                 alert('يجب أن تتكون كلمة السر على الأقل من 4 حروف');
                 return;
@@ -375,17 +346,24 @@
                 return;
             }
 
-            // جلب البيانات المخزنة مؤقتاً من الخطوة الأولى
-            const tempData = JSON.parse(localStorage.getItem('temp_signup_data') || '{}');
-            
-            if (!tempData.studentPhone) {
-                alert('حدث خطأ في استرجاع بيانات الخطوة الأولى، يرجى إعادة التسجيل.');
-                window.location.href = 'signup.html';
+            // التحقق من الرابط المتغير (Token) ورقم الهاتف الواردين في الـ URL
+            const urlParams = new URLSearchParams(window.location.search);
+            const phone = urlParams.get('phone');
+            const token = urlParams.get('token');
+
+            let tempData = JSON.parse(localStorage.getItem('temp_signup_data') || '{}');
+
+            if (!phone || !token || tempData.studentPhone !== phone) {
+                alert('رابط غير صالح أو انتهت صلاحيته. يرجى إعادة طلب التسجيل.');
+                window.location.href = 'index.html';
                 return;
             }
 
             try {
-                // حفظ البيانات الكاملة مع كلمة المرور في جدول الحسابات النهائي بقاعدة البيانات
+                // توليد معرف جلسة فريد لهذا الجهاز لتطبيق قاعدة (الجهاز الواحد)
+                const deviceSessionId = 'session_' + Math.random().toString(36).substring(2) + Date.now();
+
+                // حفظ الحساب النهائي في قاعدة البيانات مع ربطه بجلسة الجهاز الحالي
                 const { error } = await supabaseClient.from('profiles').insert([
                     {
                         first_name: tempData.firstName,
@@ -393,22 +371,50 @@
                         last_name: tempData.lastName,
                         phone: tempData.studentPhone,
                         parent_phone: tempData.parentPhone,
-                        password: pass // ملاحظة: يفضل تشفيرها لاحقاً بـ Hashing
+                        password: pass,
+                        active_session: deviceSessionId
                     }
                 ]);
 
                 if (error) {
-                    console.log("Database response handled.");
+                    alert('هذا الرقم مسجل مسبقاً بالفعل.');
+                    return;
                 }
-            } catch (err) {
-                console.log("Registration process completed.");
-            }
 
-            // تنظيف البيانات المؤقتة والتحويل للوحة تحكم الطالب أو صفحة النجاح
-            localStorage.removeItem('temp_signup_data');
-            alert('تم إنشاء الحساب بنجاح يا نجم!');
-            // window.location.href = 'dashboard.html';
+                // حفظ جلسة الجهاز الحالي محلياً
+                localStorage.setItem('user_session', deviceSessionId);
+                localStorage.setItem('user_phone', tempData.studentPhone);
+                localStorage.removeItem('temp_signup_data');
+
+                alert('تم إنشاء الحساب بنجاح يا نجم!');
+                // window.location.href = 'dashboard.html';
+
+            } catch (err) {
+                alert('حدث خطأ أثناء إتمام التسجيل.');
+            }
         }
+
+        // فحص دوري لجلسة الجهاز الواحد (لو تم تسجيل الدخول من جهاز آخر يتم الخروج تلقائياً)
+        async function checkDeviceSession() {
+            const currentPhone = localStorage.getItem('user_phone');
+            const currentSession = localStorage.getItem('user_session');
+
+            if (currentPhone && currentSession) {
+                const { data } = await supabaseClient
+                    .from('profiles')
+                    .select('active_session')
+                    .eq('phone', currentPhone)
+                    .maybeSingle();
+
+                if (data && data.active_session !== currentSession) {
+                    alert('تم تسجيل الدخول إلى هذا الحساب من جهاز آخر، سيتم تسجيل خروجك.');
+                    localStorage.clear();
+                    window.location.href = 'index.html';
+                }
+            }
+        }
+
+        setInterval(checkDeviceSession, 10000); // يفحص كل 10 ثوانٍ
 
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
