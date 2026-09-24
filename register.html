@@ -184,7 +184,7 @@
         const app = initializeApp(firebaseConfig);
         const db = getFirestore(app);
 
-        function showToast(message, isError = false) {
+        window.showToast = function(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
             document.getElementById('toastText').innerText = message;
@@ -208,7 +208,7 @@
             let email = document.getElementById('email').value.trim();
 
             if(!n1 || !n2 || !n3 || !phone || !guardianPhone || !email) {
-                showToast("الرجاء استكمال جميع الحقول المطلوبة!", true);
+                window.showToast("الرجاء استكمال جميع الحقول المطلوبة!", true);
                 return;
             }
 
@@ -218,9 +218,9 @@
             let tempData = { fullName, phone, guardianPhone, email, generatedCode };
             localStorage.setItem('temp_reg_data', JSON.stringify(tempData));
 
-            showToast("جاري حفظ البيانات وإرسال كود التحقق...");
+            window.showToast("جاري حفظ البيانات وإرسال كود التحقق...");
 
-            // محاولة الحفظ في فايرباس مع عزل الخطأ حتى لا يتعطل الزر إذا فشل الاتصال
+            // الحفظ في Firebase مع التأكد من عدم تعليق الزر لو حصلت مشكلة بالشبكة
             try {
                 await setDoc(doc(db, "pending_registrations", email.replace(/\./g, '_')), {
                     email: email,
@@ -236,14 +236,14 @@
 
             let templateParams = { to_email: email, to_name: fullName, pass_code: generatedCode };
 
-            // إرسال الإيميل وضمان الانتقال للخطوة التالية في كلتا الحالتين (سواء نجح الإيميل أو فشل)
+            // إرسال الإيميل والانتقال المباشر للخطوة الثانية
             emailjs.send('service_seljmns', 'template_5lj7i0g', templateParams)
                 .then(function(response) {
-                    showToast("تم إرسال الكود بنجاح!");
-                    setTimeout(() => { window.location.href = "register_step2.html"; }, 1200);
+                    window.showToast("تم إرسال الكود بنجاح!");
+                    setTimeout(() => { window.location.href = "register_step2.html"; }, 1000);
                 }, function(error) {
-                    showToast("الكود التجريبي: " + generatedCode, true);
-                    setTimeout(() => { window.location.href = "register_step2.html"; }, 2500);
+                    window.showToast("الكود التجريبي: " + generatedCode, true);
+                    setTimeout(() => { window.location.href = "register_step2.html"; }, 2000);
                 });
         }
     </script>
