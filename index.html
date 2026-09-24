@@ -1,240 +1,259 @@
 <!DOCTYPE html>
-<html lang="ar" dir="rtl">
+<html lang="ar" dir="rtl" class="dark">
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>منصة النجم التعليمية - الإصدار الفخم</title>
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;900&display=swap" rel="stylesheet">
+    <title>The Leader In English - Mr. Sherif Khafagy</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 10%, #1a1c29 0%, #0d0f17 60%, #06070a 100%);
+            --text-main: #ffffff;
+            --text-sub: #94a3b8;
+            --card-bg: rgba(20, 24, 39, 0.7);
+            --border-color: rgba(99, 102, 241, 0.2);
+            --led-color-1: #6366f1;
+            --led-color-2: #a855f7;
+            --led-color-3: #ec4899;
+        }
+
+        html.light {
+            --bg-gradient: radial-gradient(circle at 50% 10%, #f8fafc 0%, #e2e8f0 60%, #cbd5e1 100%);
+            --text-main: #0f172a;
+            --text-sub: #475569;
+            --card-bg: rgba(255, 255, 255, 0.85);
+            --border-color: rgba(79, 70, 229, 0.25);
+            --led-color-1: #4f46e5;
+            --led-color-2: #9333ea;
+            --led-color-3: #db2777;
+        }
+
         * {
             margin: 0;
             padding: 0;
             box-sizing: border-box;
             font-family: 'Cairo', sans-serif;
+            transition: background 0.4s ease, color 0.4s ease;
         }
 
         body {
-            background-color: #07090e;
-            color: #ffffff;
+            background: var(--bg-gradient);
+            color: var(--text-main);
             min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
             overflow-x: hidden;
             position: relative;
         }
 
-        /* خلفية الأشكال الزخرفية المتحركة (Blobs & Glows) */
-        .background-glows {
+        /* زر التبديل بين الوضع الداكن والفاتح */
+        .theme-toggle {
             position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            overflow: hidden;
-            z-index: -1;
-        }
-
-        .blob {
-            position: absolute;
-            filter: blur(80px);
-            opacity: 0.4;
-            animation: floatBlob 10s infinite alternate ease-in-out;
-        }
-
-        .blob-1 {
-            width: 350px;
-            height: 350px;
-            background: #6366f1;
-            top: -50px;
-            right: -50px;
-            border-radius: 50%;
-        }
-
-        .blob-2 {
-            width: 400px;
-            height: 400px;
-            background: #a855f7;
-            bottom: -100px;
-            left: -100px;
-            border-radius: 50%;
-            animation-delay: -5s;
-        }
-
-        @keyframes floatBlob {
-            0% { transform: translate(0, 0) scale(1); }
-            100% { transform: translate(30px, 50px) scale(1.1); }
-        }
-
-        /* الهيدر أو النافبار */
-        header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            padding: 20px 8%;
-            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+            top: 25px;
+            left: 25px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 700;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.1);
             backdrop-filter: blur(10px);
-            position: sticky;
-            top: 0;
-            z-index: 100;
         }
 
-        .logo {
-            font-size: 24px;
+        .theme-toggle:hover {
+            transform: scale(1.05);
+        }
+
+        /* إضاءات ليد خلفية متحركة */
+        .ambient-led {
+            position: absolute;
+            width: 500px;
+            height: 500px;
+            background: linear-gradient(135deg, var(--led-color-1), var(--led-color-2));
+            filter: blur(120px);
+            opacity: 0.25;
+            border-radius: 50%;
+            z-index: -1;
+            animation: pulseLed 8s infinite alternate ease-in-out;
+        }
+
+        @keyframes pulseLed {
+            0% { transform: scale(0.9) translate(-20px, -20px); }
+            100% { transform: scale(1.1) translate(30px, 30px); }
+        }
+
+        /* الكونتينر الأساسي */
+        .main-container {
+            text-align: center;
+            padding: 40px 20px;
+            max-width: 800px;
+            width: 100%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 20px;
+        }
+
+        /* اسم المدرس مع إضاءة ليد جميلة */
+        .teacher-title {
+            font-size: 28px;
             font-weight: 900;
-            background: linear-gradient(135deg, #818cf8, #c084fc);
+            background: linear-gradient(135deg, var(--led-color-1), var(--led-color-3));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            animation: fadeInDown 1s ease;
+            text-shadow: 0 0 30px rgba(99, 102, 241, 0.3);
+            letter-spacing: 1px;
+            animation: floatName 3s ease-in-out infinite alternate;
         }
 
-        /* محتوى الصفحة الرئيسي */
-        .hero {
-            text-align: center;
-            padding: 80px 20px 40px;
-            animation: fadeInUp 1s ease;
+        @keyframes floatName {
+            0% { transform: translateY(0); }
+            100% { transform: translateY(-5px); }
         }
 
-        .hero h1 {
+        /* الجملة اللي بتكتب حرف حرف */
+        .typewriter-box {
             font-size: 42px;
             font-weight: 900;
-            margin-bottom: 15px;
-            letter-spacing: -0.5px;
+            min-height: 60px;
+            color: var(--text-main);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .hero p {
-            color: #94a3b8;
-            font-size: 18px;
-            max-width: 600px;
-            margin: 0 auto 35px;
-        }
-
-        /* الكروت العصرية الزجاجية */
-        .container {
-            display: grid;
-            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 25px;
-            padding: 20px 8% 80px;
-            max-width: 1200px;
-            margin: 0 auto;
-        }
-
-        .card {
-            background: rgba(255, 255, 255, 0.03);
-            border: 1px solid rgba(255, 255, 255, 0.08);
-            border-radius: 20px;
-            padding: 30px;
-            position: relative;
-            backdrop-filter: blur(12px);
-            transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1);
-            animation: fadeInUp 1.2s ease;
-            overflow: hidden;
-        }
-
-        .card::before {
-            content: '';
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 2px;
-            background: linear-gradient(90deg, transparent, #818cf8, transparent);
-            opacity: 0;
-            transition: opacity 0.4s ease;
-        }
-
-        .card:hover {
-            transform: translateY(-8px);
-            border-color: rgba(129, 140, 248, 0.4);
-            box-shadow: 0 20px 40px rgba(99, 102, 241, 0.1);
-        }
-
-        .card:hover::before {
-            opacity: 1;
-        }
-
-        .card h3 {
-            font-size: 20px;
-            font-weight: 700;
-            margin-bottom: 10px;
-            color: #f8fafc;
-        }
-
-        .card p {
-            color: #94a3b8;
-            font-size: 14px;
-            line-height: 1.6;
-            margin-bottom: 20px;
-        }
-
-        /* زر فخم */
-        .btn {
+        .cursor {
             display: inline-block;
-            padding: 12px 25px;
-            background: linear-gradient(135deg, #6366f1, #a855f7);
-            color: white;
+            width: 4px;
+            height: 40px;
+            background-color: var(--led-color-2);
+            margin-right: 8px;
+            animation: blinkCursor 0.8s infinite;
+        }
+
+        .cursor.hide {
+            display: none !important;
+        }
+
+        @keyframes blinkCursor {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0; }
+        }
+
+        /* أزرار التسجيل مع ليد بيلف حواليهم */
+        .auth-buttons-wrapper {
+            margin-top: 30px;
+            display: flex;
+            gap: 25px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .glow-btn-container {
+            position: relative;
+            border-radius: 16px;
+            padding: 2px; /* مساحة لليد اللي بيلف */
+            background: linear-gradient(90deg, var(--led-color-1), var(--led-color-2), var(--led-color-3), var(--led-color-1));
+            background-size: 300% 300%;
+            animation: rotateLedBorder 4s linear infinite;
+            box-shadow: 0 0 20px rgba(99, 102, 241, 0.2);
+        }
+
+        @keyframes rotateLedBorder {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+
+        .auth-btn {
+            background: var(--card-bg);
+            color: var(--text-main);
+            padding: 15px 35px;
+            font-size: 18px;
             font-weight: 700;
-            border-radius: 12px;
-            text-decoration: none;
             border: none;
+            border-radius: 14px;
             cursor: pointer;
-            transition: all 0.3s ease;
-            box-shadow: 0 4px 15px rgba(99, 102, 241, 0.3);
+            backdrop-filter: blur(10px);
+            transition: transform 0.3s ease, background 0.3s ease;
+            text-decoration: none;
+            display: inline-block;
         }
 
-        .btn:hover {
-            opacity: 0.9;
-            transform: scale(1.02);
-            box-shadow: 0 6px 20px rgba(168, 85, 247, 0.4);
-        }
-
-        /* أنيميشن عام */
-        @keyframes fadeInDown {
-            from { opacity: 0; transform: translateY(-20px); }
-            to { opacity: 1; transform: translateY(0); }
-        }
-
-        @keyframes fadeInUp {
-            from { opacity: 0; transform: translateY(20px); }
-            to { opacity: 1; transform: translateY(0); }
+        .auth-btn:hover {
+            transform: scale(1.03);
+            background: var(--border-color);
         }
     </style>
 </head>
 <body>
 
-    <!-- الخلفية الزخرفية الضوئية -->
-    <div class="background-glows">
-        <div class="blob blob-1"></div>
-        <div class="blob blob-2"></div>
-    </div>
+    <!-- زر التبديل بين الوضعين -->
+    <button class="theme-toggle" onclick="toggleTheme()">🌓 وضع العرض</button>
 
-    <!-- النافبار -->
-    <header>
-        <div class="logo">الـنـجـم ⚡</div>
-        <button class="btn" style="padding: 8px 18px; font-size: 14px;">دخول الأدمن</button>
-    </header>
+    <!-- إضاءة خلفية محيطية -->
+    <div class="ambient-led"></div>
 
-    <!-- الهيدر الرئيسي -->
-    <section class="hero">
-        <h1>اصنع مستقبلك التعليمي باحترافية</h1>
-        <p>منصة تعليمية متكاملة مصممة بأحدث تقنيات الـ UI/UX وحماية ذكية للمحتوى.</p>
-    </section>
+    <div class="main-container">
+        <!-- اسم المدرس -->
+        <h2 class="teacher-title">Mr. Sherif Khafagy</h2>
 
-    <!-- كروت المحتوى -->
-    <div class="container">
-        <div class="card">
-            <h3>كورسات الثانوية العامة</h3>
-            <p>شرح مبسط، نظام امتحانات تفاعلي، ومتابعة دقيقة لكل درس خطوة بخطوة.</p>
-            <a href="#" class="btn">استعرض الكورسات</a>
+        <!-- النص المتحرك حرف حرف -->
+        <div class="typewriter-box">
+            <span id="typewriter-text"></span>
+            <span class="cursor" id="cursor"></span>
         </div>
-        <div class="card">
-            <h3>نظام الامتحانات الذكي</h3>
-            <p>امتحانات بأسئلة مقالية واختيار من متعدد مع عداد تنازلي وتقييم فوري للنتيجة.</p>
-            <a href="#" class="btn">جرب الامتحان</a>
-        </div>
-        <div class="card">
-            <h3>ملفات PDF مؤمنة</h3>
-            <p>عرض تفاعلي للملازم والمذكرات بعلامة مائية تحمي حقوق المدرس تماماً.</p>
-            <a href="#" class="btn">تصفح المذكرات</a>
+
+        <!-- أزرار التسجيل مع ليد متحرك -->
+        <div class="auth-buttons-wrapper">
+            <div class="glow-btn-container">
+                <a href="#" class="auth-btn">Sign In</a>
+            </div>
+            <div class="glow-btn-container">
+                <a href="#" class="auth-btn">Sign Up</a>
+            </div>
         </div>
     </div>
 
+    <script>
+        // تأثير الكتابة حرف حرف مع اخفاء المؤشر بعد الانتهاء
+        const textToType = "The Leader In English";
+        const textElement = document.getElementById("typewriter-text");
+        const cursorElement = document.getElementById("cursor");
+        let charIndex = 0;
+
+        function typeWriter() {
+            if (charIndex < textToType.length) {
+                textElement.textContent += textToType.charAt(charIndex);
+                charIndex++;
+                setTimeout(typeWriter, 120);
+            } else {
+                // أول ما تخلص كتابة، علامة الكتابة تتشال فوراً
+                setTimeout(() => {
+                    cursorElement.classList.add("hide");
+                }, 500);
+            }
+        }
+
+        window.onload = () => {
+            setTimeout(typeWriter, 400);
+        };
+
+        // دالة تبديل الوضع (داكن / فاتح مختلفين تماماً)
+        function toggleTheme() {
+            const htmlTag = document.documentElement;
+            if (htmlTag.classList.contains('dark')) {
+                htmlTag.classList.remove('dark');
+                htmlTag.classList.add('light');
+            } else {
+                htmlTag.classList.remove('light');
+                htmlTag.classList.add('dark');
+            }
+        }
+    </script>
 </body>
 </html>
