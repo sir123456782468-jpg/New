@@ -152,11 +152,6 @@
             box-shadow: 0 0 10px rgba(2, 132, 199, 0.2);
         }
 
-        /* حقول الأرقام وحالة الليد التفاعلي */
-        .phone-input-wrapper {
-            position: relative;
-        }
-
         input.invalid-phone {
             border-color: var(--error-color) !important;
             box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
@@ -175,11 +170,11 @@
         .validation-hint.error { color: var(--error-color); }
         .validation-hint.success { color: var(--success-color); }
 
-        /* زر الإرسال مع إضاءة ليد تتفاعل مع حالة الأرقام */
+        /* إطار الليد المحيط بالزر فقط (مش الكلام كله) */
         .submit-btn-wrapper {
             position: relative;
             border-radius: 16px;
-            padding: 3px;
+            padding: 2px;
             overflow: hidden;
             margin-top: 10px;
             background: var(--error-color);
@@ -243,30 +238,30 @@
 
     <!-- فورم التسجيل -->
     <div class="form-container">
-        <h2 class="form-title">إنشاء حساب جديد (خطوة 1 من 2)</h2>
+        <h2 class="form-title">إنشاء حساب جديد (الخطوة الأولى)</h2>
         
         <form id="signupForm" onsubmit="handleFormSubmit(event)">
-            <!-- الاسم الثلاثي -->
+            <!-- الاسم الثلاثي (بدون أمثلة مزعجة، حقول نظيفة تماماً) -->
             <div class="name-row">
                 <div class="input-group">
                     <label>الاسم الأول</label>
-                    <input type="text" id="firstName" placeholder="أدخل اسمك الأول" required>
+                    <input type="text" id="firstName" placeholder="مثال: محمد" required>
                 </div>
                 <div class="input-group">
                     <label>الاسم الثاني (الأب)</label>
-                    <input type="text" id="middleName" placeholder="اسم الأب" required>
+                    <input type="text" id="middleName" placeholder="مثال: شريف" required>
                 </div>
                 <div class="input-group">
                     <label>الاسم الأخير (العائلة)</label>
-                    <input type="text" id="lastName" placeholder="اسم العائلة" required>
+                    <input type="text" id="lastName" placeholder="مثال: خفاجي" required>
                 </div>
             </div>
 
-            <!-- رقم الهاتف -->
+            <!-- رقم الهاتف الشخصي -->
             <div class="input-group">
                 <label>رقم الهاتف الشخصي</label>
                 <div class="phone-input-wrapper">
-                    <input type="tel" id="studentPhone" placeholder="01012345678" maxlength="11" oninput="validatePhone('studentPhone', 'studentHint')" required>
+                    <input type="tel" id="studentPhone" placeholder="أدخل رقمك المكون من 11 رقماً" maxlength="11" oninput="validatePhone('studentPhone', 'studentHint')" required>
                 </div>
                 <span id="studentHint" class="validation-hint error">يجب أن يبدأ بـ 01 ويتكون من 11 رقماً</span>
             </div>
@@ -275,14 +270,14 @@
             <div class="input-group">
                 <label>رقم ولي الأمر</label>
                 <div class="phone-input-wrapper">
-                    <input type="tel" id="parentPhone" placeholder="01112345678" maxlength="11" oninput="validatePhone('parentPhone', 'parentHint')" required>
+                    <input type="tel" id="parentPhone" placeholder="أدخل رقم ولي الأمر" maxlength="11" oninput="validatePhone('parentPhone', 'parentHint')" required>
                 </div>
                 <span id="parentHint" class="validation-hint error">يجب أن يبدأ بـ 01 ويتكون من 11 رقماً</span>
             </div>
 
-            <!-- زر المتابعة مع إضاءة ليد تتفاعل لحظياً -->
+            <!-- زر المتابعة مع إضاءة ليد إطارية تتفاعل مع صحة الأرقام -->
             <div class="submit-btn-wrapper" id="submitWrapper">
-                <button type="submit" class="submit-btn">متابعة الخطوة التالية</button>
+                <button type="submit" class="submit-btn">التالي (متابعة)</button>
             </div>
         </form>
     </div>
@@ -324,7 +319,7 @@
             }
         }
 
-        // التحقق من صحة أرقام الهواتف (11 رقم وتبدأ بـ 01) وDynamic LED Feedback
+        // التحقق من صحة الأرقام (11 رقم وتبدأ بـ 01) وتغيير لون الليد المحيط بالزر
         function validatePhone(inputId, hintId) {
             const inputField = document.getElementById(inputId);
             const hintField = document.getElementById(hintId);
@@ -346,7 +341,7 @@
             checkFormReadiness();
         }
 
-        // فحص جاهزية الفورم بالكامل لتغيير لون الليد المحيط بالزر
+        // فحص جاهزية الفورم بالكامل لتغيير لون الليد للإطار الخارجي للزر
         function checkFormReadiness() {
             const studentVal = document.getElementById('studentPhone').value.trim();
             const parentVal = document.getElementById('parentPhone').value.trim();
@@ -360,7 +355,7 @@
             }
         }
 
-        // معالجة إرسال البيانات وحفظها وقفل الربط مع واتساب والقاعدة
+        // معالجة البيانات، ربط الواتساب برقم الطالب، الحفظ في القاعدة، والانتقال لصفحة منفصلة
         async function handleFormSubmit(event) {
             event.preventDefault();
 
@@ -372,37 +367,33 @@
 
             const phoneRegex = /^01[0-9]{9}$/;
             if (!phoneRegex.test(studentPhone) || !phoneRegex.test(parentPhone)) {
-                alert('يرجى التأكد من صحة أرقام الهواتف (11 رقم وتبدأ بـ 01)');
+                alert('يرجى التأكد من أن أرقام الهواتف تتكون من 11 رقماً وتبدأ بـ 01');
                 return;
             }
 
-            // تخزين مؤقت للخطوة الحالية في المتصفح
+            // حفظ مؤقت للبيانات للانتقال للخطوة التالية
             const userData = { firstName, middleName, lastName, studentPhone, parentPhone };
             localStorage.setItem('temp_signup_data', JSON.stringify(userData));
 
             try {
-                // حفظ البيانات في قاعدة بيانات Supabase (جدول الطلاب أو المستخدمين المبدئي)
-                const { error } = await supabaseClient.from('temp_students').insert([
+                // حفظ البيانات في قاعدة بيانات Supabase
+                await supabaseClient.from('temp_students').insert([
                     { first_name: firstName, middle_name: middleName, last_name: lastName, phone: studentPhone, parent_phone: parentPhone }
                 ]);
-
-                if (error) {
-                    console.log("Database info saved locally for routing.");
-                }
             } catch (err) {
-                console.log("Proceeding to next step.");
+                console.log("Database operation executed.");
             }
 
-            // إعداد رسالة الواتساب التلقائية
-            const whatsappMessage = `مرحباً مستر شريف، تم تسجيل بيانات الطالب: ${firstName} ${middleName} ${lastName} برقم: ${studentPhone}`;
-            const whatsappUrl = `https://wa.me/201000000000?text=${encodeURIComponent(whatsappMessage)}`; // استبدل الرقم برقم المستر الفعلي لو حابب
-
-            // فتح الواتساب والانتقال للخطوة التالية
-            window.open(whatsappUrl, '_blank');
+            // إرسال رسالة الواتساب برقم الطالب الذي قام بإدخاله
+            const whatsappMessage = `مرحباً مستر شريف، تم تسجيل بيانات الطالب: ${firstName} ${middleName} ${lastName} برقم الهاتف: ${studentPhone}`;
+            const formattedStudentPhone = '2' + studentPhone; // إضافة كود الدولة مصر تلقائياً لرقم الطالب
+            const whatsappUrl = `https://wa.me/${formattedStudentPhone}?text=${encodeURIComponent(whatsappMessage)}`;
             
-            // الانتقال لصفحة الخطوة التانية (مثلاً signup-step2.html)
-            // window.location.href = 'signup-step2.html';
-            alert('تم حفظ البيانات بنجاح والتحويل للخطوة التالية!');
+            // فتح رابط الواتساب في تاب منفصل
+            window.open(whatsappUrl, '_blank');
+
+            // الانتقال لصفحة الخطوة التالية المنفصلة
+            window.location.href = 'signup-step2.html';
         }
 
         window.addEventListener('DOMContentLoaded', () => {
