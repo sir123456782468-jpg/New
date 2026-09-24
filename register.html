@@ -169,7 +169,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getFirestore, doc, getDoc, setDoc, deleteDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyCnLE_iSDSByBEmx1ujLWVVHw3Jv2W62Sc",
@@ -199,7 +199,7 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        window.proceedToVerification = async function() {
+        window.proceedToVerification = function() {
             let n1 = document.getElementById('name1').value.trim();
             let n2 = document.getElementById('name2').value.trim();
             let n3 = document.getElementById('name3').value.trim();
@@ -212,62 +212,32 @@
                 return;
             }
 
-            let emailKey = email.toLowerCase().replace(/\./g, '_');
-            window.showToast("جاري التحقق من البريد الإلكتروني...");
+            let fullName = `${n1} ${n2} ${n3}`;
+            let generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-            try {
-                // 1. التحقق لو الحساب مسجل بالفعل بشكل نهائي في قاعدة البيانات الرئيسية
-                const userDocRef = doc(db, "students", emailKey);
-                const userSnap = await getDoc(userDocRef);
-                
-                if (userSnap.exists()) {
-                    window.showToast("هذا البريد الإلكتروني مسجل بالفعل! يجدر بك تسجيل الدخول.", true);
-                    return;
-                }
+            // حفظ البيانات فوراً في الـ LocalStorage عشان الخطوة الثانية تقراها وتعرف الكود
+            let tempData = { fullName, phone, guardianPhone, email, generatedCode };
+            localStorage.setItem('temp_reg_data', JSON.stringify(tempData));
 
-                // 2. لو كان مسجل كـ (تسجيل معلق) ومش مكمل، نمسحه تلقائياً عشان يبدأ من جديد بدون مشاكل
-                const pendingRef = doc(db, "pending_registrations", emailKey);
-                const pendingSnap = await getDoc(pendingRef);
-                if (pendingSnap.exists()) {
-                    await deleteDoc(pendingRef);
-                }
+            window.showToast("جاري إرسال الكود والانتقال...");
 
-                let fullName = `${n1} ${n2} ${n3}`;
-                let generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
+            // إرسال الإيميل ورفع البيانات في الخلفية بدون انتظار شبكة عشان الصفحة ما تتعلقش أبداً
+            emailjs.send('service_seljmns', 'template_5lj7i0g', { to_email: email, to_name: fullName, pass_code: generatedCode })
+                .catch(err => console.log("Email error:", err));
 
-                let tempData = { fullName, phone, guardianPhone, email, generatedCode };
-                localStorage.setItem('temp_reg_data', JSON.stringify(tempData));
+            setDoc(doc(db, "pending_registrations", email.toLowerCase().replace(/\./g, '_')), {
+                email: email,
+                full_name: fullName,
+                phone: phone,
+                guardian_phone: guardianPhone,
+                verification_code: generatedCode,
+                createdAt: new Date().toISOString()
+            }).catch(err => console.log("Firebase error:", err));
 
-                // حفظ التسجيل المعلق الجديد وتوليد الكود
-                await setDoc(pendingRef, {
-                    email: email,
-                    full_name: fullName,
-                    phone: phone,
-                    guardian_phone: guardianPhone,
-                    verification_code: generatedCode,
-                    createdAt: new Date().toISOString()
-                });
-
-                window.showToast("جاري إرسال كود التحقق...");
-
-                emailjs.send('service_seljmns', 'template_5lj7i0g', { to_email: email, to_name: fullName, pass_code: generatedCode })
-                    .then(() => {
-                        window.showToast("تم إرسال الكود بنجاح!");
-                        setTimeout(() => { window.location.href = "register_step2.html"; }, 1000);
-                    })
-                    .catch(() => {
-                        window.showToast("تم توليد الكود، جاري الانتقال...");
-                        setTimeout(() => { window.location.href = "register_step2.html"; }, 1000);
-                    });
-
-            } catch (err) {
-                console.log("Error:", err);
-                // الانتقال الآمن في حال أي مشكلة بالشبكة
-                let fullName = `${n1} ${n2} ${n3}`;
-                let generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
-                localStorage.setItem('temp_reg_data', JSON.stringify({ fullName, phone, guardianPhone, email, generatedCode }));
-                setTimeout(() => { window.location.href = "register_step2.html"; }, 500);
-            }
+            // الانتقال الفوري للخطوة الثانية من غير أي انتظار
+            setTimeout(() => {
+                window.location.href = "register_step2.html";
+            }, 600);
         }
     </script>
 </body>
