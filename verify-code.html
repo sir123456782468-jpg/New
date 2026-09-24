@@ -191,7 +191,7 @@
 
     <div class="form-container">
         <h2 class="form-title">التحقق من البريد الإلكتروني</h2>
-        <p class="form-subtitle">قمنا بإرسال كود مكون من 6 أرقام إلى بريدك الإلكتروني. أدخله أدناه للمتابعة.</p>
+        <p class="form-subtitle">قمنا بإرسال كود مكون من 6 أرقام إلى بريدك الإلكتروني. أدخله أدناه للمتابعة وحفظ بياناتك.</p>
         
         <form id="verifyForm" onsubmit="handleVerify(event)">
             <div class="input-group">
@@ -244,7 +244,7 @@
 
         async function handleVerify(event) {
             event.preventDefault();
-            const token = document.getElementById('otpCode').value.trim();
+            const enteredToken = document.getElementById('otpCode').value.trim();
             const verifyBtn = document.getElementById('verifyBtn');
 
             if (!userEmail) {
@@ -253,7 +253,7 @@
                 return;
             }
 
-            if (token.length < 6) {
+            if (enteredToken.length < 6) {
                 alert('يرجى إدخال الكود المكون من 6 أرقام كاملاً.');
                 return;
             }
@@ -261,25 +261,54 @@
             verifyBtn.innerText = 'جاري التحقق...';
 
             try {
-                // التحقق من صحة الكود عبر Supabase Auth
-                const { data, error } = await supabaseClient.auth.verifyOtp({
-                    email: userEmail,
-                    token: token,
-                    type: 'email'
-                });
+                // استرجاع البيانات المؤقتة والكود المخزن من الخطوة الأولى
+                const storedDataString = localStorage.getItem('temp_signup_data');
+                if (!storedDataString) {
+                    alert('انتهت صلاحية الجلسة، يرجى التسجيل مرة أخرى.');
+                    window.location.href = 'index.html';
+                    return;
+                }
 
-                if (error) {
-                    alert('الكود غير صحيح أو انتهت صلاحيته: ' + error.message);
+                const storedData = JSON.parse(storedDataString);
+
+                // مقارنة الكود المدخل بالكود اللي اتبعت عبر EmailJS
+                if (storedData.otpCode !== enteredToken) {
+                    alert('كود التحقق غير صحيح، تأكد من الأرقام المرسلة لبريدك.');
                     verifyBtn.innerText = 'تحقق ومتابعة';
                     return;
                 }
 
-                alert('تم التحقق من بريدك بنجاح يا فنان! جاري الانتقال للخطوة التالية...');
+                alert('تم التحقق من بريدك بنجاح يا فنان! جاري حفظ بياناتك في قاعدة البيانات...');
+
+                // حفظ البيانات بشكل نهائي في جدول profiles في Supabase
+                const { error: dbError } = await supabaseClient
+                    .from('profiles')
+                    .insert([
+                        {
+                            first_name: storedData.firstName,
+                            middle_name: storedData.middleName,
+                            last_name: storedData.lastName,
+                            email: storedData.studentEmail,
+                            student_phone: storedData.studentPhone,
+                            parent_phone: storedData.parentPhone
+                        }
+                    ]);
+
+                if (dbError) {
+                    console.error(dbError);
+                    alert('حدث خطأ أثناء حفظ بياناتك في قاعدة البيانات: ' + dbError.message);
+                    verifyBtn.innerText = 'تحقق ومتابعة';
+                    return;
+                }
+
+                alert('تم إنشاء الحساب وحفظ البيانات في قاعدة البيانات بنجاح!');
                 
-                // الانتقال لصفحة الخطوة الثانية (تعيين كلمة المرور)
-                window.location.href = 'signup-step2.html';
+                // مسح البيانات المؤقتة والانتقال لصفحة تسجيل الدخول
+                localStorage.removeItem('temp_signup_data');
+                window.location.href = 'signin.html';
 
             } catch (err) {
+                console.error(err);
                 alert('حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.');
                 verifyBtn.innerText = 'تحقق ومتابعة';
             }
