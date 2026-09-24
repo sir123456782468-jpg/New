@@ -10,29 +10,29 @@
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            /* الألوان الفاتحة الرايقة (أزرق سماوي مع لمسات كشميرية ناعمة) */
-            --bg-gradient: radial-gradient(circle at 50% 20%, #f0fdf4 0%, #e0f2fe 50%, #f8fafc 100%);
-            --card-bg: rgba(255, 255, 255, 0.85);
-            --text-main: #0f172a;
-            --text-muted: #475569;
+            /* الألوان الفاتحة الرايقة والمريحة للعين */
+            --bg-gradient: radial-gradient(circle at 50% 20%, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
             --accent-primary: #0284c7;
-            --accent-glow: rgba(2, 132, 199, 0.35);
-            --border-color: rgba(2, 132, 199, 0.25);
+            --accent-glow: rgba(2, 132, 199, 0.15);
+            --border-color: rgba(2, 132, 199, 0.15);
             --led-color: #38bdf8;
-            --pattern-color: rgba(2, 132, 199, 0.04);
+            --pattern-color: rgba(2, 132, 199, 0.02);
         }
 
         [data-theme="dark"] {
-            /* الألوان الداكنة الفخمة (أزرق ملكي مع تيتانيوم بعيد عن السواد) */
-            --bg-gradient: radial-gradient(circle at 50% 20%, #0f172a 0%, #090d16 50%, #030712 100%);
-            --card-bg: rgba(15, 23, 42, 0.75);
-            --text-main: #f8fafc;
+            /* الألوان الداكنة المريحة للعين (هادئة وبعيدة عن التباين المؤذي) */
+            --bg-gradient: radial-gradient(circle at 50% 20%, #0f172a 0%, #0b1120 50%, #020617 100%);
+            --card-bg: rgba(15, 23, 42, 0.85);
+            --text-main: #f1f5f9;
             --text-muted: #94a3b8;
             --accent-primary: #38bdf8;
-            --accent-glow: rgba(56, 189, 248, 0.5);
-            --border-color: rgba(56, 189, 248, 0.3);
+            --accent-glow: rgba(56, 189, 248, 0.2);
+            --border-color: rgba(56, 189, 248, 0.2);
             --led-color: #38bdf8;
-            --pattern-color: rgba(56, 189, 248, 0.03);
+            --pattern-color: rgba(56, 189, 248, 0.02);
         }
 
         * {
@@ -56,52 +56,30 @@
             position: relative;
         }
 
-        /* خلفية هندسية وزخارف رايقة جداً تملى الفراغ وتدي عمق بصري */
+        /* خلفية هندسية خفيفة جداً ومريحة */
         body::before {
             content: '';
             position: absolute;
             top: 0; left: 0; width: 100%; height: 100%;
             background-image: 
-                radial-gradient(var(--pattern-color) 1px, transparent 1px),
-                radial-gradient(var(--pattern-color) 1px, var(--bg-gradient) 1px);
-            background-size: 40px 40px;
-            background-position: 0 0, 20px 20px;
+                radial-gradient(var(--pattern-color) 1px, transparent 1px);
+            background-size: 30px 30px;
             z-index: 0;
             pointer-events: none;
         }
 
-        /* دوائر إضاءة خلفية (Ambient Glows) لتوزيع الألوان بطريقة ساحرة */
+        /* دوائر إضاءة خلفية هادئة جداً */
         .ambient-glow-1 {
             position: absolute;
-            top: 10%;
-            left: 15%;
-            width: 300px;
-            height: 300px;
+            top: 15%;
+            left: 20%;
+            width: 250px;
+            height: 250px;
             background: var(--accent-glow);
-            filter: blur(80px);
+            filter: blur(100px);
             border-radius: 50%;
             z-index: 0;
             pointer-events: none;
-            animation: floatGlow 8s infinite alternate ease-in-out;
-        }
-
-        .ambient-glow-2 {
-            position: absolute;
-            bottom: 10%;
-            right: 15%;
-            width: 350px;
-            height: 350px;
-            background: rgba(168, 85, 247, 0.15);
-            filter: blur(90px);
-            border-radius: 50%;
-            z-index: 0;
-            pointer-events: none;
-            animation: floatGlow 10s infinite alternate-reverse ease-in-out;
-        }
-
-        @keyframes floatGlow {
-            0% { transform: translateY(0) scale(1); }
-            100% { transform: translateY(30px) scale(1.1); }
         }
 
         /* زر تبديل الوضع (داكن / فاتح) */
@@ -117,7 +95,7 @@
             cursor: pointer;
             font-weight: 700;
             font-size: 13px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
             z-index: 10;
             display: flex;
             align-items: center;
@@ -125,24 +103,16 @@
             backdrop-filter: blur(12px);
         }
         .theme-toggle:hover {
-            transform: scale(1.06);
+            transform: scale(1.05);
             border-color: var(--accent-primary);
         }
 
-        /* الهيدر العلوي: اسم المستر مع الزخارف والإضاءة الملونة المتداخلة */
+        /* الهيدر العلوي: اسم المستر نظيف وبدون علامات مزعجة */
         header {
             text-align: center;
-            margin-top: 15px;
+            margin-top: 20px;
             position: relative;
             z-index: 2;
-        }
-
-        .ornament-top {
-            font-size: 14px;
-            color: var(--text-muted);
-            letter-spacing: 4px;
-            margin-bottom: 5px;
-            opacity: 0.7;
         }
 
         .teacher-title {
@@ -155,32 +125,30 @@
             -webkit-text-fill-color: transparent;
             position: relative;
             display: inline-block;
-            filter: drop-shadow(0 0 20px rgba(236, 72, 153, 0.3));
         }
 
-        /* خط إضاءة ليد احترافي تحت اسم المستر */
+        /* خط إضاءة ليد هادئ تحت اسم المستر */
         .teacher-title::after {
             content: '';
             position: absolute;
-            bottom: -8px;
-            left: 5%;
-            width: 90%;
-            height: 3px;
-            background: linear-gradient(90deg, transparent, #ec4899, #38bdf8, transparent);
-            box-shadow: 0 0 15px var(--led-color);
+            bottom: -6px;
+            left: 10%;
+            width: 80%;
+            height: 2px;
+            background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
+            box-shadow: 0 0 10px var(--led-color);
             border-radius: 50%;
-            animation: pulseLed 3s infinite ease-in-out;
         }
 
         .developer-credit {
             font-size: 12px;
             color: var(--text-muted);
-            margin-top: 12px;
+            margin-top: 10px;
             letter-spacing: 1px;
             font-weight: 600;
         }
 
-        /* منتصف الشاشة: الإطار الزخرفي واسم المنصة والآلة الكتابية */
+        /* منتصف الشاشة: إطار المنصة النظيف بدون علامات زوايا */
         .hero-section {
             text-align: center;
             margin: auto 0;
@@ -188,30 +156,20 @@
             z-index: 2;
             width: 100%;
             max-width: 900px;
-            padding: 30px;
+            padding: 40px 30px;
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             border-radius: 24px;
             backdrop-filter: blur(16px);
-            box-shadow: 0 20px 40px rgba(0,0,0,0.1);
+            box-shadow: 0 15px 35px rgba(0,0,0,0.06);
         }
-
-        .hero-section::before, .hero-section::after {
-            content: '✦';
-            position: absolute;
-            color: var(--accent-primary);
-            font-size: 16px;
-            opacity: 0.6;
-        }
-        .hero-section::before { top: 15px; right: 20px; }
-        .hero-section::after { bottom: 15px; left: 20px; }
 
         .main-heading {
             font-family: 'Cinzel', serif;
-            font-size: clamp(28px, 4.5vw, 56px);
+            font-size: clamp(26px, 4vw, 50px);
             font-weight: 800;
             color: var(--text-main);
-            min-height: 80px;
+            min-height: 70px;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -224,18 +182,16 @@
             background: linear-gradient(90deg, var(--text-main), var(--accent-primary));
             -webkit-background-clip: text;
             -webkit-text-fill-color: transparent;
-            text-shadow: 0 0 25px var(--accent-glow);
         }
 
         /* مؤشر الكتابة الحرفية */
         .typing-cursor {
             display: inline-block;
-            width: 4px;
-            height: 45px;
+            width: 3px;
+            height: 40px;
             background-color: var(--accent-primary);
             margin-right: 6px;
             animation: blinkCursor 0.8s infinite;
-            box-shadow: 0 0 12px var(--accent-primary);
             vertical-align: middle;
             border-radius: 2px;
         }
@@ -256,30 +212,25 @@
             50% { opacity: 0; }
         }
 
-        @keyframes pulseLed {
-            0%, 100% { opacity: 0.5; transform: scaleX(0.95); }
-            50% { opacity: 1; transform: scaleX(1.05); }
-        }
-
-        /* الأزرار السفلية (Sign Up & Sign In) مع إضاءة ليد تدور وتحيط بها */
+        /* الأزرار السفلية مع إضاءة ليد ناعمة */
         .actions-container {
             display: flex;
             justify-content: center;
-            gap: 35px;
+            gap: 30px;
             margin-bottom: 25px;
             width: 100%;
-            max-width: 600px;
+            max-width: 550px;
             z-index: 2;
         }
 
         .led-btn-wrapper {
             position: relative;
             flex: 1;
-            border-radius: 18px;
-            padding: 3px;
+            border-radius: 16px;
+            padding: 2px;
             overflow: hidden;
-            background: linear-gradient(135deg, rgba(2, 132, 199, 0.2), rgba(236, 72, 153, 0.2));
-            box-shadow: 0 10px 30px rgba(0,0,0,0.12);
+            background: linear-gradient(135deg, rgba(2, 132, 199, 0.15), rgba(236, 72, 153, 0.15));
+            box-shadow: 0 8px 20px rgba(0,0,0,0.06);
         }
 
         .led-btn-wrapper::before {
@@ -290,7 +241,7 @@
             width: 200%;
             height: 200%;
             background: conic-gradient(transparent, transparent, transparent, #ec4899, #38bdf8, #f59e0b);
-            animation: rotateLed 4s linear infinite;
+            animation: rotateLed 5s linear infinite;
         }
 
         @keyframes rotateLed {
@@ -305,10 +256,10 @@
             display: flex;
             justify-content: center;
             align-items: center;
-            padding: 18px 24px;
-            border-radius: 16px;
+            padding: 16px 22px;
+            border-radius: 14px;
             text-decoration: none;
-            font-size: 17px;
+            font-size: 16px;
             font-weight: 700;
             z-index: 1;
             backdrop-filter: blur(15px);
@@ -316,7 +267,7 @@
         }
 
         .led-btn:hover {
-            transform: translateY(-4px);
+            transform: translateY(-3px);
             background: var(--accent-primary);
             color: #ffffff;
         }
@@ -332,36 +283,33 @@
         @media(max-width: 768px) {
             .actions-container {
                 flex-direction: column;
-                gap: 18px;
+                gap: 15px;
             }
             .teacher-title {
                 font-size: 24px;
             }
             .hero-section {
-                padding: 20px;
+                padding: 30px 20px;
             }
         }
     </style>
 </head>
 <body data-theme="light">
 
-    <!-- دوائر الإضاءة الخلفية المتداخلة -->
     <div class="ambient-glow-1"></div>
-    <div class="ambient-glow-2"></div>
 
-    <!-- زر تبديل الثيم الداكن والفاتح -->
+    <!-- زر تبديل الثيم -->
     <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
         <span id="themeIcon">🌙</span> <span id="themeText">الوضع الداكن</span>
     </button>
 
-    <!-- الهيدر الفخم: اسم المستر مع الزخرفة -->
+    <!-- الهيدر -->
     <header>
-        <div class="ornament-top">✦ ─── ❖ ─── ✦</div>
         <h1 class="teacher-title">Mr. Sherif Khafagy</h1>
         <div class="developer-credit">Developed By / Mohamed Sherif Khafagy</div>
     </header>
 
-    <!-- منتصف الشاشة: إطار المنصة والآلة الكتابية المنسابة -->
+    <!-- منتصف الشاشة -->
     <div class="hero-section">
         <h2 class="main-heading">
             <span id="typedText"></span><span class="typing-cursor" id="typingCursor"></span>
@@ -369,13 +317,11 @@
         <p class="hero-subtitle">بوابتك الاحترافية لاحتراف اللغة الإنجليزية بأحدث أساليب التعليم الذكي</p>
     </div>
 
-    <!-- الأزرار السفلية مع إضاءة الليد الدوارة -->
+    <!-- الأزرار السفلية -->
     <div class="actions-container">
-        <!-- Sign Up -->
         <div class="led-btn-wrapper">
             <a href="signup.html" class="led-btn">إنشاء حساب (Sign Up)</a>
         </div>
-        <!-- Sign In -->
         <div class="led-btn-wrapper">
             <a href="signin.html" class="led-btn">تسجيل الدخول (Sign In)</a>
         </div>
@@ -387,14 +333,13 @@
 
     <script>
         // ==========================================
-        // 1. الربط الحقيقي والجاهز مع قاعدة بيانات Supabase
+        // 1. الربط بقاعدة بيانات Supabase
         // ==========================================
         const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lNpmx_7cT_frhxmkMKnlVQ_D9MhsqWi';
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // دالة التحقق من استجابة قاعدة البيانات
         async function verifyDatabaseConnection() {
             try {
                 const { error } = await supabaseClient.from('profiles').select('id', { count: 'exact', head: true });
@@ -436,7 +381,7 @@
         }
 
         // ==========================================
-        // 3. تأثير الكتابة التلقائية وإزالة المؤشر
+        // 3. تأثير الكتابة التلقائية
         // ==========================================
         const textTarget = document.getElementById('typedText');
         const cursorTarget = document.getElementById('typingCursor');
