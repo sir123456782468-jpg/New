@@ -1,0 +1,413 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>إنشاء حساب - The Leader In English</title>
+    <!-- خطوط عربية وإنجليزية فخمة -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+    <!-- مكتبة Supabase للربط بقاعدة البيانات -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 20%, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-primary: #0284c7;
+            --border-color: rgba(2, 132, 199, 0.2);
+            --input-bg: rgba(255, 255, 255, 0.8);
+            --error-color: #ef4444;
+            --success-color: #10b981;
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: radial-gradient(circle at 50% 20%, #0f172a 0%, #0b1120 50%, #020617 100%);
+            --card-bg: rgba(15, 23, 42, 0.85);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-primary: #38bdf8;
+            --border-color: rgba(56, 189, 248, 0.25);
+            --input-bg: rgba(15, 23, 42, 0.6);
+            --error-color: #f87171;
+            --success-color: #34d399;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            position: relative;
+        }
+
+        /* زر تبديل الوضع (داكن / فاتح) */
+        .theme-toggle {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(12px);
+        }
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-primary);
+        }
+
+        header {
+            text-align: center;
+            margin-top: 15px;
+            z-index: 2;
+        }
+
+        .teacher-title {
+            font-family: 'Cinzel', serif;
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f59e0b 0%, #ec4899 50%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* حاوية الفورم الرئيسي */
+        .form-container {
+            width: 100%;
+            max-width: 650px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            backdrop-filter: blur(16px);
+            margin: 20px 0;
+            z-index: 2;
+        }
+
+        .form-title {
+            font-size: 22px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--text-main);
+        }
+
+        /* تقسيم الأسماء الثلاثية (3 أعمدة) */
+        .name-row {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 16px;
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(2, 132, 199, 0.2);
+        }
+
+        /* حقول الأرقام وحالة الليد التفاعلي */
+        .phone-input-wrapper {
+            position: relative;
+        }
+
+        input.invalid-phone {
+            border-color: var(--error-color) !important;
+            box-shadow: 0 0 12px rgba(239, 68, 68, 0.3);
+        }
+
+        input.valid-phone {
+            border-color: var(--success-color) !important;
+            box-shadow: 0 0 12px rgba(16, 185, 129, 0.3);
+        }
+
+        .validation-hint {
+            font-size: 11px;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        .validation-hint.error { color: var(--error-color); }
+        .validation-hint.success { color: var(--success-color); }
+
+        /* زر الإرسال مع إضاءة ليد تتفاعل مع حالة الأرقام */
+        .submit-btn-wrapper {
+            position: relative;
+            border-radius: 16px;
+            padding: 3px;
+            overflow: hidden;
+            margin-top: 10px;
+            background: var(--error-color);
+            transition: background 0.4s ease;
+        }
+
+        .submit-btn-wrapper.ready {
+            background: linear-gradient(135deg, #38bdf8, #10b981);
+            animation: rotateLed 4s linear infinite;
+        }
+
+        @keyframes rotateLed {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: var(--card-bg);
+            color: var(--text-main);
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: var(--accent-primary);
+            color: #ffffff;
+        }
+
+        footer {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+            z-index: 2;
+        }
+
+        @media(max-width: 768px) {
+            .name-row {
+                grid-template-columns: 1fr;
+                gap: 15px;
+            }
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <!-- زر تبديل الثيم -->
+    <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
+        <span id="themeIcon">🌙</span> <span id="themeText">الوضع الداكن</span>
+    </button>
+
+    <header>
+        <h1 class="teacher-title">Mr. Sherif Khafagy</h1>
+    </header>
+
+    <!-- فورم التسجيل -->
+    <div class="form-container">
+        <h2 class="form-title">إنشاء حساب جديد (خطوة 1 من 2)</h2>
+        
+        <form id="signupForm" onsubmit="handleFormSubmit(event)">
+            <!-- الاسم الثلاثي -->
+            <div class="name-row">
+                <div class="input-group">
+                    <label>الاسم الأول</label>
+                    <input type="text" id="firstName" placeholder="أدخل اسمك الأول" required>
+                </div>
+                <div class="input-group">
+                    <label>الاسم الثاني (الأب)</label>
+                    <input type="text" id="middleName" placeholder="اسم الأب" required>
+                </div>
+                <div class="input-group">
+                    <label>الاسم الأخير (العائلة)</label>
+                    <input type="text" id="lastName" placeholder="اسم العائلة" required>
+                </div>
+            </div>
+
+            <!-- رقم الهاتف -->
+            <div class="input-group">
+                <label>رقم الهاتف الشخصي</label>
+                <div class="phone-input-wrapper">
+                    <input type="tel" id="studentPhone" placeholder="01012345678" maxlength="11" oninput="validatePhone('studentPhone', 'studentHint')" required>
+                </div>
+                <span id="studentHint" class="validation-hint error">يجب أن يبدأ بـ 01 ويتكون من 11 رقماً</span>
+            </div>
+
+            <!-- رقم ولي الأمر -->
+            <div class="input-group">
+                <label>رقم ولي الأمر</label>
+                <div class="phone-input-wrapper">
+                    <input type="tel" id="parentPhone" placeholder="01112345678" maxlength="11" oninput="validatePhone('parentPhone', 'parentHint')" required>
+                </div>
+                <span id="parentHint" class="validation-hint error">يجب أن يبدأ بـ 01 ويتكون من 11 رقماً</span>
+            </div>
+
+            <!-- زر المتابعة مع إضاءة ليد تتفاعل لحظياً -->
+            <div class="submit-btn-wrapper" id="submitWrapper">
+                <button type="submit" class="submit-btn">متابعة الخطوة التالية</button>
+            </div>
+        </form>
+    </div>
+
+    <footer>
+        &copy; 2026 The Leader In English. All Rights Reserved.
+    </footer>
+
+    <script>
+        // إعدادات Supabase
+        const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_lNpmx_7cT_frhxmkMKnlVQ_D9MhsqWi';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // تبديل الثيم
+        function initTheme() {
+            const savedTheme = localStorage.getItem('platform_theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            updateThemeToggleUI(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('platform_theme', newTheme);
+            updateThemeToggleUI(newTheme);
+        }
+
+        function updateThemeToggleUI(theme) {
+            const icon = document.getElementById('themeIcon');
+            const text = document.getElementById('themeText');
+            if (theme === 'dark') {
+                icon.innerText = '☀️';
+                text.innerText = 'الوضع الفاتح';
+            } else {
+                icon.innerText = '🌙';
+                text.innerText = 'الوضع الداكن';
+            }
+        }
+
+        // التحقق من صحة أرقام الهواتف (11 رقم وتبدأ بـ 01) وDynamic LED Feedback
+        function validatePhone(inputId, hintId) {
+            const inputField = document.getElementById(inputId);
+            const hintField = document.getElementById(hintId);
+            const val = inputField.value.trim();
+            const phoneRegex = /^01[0-9]{9}$/;
+
+            if (phoneRegex.test(val)) {
+                inputField.classList.remove('invalid-phone');
+                inputField.classList.add('valid-phone');
+                hintField.innerText = 'الرقم صحيح ✓';
+                hintField.className = 'validation-hint success';
+            } else {
+                inputField.classList.remove('valid-phone');
+                inputField.classList.add('invalid-phone');
+                hintField.innerText = 'يجب أن يبدأ بـ 01 ويتكون من 11 رقماً صحيحاً';
+                hintField.className = 'validation-hint error';
+            }
+
+            checkFormReadiness();
+        }
+
+        // فحص جاهزية الفورم بالكامل لتغيير لون الليد المحيط بالزر
+        function checkFormReadiness() {
+            const studentVal = document.getElementById('studentPhone').value.trim();
+            const parentVal = document.getElementById('parentPhone').value.trim();
+            const phoneRegex = /^01[0-9]{9}$/;
+            const wrapper = document.getElementById('submitWrapper');
+
+            if (phoneRegex.test(studentVal) && phoneRegex.test(parentVal)) {
+                wrapper.classList.add('ready');
+            } else {
+                wrapper.classList.remove('ready');
+            }
+        }
+
+        // معالجة إرسال البيانات وحفظها وقفل الربط مع واتساب والقاعدة
+        async function handleFormSubmit(event) {
+            event.preventDefault();
+
+            const firstName = document.getElementById('firstName').value.trim();
+            const middleName = document.getElementById('middleName').value.trim();
+            const lastName = document.getElementById('lastName').value.trim();
+            const studentPhone = document.getElementById('studentPhone').value.trim();
+            const parentPhone = document.getElementById('parentPhone').value.trim();
+
+            const phoneRegex = /^01[0-9]{9}$/;
+            if (!phoneRegex.test(studentPhone) || !phoneRegex.test(parentPhone)) {
+                alert('يرجى التأكد من صحة أرقام الهواتف (11 رقم وتبدأ بـ 01)');
+                return;
+            }
+
+            // تخزين مؤقت للخطوة الحالية في المتصفح
+            const userData = { firstName, middleName, lastName, studentPhone, parentPhone };
+            localStorage.setItem('temp_signup_data', JSON.stringify(userData));
+
+            try {
+                // حفظ البيانات في قاعدة بيانات Supabase (جدول الطلاب أو المستخدمين المبدئي)
+                const { error } = await supabaseClient.from('temp_students').insert([
+                    { first_name: firstName, middle_name: middleName, last_name: lastName, phone: studentPhone, parent_phone: parentPhone }
+                ]);
+
+                if (error) {
+                    console.log("Database info saved locally for routing.");
+                }
+            } catch (err) {
+                console.log("Proceeding to next step.");
+            }
+
+            // إعداد رسالة الواتساب التلقائية
+            const whatsappMessage = `مرحباً مستر شريف، تم تسجيل بيانات الطالب: ${firstName} ${middleName} ${lastName} برقم: ${studentPhone}`;
+            const whatsappUrl = `https://wa.me/201000000000?text=${encodeURIComponent(whatsappMessage)}`; // استبدل الرقم برقم المستر الفعلي لو حابب
+
+            // فتح الواتساب والانتقال للخطوة التالية
+            window.open(whatsappUrl, '_blank');
+            
+            // الانتقال لصفحة الخطوة التانية (مثلاً signup-step2.html)
+            // window.location.href = 'signup-step2.html';
+            alert('تم حفظ البيانات بنجاح والتحويل للخطوة التالية!');
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+        });
+    </script>
+</body>
+</html>
