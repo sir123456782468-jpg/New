@@ -6,6 +6,10 @@
     <title>إنشاء حساب - الخطوة الأولى | The Leader In English</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() { emailjs.init("gU8jVHuVqdaZT6CD1"); })();
+    </script>
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; caret-color: transparent; }
@@ -44,7 +48,7 @@
 
         .platform-card {
             width: 100%;
-            max-width: 440px;
+            max-width: 500px;
             background: rgba(15, 23, 42, 0.85);
             backdrop-filter: blur(20px);
             border: 1px solid rgba(212, 175, 55, 0.2);
@@ -61,30 +65,32 @@
             height: 3px;
             background: linear-gradient(90deg, #d4af37, #60a5fa, #d4af37);
         }
-        .brand-header { text-align: center; margin-bottom: 22px; }
+        .brand-header { text-align: center; margin-bottom: 20px; }
         .brand-header h1 { font-size: 22px; font-weight: 900; color: #f8fafc; margin-bottom: 4px; }
         .brand-header h1 span { color: #d4af37; }
+        .brand-header p { font-size: 13px; color: #94a3b8; }
         
-        .form-group { margin-bottom: 15px; }
-        .form-group label { display: block; font-size: 13px; font-weight: 600; color: #cbd5e1; margin-bottom: 5px; }
+        .names-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; margin-bottom: 12px; }
+        .form-group { margin-bottom: 12px; }
+        .form-group label { display: block; font-size: 12px; font-weight: 600; color: #cbd5e1; margin-bottom: 4px; }
         .form-control {
             width: 100%;
             background: rgba(30, 41, 59, 0.6);
             border: 1.5px solid #334155;
-            border-radius: 12px;
-            padding: 11px 14px;
+            border-radius: 10px;
+            padding: 10px 12px;
             color: #fff;
-            font-size: 14px;
+            font-size: 13px;
             outline: none;
             transition: all 0.3s ease;
         }
-        .form-control:focus { border-color: #d4af37; box-shadow: 0 0 10px rgba(212, 175, 55, 0.2); }
-
+        .form-control:focus { border-color: #d4af37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15); }
+        
         .btn {
             width: 100%;
             padding: 12px;
             border-radius: 12px;
-            font-size: 15px;
+            font-size: 14px;
             font-weight: 700;
             cursor: pointer;
             transition: all 0.3s ease;
@@ -93,7 +99,10 @@
         }
         .btn-primary { background: linear-gradient(135deg, #d4af37, #aa7c11); color: #0b0f19; box-shadow: 0 4px 15px rgba(212, 175, 55, 0.3); }
         .btn-primary:hover { filter: brightness(1.1); transform: translateY(-1px); }
-
+        
+        .switch-auth { text-align: center; margin-top: 15px; font-size: 13px; color: #94a3b8; }
+        .switch-auth a { color: #d4af37; text-decoration: none; font-weight: 700; }
+        
         .developer-credit {
             margin-top: 20px;
             text-align: center;
@@ -120,12 +129,26 @@
     <div class="platform-card">
         <div class="brand-header">
             <h1>The Leader <span>In English</span></h1>
-            <p style="font-size: 13px; color: #94a3b8;">البيانات الأساسية (الخطوة 1 من 3)</p>
+            <p>خطوة واحدة تفصلك عن التفوق (1/3)</p>
         </div>
 
         <div class="form-group">
-            <label><i class="fa-solid fa-user"></i> الاسم الرباعي</label>
-            <input type="text" id="fullName" class="form-control" placeholder="أدخل اسمك الرباعي">
+            <label><i class="fa-solid fa-user"></i> اسم الطالب الثلاثي</label>
+            <div class="names-grid">
+                <input type="text" id="name1" class="form-control" placeholder="الاسم الأول">
+                <input type="text" id="name2" class="form-control" placeholder="الاسم الثاني">
+                <input type="text" id="name3" class="form-control" placeholder="الاسم الثالث">
+            </div>
+        </div>
+
+        <div class="form-group">
+            <label><i class="fa-solid fa-phone"></i> رقم هاتف الطالب</label>
+            <input type="text" id="phone" class="form-control" placeholder="01xxxxxxxxx">
+        </div>
+
+        <div class="form-group">
+            <label><i class="fa-solid fa-user-shield"></i> رقم ولي الأمر</label>
+            <input type="text" id="guardianPhone" class="form-control" placeholder="01xxxxxxxxx">
         </div>
 
         <div class="form-group">
@@ -133,7 +156,11 @@
             <input type="email" id="email" class="form-control" placeholder="example@gmail.com">
         </div>
 
-        <button type="button" class="btn btn-primary" onclick="goToStep2()">التالي (الخطوة 2) <i class="fa-solid fa-arrow-left"></i></button>
+        <button type="button" class="btn btn-primary" onclick="proceedToVerification()">إرسال كود التحقق <i class="fa-solid fa-paper-plane"></i></button>
+
+        <div class="switch-auth">
+            لديك حساب بالفعل؟ <a href="login.html">تسجيل الدخول</a>
+        </div>
     </div>
 
     <div class="developer-credit">
@@ -141,8 +168,23 @@
     </div>
 
     <script type="module">
-        // دالة التنبيهات المرئية
-        window.showToast = function(message, isError = false) {
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyCnLE_iSDSByBEmx1ujLWVVHw3Jv2W62Sc",
+          authDomain: "the-leader-c2f06.firebaseapp.com",
+          projectId: "the-leader-c2f06",
+          storageBucket: "the-leader-c2f06.firebasestorage.app",
+          messagingSenderId: "693921211082",
+          appId: "1:693921211082:web:640e7e5528a9891d368a33",
+          measurementId: "G-RK4LP1HMJY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+
+        function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
             document.getElementById('toastText').innerText = message;
@@ -157,34 +199,51 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        // دالة الانتقال للخطوة الثانية مع ربطها بالـ window لتفادي مشكلة عدم الاستجابة
-        window.goToStep2 = function() {
-            const fullName = document.getElementById('fullName').value.trim();
-            const email = document.getElementById('email').value.trim();
+        window.proceedToVerification = async function() {
+            let n1 = document.getElementById('name1').value.trim();
+            let n2 = document.getElementById('name2').value.trim();
+            let n3 = document.getElementById('name3').value.trim();
+            let phone = document.getElementById('phone').value.trim();
+            let guardianPhone = document.getElementById('guardianPhone').value.trim();
+            let email = document.getElementById('email').value.trim();
 
-            if(!fullName || !email) {
-                window.showToast("يرجى إدخال الاسم الرباعي والبريد الإلكتروني!", true);
+            if(!n1 || !n2 || !n3 || !phone || !guardianPhone || !email) {
+                showToast("الرجاء استكمال جميع الحقول المطلوبة!", true);
                 return;
             }
 
-            // التحقق المبسط لصحة البريد الإلكتروني
-            if(!email.includes('@') || !email.includes('.')) {
-                window.showToast("يرجى إدخال بريد إلكتروني صحيح!", true);
-                return;
-            }
+            let fullName = `${n1} ${n2} ${n3}`;
+            let generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-            // حفظ البيانات المؤقتة في الـ LocalStorage لنقلها للخطوة التالية
-            let tempData = JSON.parse(localStorage.getItem('temp_reg_data') || '{}');
-            tempData.fullName = fullName;
-            tempData.email = email;
+            let tempData = { fullName, phone, guardianPhone, email, generatedCode };
             localStorage.setItem('temp_reg_data', JSON.stringify(tempData));
 
-            window.showToast("جاري الانتقال للخطوة التالية...");
-            
-            // الانتقال لصفحة الخطوة الثانية (تأكد من مطابقة اسم الملف عندك لو كان مختلفاً مثل register_step2.html)
-            setTimeout(() => {
-                window.location.href = "register_step2.html";
-            }, 1000);
+            showToast("جاري حفظ البيانات وإرسال كود التحقق...");
+
+            // الحفظ المباشر في قاعدة بيانات Firebase Firestore تحت مجموعة pending_registrations[span_1](start_span)[span_1](end_span)
+            try {
+                await setDoc(doc(db, "pending_registrations", email.replace(/\./g, '_')), {
+                    email: email,
+                    full_name: fullName,
+                    phone: phone,
+                    guardian_phone: guardianPhone,
+                    verification_code: generatedCode,
+                    createdAt: new Date().toISOString()
+                });
+            } catch (err) {
+                console.log("Cloud sync note:", err);
+            }
+
+            let templateParams = { to_email: email, to_name: fullName, pass_code: generatedCode };
+
+            emailjs.send('service_seljmns', 'template_5lj7i0g', templateParams)
+                .then(function(response) {
+                    showToast("تم إرسال الكود بنجاح!");
+                    setTimeout(() => { window.location.href = "register_step2.html"; }, 1500);
+                }, function(error) {
+                    showToast("الكود التجريبي: " + generatedCode, true);
+                    setTimeout(() => { window.location.href = "register_step2.html"; }, 2500);
+                });
         }
     </script>
 </body>
