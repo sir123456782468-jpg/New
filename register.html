@@ -199,7 +199,7 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        window.proceedToVerification = async function() {
+        window.proceedToVerification = function() {
             let n1 = document.getElementById('name1').value.trim();
             let n2 = document.getElementById('name2').value.trim();
             let n3 = document.getElementById('name3').value.trim();
@@ -215,36 +215,33 @@
             let fullName = `${n1} ${n2} ${n3}`;
             let generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
 
+            // حفظ البيانات فوراً في الـ LocalStorage عشان الخطوة التانية تقراها بكل سرعة
             let tempData = { fullName, phone, guardianPhone, email, generatedCode };
             localStorage.setItem('temp_reg_data', JSON.stringify(tempData));
 
-            window.showToast("جاري حفظ البيانات وإرسال كود التحقق...");
+            window.showToast("تم توليد الكود، جاري الانتقال فوراً...");
 
-            // الحفظ في Firebase مع التأكد من عدم تعليق الزر لو حصلت مشكلة بالشبكة
+            // إرسال الإيميل ورفع البيانات في الخلفية بدون ما نوقف المستخدم عن الانتقال
             try {
-                await setDoc(doc(db, "pending_registrations", email.replace(/\./g, '_')), {
+                setDoc(doc(db, "pending_registrations", email.replace(/\./g, '_')), {
                     email: email,
                     full_name: fullName,
                     phone: phone,
                     guardian_phone: guardianPhone,
                     verification_code: generatedCode,
                     createdAt: new Date().toISOString()
-                });
-            } catch (err) {
-                console.log("Cloud sync note:", err);
+                }).catch(err => console.log(err));
+
+                emailjs.send('service_seljmns', 'template_5lj7i0g', { to_email: email, to_name: fullName, pass_code: generatedCode })
+                    .catch(err => console.log(err));
+            } catch (e) {
+                console.log(e);
             }
 
-            let templateParams = { to_email: email, to_name: fullName, pass_code: generatedCode };
-
-            // إرسال الإيميل والانتقال المباشر للخطوة الثانية
-            emailjs.send('service_seljmns', 'template_5lj7i0g', templateParams)
-                .then(function(response) {
-                    window.showToast("تم إرسال الكود بنجاح!");
-                    setTimeout(() => { window.location.href = "register_step2.html"; }, 1000);
-                }, function(error) {
-                    window.showToast("الكود التجريبي: " + generatedCode, true);
-                    setTimeout(() => { window.location.href = "register_step2.html"; }, 2000);
-                });
+            // الانتقال الفوري بعد نصف ثانية من غير أي تعليق
+            setTimeout(() => {
+                window.location.href = "register_step2.html";
+            }, 500);
         }
     </script>
 </body>
