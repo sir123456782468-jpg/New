@@ -4,39 +4,37 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Leader In English - Mr. Sherif Khafagy</title>
-    <!-- خطوط عصرية فخمة -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Poppins:wght@600;700;900&display=swap" rel="stylesheet">
+    <!-- استدعاء خطوط مميزة -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Plus+Jakarta+Sans:wght@600;700;800&display=swap" rel="stylesheet">
     <!-- مكتبة Supabase للربط بقاعدة البيانات -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            /* ثيم احترافي ناصع ومريح: أبيض نقي مع أحمر ناري راقي وتيتانيوم */
-            --bg-page: #ffffff;
-            --navbar-bg: rgba(255, 255, 255, 0.95);
-            --text-main: #0f172a;
-            --text-muted: #64748b;
-            --primary-red: #ef4444; /* أحمر ناري فخم زي الكبار */
-            --primary-red-hover: #dc2626;
-            --hero-bg: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%);
-            --card-bg: #ffffff;
-            --border-color: #f1f5f9;
-            --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.05);
-            --shadow-lg: 0 20px 40px rgba(239, 68, 68, 0.1);
-        }
-
-        [data-theme="dark"] {
-            /* الثيم الداكن الاحترافي */
-            --bg-page: #0a0f1d;
-            --navbar-bg: rgba(10, 15, 29, 0.95);
+            /* هويتنا البصرية الخاصة: أزرق ملكي عميق مع تيتانيوم وذهبي هادئ */
+            --bg-page: #070b14;
+            --navbar-bg: rgba(7, 11, 20, 0.85);
             --text-main: #f8fafc;
             --text-muted: #94a3b8;
-            --primary-red: #f87171;
-            --primary-red-hover: #ef4444;
-            --hero-bg: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
-            --card-bg: #111827;
-            --border-color: #1f2937;
-            --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.4);
-            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.6);
+            --brand-primary: #38bdf8; /* أزرق سماوي ناصع */
+            --brand-secondary: #6366f1; /* بنفسجي ملكي راقي */
+            --brand-gold: #f59e0b; /* ذهبي مميز */
+            --card-bg: rgba(15, 23, 42, 0.7);
+            --border-color: rgba(56, 189, 248, 0.15);
+            --shadow-glow: 0 0 30px rgba(56, 189, 248, 0.15);
+        }
+
+        [data-theme="light"] {
+            /* الثيم الفاتح الخاص بنا بألوان مريحة ومميزة */
+            --bg-page: #f8fafc;
+            --navbar-bg: rgba(248, 250, 252, 0.85);
+            --text-main: #0f172a;
+            --text-muted: #64748b;
+            --brand-primary: #0284c7;
+            --brand-secondary: #4f46e5;
+            --brand-gold: #d97706;
+            --card-bg: rgba(255, 255, 255, 0.8);
+            --border-color: rgba(2, 132, 199, 0.15);
+            --shadow-glow: 0 10px 30px rgba(2, 132, 199, 0.1);
         }
 
         * {
@@ -52,23 +50,34 @@
             color: var(--text-main);
             min-height: 100vh;
             overflow-x: hidden;
+            position: relative;
         }
 
-        /* شريط التنقل العلوي (Navbar) الاحترافي الثابت */
+        /* خلفية هندسية خاصة بنا فريدة من نوعها */
+        .custom-mesh-bg {
+            position: absolute;
+            top: 0; left: 0; width: 100%; height: 100%;
+            background-image: 
+                radial-gradient(var(--border-color) 1px, transparent 1px),
+                radial-gradient(var(--border-color) 1px, var(--bg-page) 1px);
+            background-size: 40px 40px;
+            background-position: 0 0, 20px 20px;
+            z-index: 0;
+            pointer-events: none;
+        }
+
+        /* شريط التنقل (Navbar) الخاص بنا */
         nav {
             position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
+            top: 0; left: 0; width: 100%;
             background: var(--navbar-bg);
-            backdrop-filter: blur(12px);
+            backdrop-filter: blur(16px);
             border-bottom: 1px solid var(--border-color);
             display: flex;
             justify-content: space-between;
             align-items: center;
-            padding: 15px 5%;
+            padding: 16px 6%;
             z-index: 1000;
-            box-shadow: var(--shadow-sm);
         }
 
         .nav-logo {
@@ -78,38 +87,24 @@
             text-decoration: none;
         }
 
-        .logo-badge {
-            background: var(--primary-red);
+        .logo-symbol {
+            width: 40px; height: 40px;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             color: white;
-            font-family: 'Poppins', sans-serif;
             font-weight: 900;
-            font-size: 18px;
-            padding: 6px 12px;
-            border-radius: 10px;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+            font-size: 20px;
+            box-shadow: var(--shadow-glow);
         }
 
         .logo-text {
             font-size: 20px;
-            font-weight: 800;
+            font-weight: 900;
             color: var(--text-main);
             letter-spacing: 0.5px;
-        }
-
-        .nav-links {
-            display: flex;
-            align-items: center;
-            gap: 25px;
-        }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-muted);
-            font-weight: 700;
-            font-size: 14px;
-        }
-        .nav-links a:hover {
-            color: var(--primary-red);
         }
 
         .nav-actions {
@@ -118,37 +113,33 @@
             gap: 15px;
         }
 
-        /* أزرار التسجيل في الـ Navbar */
         .btn-signin {
             padding: 9px 20px;
             background: transparent;
-            border: 2px solid var(--primary-red);
-            color: var(--primary-red);
+            border: 2px solid var(--brand-primary);
+            color: var(--brand-primary);
             border-radius: 10px;
             font-weight: 700;
             font-size: 14px;
             text-decoration: none;
-            cursor: pointer;
         }
         .btn-signin:hover {
-            background: var(--primary-red);
+            background: var(--brand-primary);
             color: white;
         }
 
         .btn-signup {
             padding: 10px 22px;
-            background: var(--primary-red);
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
             border: none;
             color: white;
             border-radius: 10px;
             font-weight: 700;
             font-size: 14px;
             text-decoration: none;
-            cursor: pointer;
-            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+            box-shadow: var(--shadow-glow);
         }
         .btn-signup:hover {
-            background: var(--primary-red-hover);
             transform: translateY(-2px);
         }
 
@@ -156,8 +147,7 @@
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             color: var(--text-main);
-            width: 40px;
-            height: 40px;
+            width: 40px; height: 40px;
             border-radius: 10px;
             cursor: pointer;
             display: flex;
@@ -166,54 +156,57 @@
             font-size: 16px;
         }
 
-        /* قسم الـ Hero الرئيسي الضخم والفخم */
+        /* قسم الـ Hero بتصميمنا الخاص الفريد */
         .hero-section {
-            margin-top: 80px;
-            min-height: 85vh;
-            background: var(--hero-bg);
+            margin-top: 100px;
+            min-height: 80vh;
             display: flex;
             align-items: center;
             justify-content: space-between;
-            padding: 60px 8%;
+            padding: 40px 8%;
             position: relative;
-            overflow: hidden;
-        }
-
-        .hero-content {
-            max-width: 600px;
             z-index: 2;
         }
 
-        .hero-tag {
-            display: inline-block;
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--primary-red);
-            padding: 6px 16px;
+        .hero-content {
+            max-width: 650px;
+        }
+
+        .custom-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 6px 18px;
             border-radius: 30px;
-            font-weight: 800;
+            font-weight: 700;
             font-size: 13px;
+            color: var(--brand-gold);
             margin-bottom: 20px;
-            letter-spacing: 0.5px;
+            box-shadow: var(--shadow-glow);
         }
 
         .hero-title {
-            font-size: clamp(36px, 5vw, 60px);
+            font-size: clamp(38px, 5vw, 56px);
             font-weight: 900;
-            line-height: 1.2;
+            line-height: 1.25;
             color: var(--text-main);
             margin-bottom: 20px;
         }
 
         .hero-title span {
-            color: var(--primary-red);
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
         }
 
         /* مؤشر الكتابة الاحترافي */
         .typing-cursor {
             display: inline-block;
             width: 4px;
-            height: 45px;
-            background-color: var(--primary-red);
+            height: 42px;
+            background-color: var(--brand-primary);
             margin-right: 5px;
             animation: blink 0.8s infinite;
             vertical-align: middle;
@@ -235,117 +228,103 @@
             font-weight: 600;
         }
 
-        .hero-cta-group {
+        .hero-actions {
             display: flex;
             gap: 20px;
         }
 
-        .btn-main-action {
+        .btn-custom-main {
             padding: 16px 35px;
-            background: var(--primary-red);
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-secondary));
             color: white;
-            font-size: 18px;
+            font-size: 17px;
             font-weight: 800;
             border-radius: 14px;
             text-decoration: none;
-            box-shadow: var(--shadow-lg);
+            box-shadow: var(--shadow-glow);
             display: inline-flex;
             align-items: center;
             gap: 10px;
         }
-        .btn-main-action:hover {
-            background: var(--primary-red-hover);
+        .btn-custom-main:hover {
             transform: translateY(-3px);
         }
 
-        /* جزء الصور والرسوم البيانية في الـ Hero */
-        .hero-visual {
+        /* الكارت الجانبي الفريد للمستر */
+        .hero-card-custom {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 35px;
+            border-radius: 28px;
+            backdrop-filter: blur(20px);
+            box-shadow: var(--shadow-glow);
+            width: 380px;
+            text-align: center;
             position: relative;
-            width: 450px;
-            height: 450px;
+        }
+
+        .teacher-avatar-placeholder {
+            width: 85px; height: 85px;
+            background: linear-gradient(135deg, var(--brand-primary), var(--brand-gold));
+            border-radius: 50%;
+            margin: 0 auto 20px auto;
             display: flex;
             align-items: center;
             justify-content: center;
+            font-size: 36px;
+            box-shadow: var(--shadow-glow);
         }
 
-        .hero-card-floating {
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            padding: 25px;
-            border-radius: 24px;
-            box-shadow: var(--shadow-lg);
-            width: 100%;
-            text-align: center;
-            position: relative;
-            z-index: 2;
-        }
-
-        .teacher-name-box {
-            font-size: 24px;
+        .teacher-name {
+            font-size: 22px;
             font-weight: 900;
             color: var(--text-main);
-            margin-top: 10px;
-        }
-        .teacher-subtitle {
-            font-size: 13px;
-            color: var(--text-muted);
-            font-weight: 700;
-            letter-spacing: 1px;
-            margin-top: 5px;
+            margin-bottom: 5px;
         }
 
-        /* قسم المميزات (Features Section) زي الكبار */
+        .teacher-role {
+            font-size: 13px;
+            color: var(--brand-primary);
+            font-weight: 800;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+        }
+
+        /* أقسام مميزاتنا الخاصة */
         .features-section {
             padding: 80px 8%;
-            background: var(--bg-page);
-        }
-
-        .section-header {
-            text-align: center;
-            max-width: 600px;
-            margin: 0 auto 50px auto;
-        }
-        .section-header h2 {
-            font-size: 32px;
-            font-weight: 900;
-            margin-bottom: 12px;
-            color: var(--text-main);
-        }
-        .section-header p {
-            color: var(--text-muted);
-            font-weight: 600;
-            font-size: 15px;
+            position: relative;
+            z-index: 2;
         }
 
         .features-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-            gap: 30px;
+            gap: 25px;
         }
 
-        .feature-card {
+        .feature-box {
             background: var(--card-bg);
             border: 1px solid var(--border-color);
             padding: 35px 30px;
-            border-radius: 20px;
-            box-shadow: var(--shadow-sm);
-            text-align: right;
+            border-radius: 24px;
+            backdrop-filter: blur(16px);
+            box-shadow: var(--shadow-glow);
         }
-        .feature-card:hover {
+        .feature-box:hover {
+            border-color: var(--brand-primary);
             transform: translateY(-5px);
-            border-color: var(--primary-red);
         }
 
-        .feature-icon {
-            width: 55px;
-            height: 55px;
-            background: rgba(239, 68, 68, 0.1);
-            color: var(--primary-red);
+        .feature-icon-custom {
+            width: 50px; height: 50px;
+            background: rgba(56, 189, 248, 0.1);
+            color: var(--brand-primary);
             border-radius: 14px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 24px;
+            font-size: 22px;
             margin-bottom: 20px;
             font-weight: 900;
         }
@@ -371,9 +350,10 @@
             color: var(--text-muted);
             font-size: 13px;
             font-weight: 700;
+            position: relative;
+            z-index: 2;
         }
 
-        /* التجاوب مع الموبايل */
         @media(max-width: 900px) {
             .hero-section {
                 flex-direction: column;
@@ -384,105 +364,89 @@
                 max-width: 100%;
                 margin-bottom: 40px;
             }
-            .hero-cta-group {
+            .hero-actions {
                 justify-content: center;
             }
-            .hero-visual {
+            .hero-card-custom {
                 width: 100%;
-                max-width: 350px;
-            }
-            .nav-links {
-                display: none;
             }
         }
     </style>
 </head>
-<body data-theme="light">
+<body data-theme="dark">
 
-    <!-- شريط التنقل العلوي الاحترافي (Navbar) -->
+    <div class="custom-mesh-bg"></div>
+
+    <!-- شريط التنقل الخاص بنا -->
     <nav>
         <a href="#" class="nav-logo">
-            <div class="logo-badge">LEADER</div>
+            <div class="logo-symbol">L</div>
             <div class="logo-text">The Leader</div>
         </a>
 
-        <div class="nav-links">
-            <a href="#">الرئيسية</a>
-            <a href="#">عن المنصة</a>
-            <a href="#">الكورسات</a>
-            <a href="#">آراء الطلاب</a>
-        </div>
-
         <div class="nav-actions">
-            <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeIconBtn">🌙</button>
+            <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeIconBtn">☀️</button>
             <a href="signin.html" class="btn-signin">تسجيل الدخول</a>
             <a href="signup.html" class="btn-signup">حساب جديد</a>
         </div>
     </nav>
 
-    <!-- قسم الـ Hero الرئيسي الملحمي -->
+    <!-- واجهة الـ Hero الخاصة بنا -->
     <section class="hero-section">
         <div class="hero-content">
-            <div class="hero-tag">✨ المنصة التعليمية الأولى لمادة الإنجليزية</div>
+            <div class="custom-badge">⭐ هوية بصرية حصرية وخاصة بمنصتنا</div>
             <h1 class="hero-title">
-                تعلم وفهم الإنجليزية <br>بأسلوب <span id="typedText"></span><span class="typing-cursor" id="typingCursor"></span>
+                ارتقِ بمستواك في الإنجليزية <br>بأسلوب <span id="typedText"></span><span class="typing-cursor" id="typingCursor"></span>
             </h1>
             <p class="hero-desc">
-                أهلاً بيك في بيتك الثاني! سواء كنت في أولى، ثانية، أو ثالثة ثانوي، هنا هتلاقي كل اللي تحتاجه علشان تقفل إنجليزي وتفهم المنهج صح وبأبسط الطرق الممكنة.
+                صممنا لك بيئة تعليمية متكاملة فريدة من نوعها، تجمع بين الأمان العالي، الشرح الاحترافي، والتجربة المرئية المريحة بعيداً عن القوالب المكررة.
             </p>
-            <div class="hero-cta-group">
-                <a href="signup.html" class="btn-main-action">اشترك دلوقتي ! 🚀</a>
+            <div class="hero-actions">
+                <a href="signup.html" class="btn-custom-main">انضم للابطال الآن 🚀</a>
             </div>
         </div>
 
-        <div class="hero-visual">
-            <div class="hero-card-floating">
-                <div class="feature-icon" style="margin: 0 auto 15px auto;">👨‍🏫</div>
-                <div class="teacher-name-box">Mr. Sherif Khafagy</div>
-                <div class="teacher-subtitle">EXPERT ENGLISH INSTRUCTOR</div>
-                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
-                <div style="font-size: 13px; color: var(--text-muted); font-weight: 700;">
-                    Developed By / Mohamed Sherif Khafagy
-                </div>
+        <div class="hero-card-custom">
+            <div class="teacher-avatar-placeholder">👨‍🏫</div>
+            <div class="teacher-name">Mr. Sherif Khafagy</div>
+            <div class="teacher-role">EXPERT ENGLISH INSTRUCTOR</div>
+            <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+            <div style="font-size: 12px; color: var(--text-muted); font-weight: 700;">
+                Designed & Developed By / Mohamed Sherif
             </div>
         </div>
     </section>
 
-    <!-- قسم المميزات والخصائص -->
+    <!-- أقسام المميزات الخاصة بنا -->
     <section class="features-section">
-        <div class="section-header">
-            <h2>ليه تختار منصة The Leader؟</h2>
-            <p>وفرنالك كل الأدوات البرمجية والتعليمية علشان نضمن تفوقك ووصولك للدرجة النهائية</p>
-        </div>
-
         <div class="features-grid">
-            <div class="feature-card">
-                <div class="feature-icon">📚</div>
-                <div class="feature-title">شروحات فيديو تفصيلية</div>
-                <div class="feature-desc">فيديوهات بأعلى جودة مع حماية كاملة ضد التسجيل لضمان تركيزك التام في المنهج.</div>
+            <div class="feature-box">
+                <div class="feature-icon-custom">💡</div>
+                <div class="feature-title">منظومة تعليمية مبتكرة</div>
+                <div class="feature-desc">شروحات تفصيلية مبنية على الفهم العميق والتحليل لإتقان قواعد ومهارات اللغة الإنجليزية.</div>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon">📝</div>
-                <div class="feature-title">اختبارات وواجبات دورية</div>
-                <div class="feature-desc">امتحانات إلكترونية بنظام المراجعة الفورية وعداد زمني يطابق نظام الثانوية العامة الحديث.</div>
+            <div class="feature-box">
+                <div class="feature-icon-custom">🛡️</div>
+                <div class="feature-title">أمان وحماية حصرية</div>
+                <div class="feature-desc">نظام حماية متطور ببصمة جهاز فريدة يحافظ على خصوصية حسابك ومجهودك الدراسي.</div>
             </div>
 
-            <div class="feature-card">
-                <div class="feature-icon">🔒</div>
-                <div class="feature-title">نظام أمان وحماية متطور</div>
-                <div class="feature-desc">حسابك محمي ببصمة جهاز فريدة تضمن عدم مشاركة الحسابات وتحافظ على مجهودك.</div>
+            <div class="feature-box">
+                <div class="feature-icon-custom">📊</div>
+                <div class="feature-title">متابعة واختبارات فورية</div>
+                <div class="feature-desc">تقييمات دورية وامتحانات ذكية تضمن قياس مستواك وتوجيهك للدرجة النهائية بكل ثقة.</div>
             </div>
         </div>
     </section>
 
     <footer>
-        &copy; 2026 The Leader In English - Developed By Mohamed Sherif Khafagy. All Rights Reserved.
+        &copy; 2026 The Leader In English - Designed by Mohamed Sherif. All Rights Reserved.
     </footer>
 
     <script>
         // ==========================================
-        // 1. كود الاتصال وقاعدة البيانات (Supabase)
+        // 1. ربط قاعدة البيانات الحية (Supabase)
         // ==========================================
         const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lNpmx_7cT_frhxmkMKnlVQ_D9MhsqWi';
@@ -499,10 +463,10 @@
         }
 
         // ==========================================
-        // 2. إدارة الثيمات (داكن / فاتح)
+        // 2. إدارة الثيمات الخاصة بنا
         // ==========================================
         function initTheme() {
-            const savedTheme = localStorage.getItem('platform_theme') || 'light';
+            const savedTheme = localStorage.getItem('platform_theme') || 'dark';
             document.body.setAttribute('data-theme', savedTheme);
             document.getElementById('themeIconBtn').innerText = savedTheme === 'dark' ? '☀️' : '🌙';
         }
@@ -516,20 +480,20 @@
         }
 
         // ==========================================
-        // 3. كتابة العنوان حرف بحرف وإخفاء المؤشر
+        // 3. كتابة العنوان التفاعلي الفريد
         // ==========================================
         const textTarget = document.getElementById('typedText');
         const cursorTarget = document.getElementById('typingCursor');
-        const phrase = "بسيط وممتع";
+        const phrase = "استثنائي ومبتكر";
         let charIndex = 0;
 
         function typeWriter() {
             if (charIndex < phrase.length) {
                 textTarget.innerHTML += phrase.charAt(charIndex);
                 charIndex++;
-                setTimeout(typeWriter, 100);
+                setTimeout(typeWriter, 90);
             } else {
-                cursorTarget.classList.add('hidden'); // يختفي تماماً شياكة
+                cursorTarget.classList.add('hidden');
             }
         }
 
