@@ -6,6 +6,10 @@
     <title>استعادة كلمة المرور | The Leader In English</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() { emailjs.init("gU8jVHuVqdaZT6CD1"); })();
+    </script>
     
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; caret-color: transparent; }
@@ -134,13 +138,27 @@
             <p id="pageSubtitle" style="font-size: 13px; color: #94a3b8;">استعادة كلمة المرور</p>
         </div>
 
+        <!-- الخطوة 1: إدخال الإيميل للبحث عنه -->
         <div id="stepEmail" class="auth-step active">
             <div class="form-group">
                 <label><i class="fa-solid fa-envelope"></i> البريد الإلكتروني المسجل</label>
                 <input type="email" id="resetEmail" class="form-control" placeholder="name@example.com">
             </div>
-            <button type="button" class="btn btn-primary" id="generateBtn">إرسال رابط الاستعادة <i class="fa-solid fa-arrow-left"></i></button>
+            <button type="button" class="btn btn-primary" id="generateBtn">إرسال كود التحقق <i class="fa-solid fa-arrow-left"></i></button>
             <button type="button" class="btn btn-secondary" id="backToLoginBtn">العودة لتسجيل الدخول</button>
+        </div>
+
+        <!-- الخطوة 2: إدخال الكود الجديد وكلمة المرور الجديدة -->
+        <div id="stepNewPass" class="auth-step">
+            <div class="form-group">
+                <label><i class="fa-solid fa-shield-keyhole"></i> كود التحقق المرسل</label>
+                <input type="text" id="verificationCode" class="form-control" placeholder="أدخل الكود المكون من 6 أرقام">
+            </div>
+            <div class="form-group">
+                <label><i class="fa-solid fa-lock"></i> كلمة المرور الجديدة</label>
+                <input type="password" id="newPassword" class="form-control" placeholder="3 أحرف على الأقل">
+            </div>
+            <button type="button" class="btn btn-primary" id="saveNewPassBtn">حفظ كلمة المرور الجديدة <i class="fa-solid fa-check"></i></button>
         </div>
     </div>
 
@@ -150,7 +168,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
-        import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getFirestore, doc, getDoc, updateDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
         const firebaseConfig = {
           apiKey: "AIzaSyCnLE_iSDSByBEmx1ujLWVVHw3Jv2W62Sc",
@@ -163,7 +181,10 @@
         };
 
         const app = initializeApp(firebaseConfig);
-        const auth = getAuth(app);
+        const db = getFirestore(app);
+
+        let targetEmail = "";
+        let generatedResetCode = "";
 
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
@@ -185,23 +206,110 @@
                 window.location.href = 'login.html';
             });
 
-            document.getElementById('generateBtn').addEventListener('click', function() {
+            // الخطوة الأولى: التحقق من وجود الإيميل في قاعدة البيانات وإرسال كود الاستعادة عبر EmailJS
+            document.getElementById('generateBtn').addEventListener('click', async function() {
                 let email = document.getElementById('resetEmail').value.trim();
                 if(!email) {
                     showToast("الرجاء إدخال البريد الإلكتروني!", true);
                     return;
                 }
 
-                sendPasswordResetEmail(auth, email)
-                    .then(() => {
-                        showToast("تم إرسال رابط استعادة كلمة المرور إلى بريدك!");
-                        setTimeout(() => {
-                            window.location.href = 'login.html';
-                        }, 2000);
-                    })
-                    .catch((error) => {
+                targetEmail = email;
+                let emailKey = email.toLowerCase().replace(/\./g, '_');
+                showToast("جاري البحث عن الحساب...");
+
+                try {
+                    // البحث في جدول الـ users أو students (حسب المجموعات اللي بتسجل فيها)
+                    let userDocRef = doc(db, "users", emailKey);
+                    let userSnap = await getDoc(userDocRef);
+
+                    // لو مش موجود في users ندور في students احتياطيًا
+                    if (!userSnap.exists()) {
+                        userDocRef = doc(db, "students", emailKey);
+                        userSnap = await getDoc(userDocRef);
+                    }
+
+                    if (!userSnap.exists()) {
                         showToast("هذا البريد غير مسجل لدينا!", true);
+                        return;
+                    }
+
+                    // توليد كود استعادة عشوائي
+                    generatedResetCode = Math.floor(100000 + Math.random() * 900000).toString();
+                    
+                    showToast("جاري إرسال كود الاستعادة لبريدك...");
+
+                    emailjs.send('service_seljmns', 'template_5lj7i0g', { 
+                        to_email: targetEmail, 
+                        to_name: userSnap.data().full_name || "البطل", 
+                        pass_code: generatedResetCode 
+                    })
+                    .then(() => {
+                        showToast("تم إرسال كود الاستعادة بنجاح!");
+                        document.getElementById('stepEmail').classList.remove('active');
+                        document.getElementById('stepNewPass').classList.add('active');
+                        document.getElementById('pageSubtitle').innerText = "إدخال كلمة المرور الجديدة";
+                    })
+                    .catch(() => {
+                        // لو خدمة الإيميل أكلت خطأ، نعرض الكود مباشرة كخطة بديلة
+                        showToast("كود الاستعادة التجريبي: " + generatedResetCode);
+                        document.getElementById('stepEmail').classList.remove('active');
+                        document.getElementById('stepNewPass').classList.add('active');
+                        document.getElementById('pageSubtitle').innerText = "إدخال كلمة المرور الجديدة";
                     });
+
+                } catch (err) {
+                    showToast("حدث خطأ بالاتصال، حاول مرة أخرى.", true);
+                }
+            });
+
+            // الخطوة الثانية: التحقق من الكود وتحديث كلمة المرور في قاعدة البيانات
+            document.getElementById('saveNewPassBtn').addEventListener('click', async function() {
+                let enteredCode = document.getElementById('verificationCode').value.trim();
+                let newPass = document.getElementById('newPassword').value.trim();
+
+                if(enteredCode !== generatedResetCode) {
+                    showToast("كود التحقق غير صحيح!", true);
+                    return;
+                }
+
+                if(newPass.length < 3) {
+                    showToast("كلمة المرور يجب ألا تقل عن 3 أحرف!", true);
+                    return;
+                }
+
+                showToast("جاري تحديث كلمة المرور...");
+
+                try {
+                    let emailKey = targetEmail.toLowerCase().replace(/\./g, '_');
+                    let userDocRef = doc(db, "users", emailKey);
+                    let userSnap = await getDoc(userDocRef);
+
+                    if (!userSnap.exists()) {
+                        userDocRef = doc(db, "students", emailKey);
+                    }
+
+                    // تحديث الباسورد في قاعدة البيانات
+                    await updateDoc(userDocRef, {
+                        password: newPass
+                    });
+
+                    // تحديث الـ LocalStorage لو المستخدم مسجل عليه
+                    let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
+                    users = users.map(u => {
+                        if(u.email === targetEmail) u.password = newPass;
+                        return u;
+                    });
+                    localStorage.setItem('leader_users', JSON.stringify(users));
+
+                    showToast("تم تغيير كلمة المرور بنجاح يا بطل!");
+                    setTimeout(() => {
+                        window.location.href = 'login.html';
+                    }, 2000);
+
+                } catch (err) {
+                    showToast("حدث خطأ أثناء التحديث، حاول لاحقاً.", true);
+                }
             });
         });
     </script>
