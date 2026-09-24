@@ -24,7 +24,6 @@
             position: relative;
         }
 
-        /* اسم الأستاذ فوق على الشمال */
         .instructor-brand {
             position: absolute;
             top: 25px;
@@ -47,7 +46,6 @@
             color: #b8860b;
         }
 
-        /* المحتوى الرئيسي في المنتصف */
         .hero-container {
             display: flex;
             flex-direction: column;
@@ -59,7 +57,6 @@
             max-width: 900px;
         }
 
-        /* العنوان الرئيسي اللي بيتكتب حرف بحرف */
         .typing-title {
             font-size: 48px;
             font-weight: 900;
@@ -78,7 +75,6 @@
             50% { border-color: #b8860b; }
         }
 
-        /* خط الليد المتحرك */
         .led-line {
             width: 150px;
             height: 4px;
@@ -95,7 +91,6 @@
             100% { width: 280px; box-shadow: 0 0 20px #d4af37, 0 0 30px #b8860b; }
         }
 
-        /* أزرار Sign In و Sign Up */
         .actions-wrapper {
             display: flex;
             gap: 30px;
@@ -174,13 +169,11 @@
 </head>
 <body>
 
-    <!-- اسم الأستاذ فوق على الشمال -->
     <div class="instructor-brand">
         <i class="fa-solid fa-chalkboard-user"></i>
         <span>Mr. Sherif Khafagy</span>
     </div>
 
-    <!-- المحتوى الرئيسي -->
     <div class="hero-container">
         <h1 class="typing-title" id="typingText"></h1>
         <div class="led-line"></div>
@@ -199,22 +192,33 @@
         جميع الحقوق محفوظة © The Leader In English
     </div>
 
-    <!-- استدعاء مكتبة Supabase للتحقق من الجلسة -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const SUPABASE_URL = 'https://gttmvtzsbzcmyjfpavwk.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_a865uHBhaj8j0488nCLJnw_M7e3BQuh';
-        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
 
-        // التحقق لو الطالب مسجل دخول بالفعل، نحوله للوحة التحكم مباشرة
-        async function checkActiveSession() {
-            const { data: { session } } = await _supabase.auth.getSession();
-            if (session) {
-                window.location.href = 'dashboard.html'; // اسم صفحة لوحة التحكم بتاعتك
-            }
+        const firebaseConfig = {
+          apiKey: "AIzaSyCnLE_iSDSByBEmx1ujLWVVHw3Jv2W62Sc",
+          authDomain: "the-leader-c2f06.firebaseapp.com",
+          projectId: "the-leader-c2f06",
+          storageBucket: "the-leader-c2f06.firebasestorage.app",
+          messagingSenderId: "693921211082",
+          appId: "1:693921211082:web:640e7e5528a9891d368a33",
+          measurementId: "G-RK4LP1HMJY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+        const analytics = getAnalytics(app);
+
+        function checkActiveSession() {
+            onAuthStateChanged(auth, (user) => {
+                if (user) {
+                    window.location.href = 'dashboard.html';
+                }
+            });
         }
 
-        // كود الكتابة حرف بحرف
         const textToType = "The Leader In English";
         let index = 0;
         const speed = 110;
@@ -229,7 +233,7 @@
 
         window.onload = function() {
             setTimeout(typeWriter, 500);
-            checkActiveSession(); // فحص الجلسة أول ما الصفحة تفتح
+            checkActiveSession();
         };
     </script>
 </body>
