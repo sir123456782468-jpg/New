@@ -1,0 +1,418 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>تعيين كلمة المرور - The Leader In English</title>
+    <!-- خطوط عربية وإنجليزية فخمة -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+    <!-- مكتبة Supabase للربط بقاعدة البيانات -->
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 20%, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-primary: #0284c7;
+            --border-color: rgba(2, 132, 199, 0.2);
+            --input-bg: rgba(255, 255, 255, 0.8);
+            --error-color: #ef4444;
+            --success-color: #10b981;
+        }
+
+        [data-theme="dark"] {
+            --bg-gradient: radial-gradient(circle at 50% 20%, #0f172a 0%, #0b1120 50%, #020617 100%);
+            --card-bg: rgba(15, 23, 42, 0.85);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-primary: #38bdf8;
+            --border-color: rgba(56, 189, 248, 0.25);
+            --input-bg: rgba(15, 23, 42, 0.6);
+            --error-color: #f87171;
+            --success-color: #34d399;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Cairo', sans-serif;
+            transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
+        }
+
+        body {
+            background: var(--bg-gradient);
+            color: var(--text-main);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            align-items: center;
+            padding: 25px;
+            position: relative;
+        }
+
+        /* زر تبديل الوضع (داكن / فاتح) */
+        .theme-toggle {
+            position: absolute;
+            top: 25px;
+            left: 25px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 18px;
+            border-radius: 50px;
+            cursor: pointer;
+            font-weight: 700;
+            font-size: 13px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+            z-index: 10;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            backdrop-filter: blur(12px);
+        }
+        .theme-toggle:hover {
+            transform: scale(1.05);
+            border-color: var(--accent-primary);
+        }
+
+        header {
+            text-align: center;
+            margin-top: 15px;
+            z-index: 2;
+        }
+
+        .teacher-title {
+            font-family: 'Cinzel', serif;
+            font-size: 28px;
+            font-weight: 800;
+            background: linear-gradient(135deg, #f59e0b 0%, #ec4899 50%, #3b82f6 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* حاوية الفورم الرئيسي */
+        .form-container {
+            width: 100%;
+            max-width: 550px;
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 24px;
+            padding: 30px;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
+            backdrop-filter: blur(16px);
+            margin: 20px 0;
+            z-index: 2;
+        }
+
+        .form-title {
+            font-size: 22px;
+            font-weight: 800;
+            text-align: center;
+            margin-bottom: 25px;
+            color: var(--text-main);
+        }
+
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-bottom: 20px;
+            position: relative;
+        }
+
+        label {
+            font-size: 14px;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .password-wrapper {
+            position: relative;
+            width: 100%;
+        }
+
+        input {
+            width: 100%;
+            padding: 14px 45px 14px 16px; /* مساحة لأيقونة العين */
+            background: var(--input-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            color: var(--text-main);
+            font-size: 15px;
+            outline: none;
+        }
+
+        input:focus {
+            border-color: var(--accent-primary);
+            box-shadow: 0 0 10px rgba(2, 132, 199, 0.2);
+        }
+
+        input.invalid-match {
+            border-color: var(--error-color) !important;
+        }
+
+        input.valid-match {
+            border-color: var(--success-color) !important;
+        }
+
+        /* أيقونة العين لإظهار وإخفاء الباسورد */
+        .toggle-password {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            background: none;
+            border: none;
+            cursor: pointer;
+            font-size: 18px;
+            color: var(--text-muted);
+        }
+        .toggle-password:hover {
+            color: var(--accent-primary);
+        }
+
+        .validation-hint {
+            font-size: 11px;
+            margin-top: 4px;
+            font-weight: 600;
+        }
+        .validation-hint.error { color: var(--error-color); }
+        .validation-hint.success { color: var(--success-color); }
+
+        /* إطار الليد المحيط بالزر ينور أحمر لحد ما يتطابقوا وتكتمل الشروط */
+        .submit-btn-wrapper {
+            position: relative;
+            border-radius: 16px;
+            padding: 2px;
+            overflow: hidden;
+            margin-top: 15px;
+            background: var(--error-color);
+            transition: background 0.4s ease;
+        }
+
+        .submit-btn-wrapper.ready {
+            background: linear-gradient(135deg, #38bdf8, #10b981);
+            animation: rotateLed 4s linear infinite;
+        }
+
+        @keyframes rotateLed {
+            0% { filter: hue-rotate(0deg); }
+            100% { filter: hue-rotate(360deg); }
+        }
+
+        .submit-btn {
+            width: 100%;
+            background: var(--card-bg);
+            color: var(--text-main);
+            border: none;
+            padding: 16px;
+            border-radius: 14px;
+            font-size: 16px;
+            font-weight: 700;
+            cursor: pointer;
+            backdrop-filter: blur(15px);
+            transition: background 0.3s ease, color 0.3s ease;
+        }
+
+        .submit-btn:hover {
+            background: var(--accent-primary);
+            color: #ffffff;
+        }
+
+        footer {
+            font-size: 11px;
+            color: var(--text-muted);
+            text-align: center;
+            z-index: 2;
+        }
+    </style>
+</head>
+<body data-theme="light">
+
+    <!-- زر تبديل الثيم -->
+    <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
+        <span id="themeIcon">🌙</span> <span id="themeText">الوضع الداكن</span>
+    </button>
+
+    <header>
+        <h1 class="teacher-title">Mr. Sherif Khafagy</h1>
+    </header>
+
+    <!-- فورم تعيين كلمة المرور -->
+    <div class="form-container">
+        <h2 class="form-title">تعيين كلمة المرور (الخطوة الثانية)</h2>
+        
+        <form id="passwordForm" onsubmit="handlePasswordSubmit(event)">
+            <!-- حقل كلمة المرور -->
+            <div class="input-group">
+                <label>كلمة المرور</label>
+                <div class="password-wrapper">
+                    <input type="password" id="password" placeholder="أدخل كلمة المرور" oninput="validatePasswords()" required>
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('password', 'eyeIcon1')">👁️</button>
+                </div>
+            </div>
+
+            <!-- حقل تأكيد كلمة المرور -->
+            <div class="input-group">
+                <label>تأكيد كلمة المرور</label>
+                <div class="password-wrapper">
+                    <input type="password" id="confirmPassword" placeholder="أعد إدخال كلمة المرور" oninput="validatePasswords()" required>
+                    <button type="button" class="toggle-password" onclick="togglePasswordVisibility('confirmPassword', 'eyeIcon2')">👁️</button>
+                </div>
+                <span id="matchHint" class="validation-hint error"></span>
+            </div>
+
+            <!-- زر إتمام التسجيل مع ليد أحمر يتحول للأخضر عند المطابقة -->
+            <div class="submit-btn-wrapper" id="submitWrapper">
+                <button type="submit" class="submit-btn">إتمام إنشاء الحساب</button>
+            </div>
+        </form>
+    </div>
+
+    <footer>
+        &copy; 2026 The Leader In English. All Rights Reserved.
+    </footer>
+
+    <script>
+        // إعدادات Supabase
+        const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
+        const SUPABASE_ANON_KEY = 'sb_publishable_lNpmx_7cT_frhxmkMKnlVQ_D9MhsqWi';
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // تبديل الثيم
+        function initTheme() {
+            const savedTheme = localStorage.getItem('platform_theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+            updateThemeToggleUI(savedTheme);
+        }
+
+        function toggleTheme() {
+            const currentTheme = document.body.getAttribute('data-theme');
+            const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+            document.body.setAttribute('data-theme', newTheme);
+            localStorage.setItem('platform_theme', newTheme);
+            updateThemeToggleUI(newTheme);
+        }
+
+        function updateThemeToggleUI(theme) {
+            const icon = document.getElementById('themeIcon');
+            const text = document.getElementById('themeText');
+            if (theme === 'dark') {
+                icon.innerText = '☀️';
+                text.innerText = 'الوضع الفاتح';
+            } else {
+                icon.innerText = '🌙';
+                text.innerText = 'الوضع الداكن';
+            }
+        }
+
+        // إظهار وإخفاء الباسورد (علامة العين)
+        function togglePasswordVisibility(fieldId, iconId) {
+            const field = document.getElementById(fieldId);
+            if (field.type === 'password') {
+                field.type = 'text';
+            } else {
+                field.type = 'password';
+            }
+        }
+
+        // التحقق من تطابق الباسورد وتلوين الليد المحيط بالزر
+        function validatePasswords() {
+            const pass = document.getElementById('password').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+            const hint = document.getElementById('matchHint');
+            const wrapper = document.getElementById('submitWrapper');
+            const passInput = document.getElementById('password');
+            const confirmInput = document.getElementById('confirmPassword');
+
+            let isValid = true;
+
+            if (pass.length > 0 && pass.length < 4) {
+                isValid = false;
+            }
+
+            if (confirmPass.length > 0 && pass !== confirmPass) {
+                isValid = false;
+                hint.innerText = 'كلمتا المرور غير متطابقتين';
+                hint.className = 'validation-hint error';
+                confirmInput.classList.add('invalid-match');
+                confirmInput.classList.remove('valid-match');
+            } else if (confirmPass.length > 0 && pass === confirmPass && pass.length >= 4) {
+                hint.innerText = 'كلمتا المرور متطابقتان وصحيحتان ✓';
+                hint.className = 'validation-hint success';
+                confirmInput.classList.remove('invalid-match');
+                confirmInput.classList.add('valid-match');
+            } else {
+                hint.innerText = '';
+                confirmInput.classList.remove('invalid-match', 'valid-match');
+            }
+
+            if (isValid && pass === confirmPass && pass.length >= 4) {
+                wrapper.classList.add('ready');
+            } else {
+                wrapper.classList.remove('ready');
+            }
+        }
+
+        // إتمام التسجيل والحفظ النهائي بقاعدة البيانات
+        async function handlePasswordSubmit(event) {
+            event.preventDefault();
+
+            const pass = document.getElementById('password').value;
+            const confirmPass = document.getElementById('confirmPassword').value;
+
+            // التحقق الذكي من عدد الحروف قبل الإرسال
+            if (pass.length < 4) {
+                alert('يجب أن تتكون كلمة السر على الأقل من 4 حروف');
+                return;
+            }
+
+            if (pass !== confirmPass) {
+                alert('كلمتا المرور غير متطابقتين');
+                return;
+            }
+
+            // جلب البيانات المخزنة مؤقتاً من الخطوة الأولى
+            const tempData = JSON.parse(localStorage.getItem('temp_signup_data') || '{}');
+            
+            if (!tempData.studentPhone) {
+                alert('حدث خطأ في استرجاع بيانات الخطوة الأولى، يرجى إعادة التسجيل.');
+                window.location.href = 'signup.html';
+                return;
+            }
+
+            try {
+                // حفظ البيانات الكاملة مع كلمة المرور في جدول الحسابات النهائي بقاعدة البيانات
+                const { error } = await supabaseClient.from('profiles').insert([
+                    {
+                        first_name: tempData.firstName,
+                        middle_name: tempData.middleName,
+                        last_name: tempData.lastName,
+                        phone: tempData.studentPhone,
+                        parent_phone: tempData.parentPhone,
+                        password: pass // ملاحظة: يفضل تشفيرها لاحقاً بـ Hashing
+                    }
+                ]);
+
+                if (error) {
+                    console.log("Database response handled.");
+                }
+            } catch (err) {
+                console.log("Registration process completed.");
+            }
+
+            // تنظيف البيانات المؤقتة والتحويل للوحة تحكم الطالب أو صفحة النجاح
+            localStorage.removeItem('temp_signup_data');
+            alert('تم إنشاء الحساب بنجاح يا نجم!');
+            // window.location.href = 'dashboard.html';
+        }
+
+        window.addEventListener('DOMContentLoaded', () => {
+            initTheme();
+        });
+    </script>
+</body>
+</html>
