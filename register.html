@@ -199,32 +199,22 @@
             let fullName = `${n1} ${n2} ${n3}`;
             let generatedCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-            // حفظ البيانات في الـ LocalStorage عشان الخطوة الثانية تقراها وتطابق الكود فوراً
+            // حفظ البيانات مؤقتًا في المتصفح فقط بدون كتابة شيء في فايرباس الآن
             let tempData = { fullName, phone, guardianPhone, email, generatedCode };
             localStorage.setItem('temp_reg_data', JSON.stringify(tempData));
 
-            showToast("جاري إرسال كود التحقق إلى بريدك الإلكتروني...");
+            showToast("جاري إرسال كود التحقق إلى بريدك...");
 
-            // إرسال الإيميل بشكل مباشر وصريح عبر EmailJS مع انتظار نجاح الإرسال والانتقال السليم
-            emailjs.send('service_seljmns', 'template_5lj7i0g', {
-                to_email: email,
-                to_name: fullName,
-                pass_code: generatedCode
-            })
-            .then(function(response) {
-                showToast("تم إرسال كود التحقق بنجاح!");
-                setTimeout(() => {
-                    window.location.href = "register_step2.html";
-                }, 1000);
-            })
-            .catch(function(error) {
-                // لو حصل أي خطأ في الاتصال، بنعرض الكود في التوست كضمان تام للمتابعة وعدم تعطيل الطالب
-                console.error("EmailJS Error:", error);
-                showToast("كود التحقق التجريبي: " + generatedCode, true);
-                setTimeout(() => {
-                    window.location.href = "register_step2.html";
-                }, 3000);
-            });
+            let templateParams = { to_email: email, to_name: fullName, pass_code: generatedCode };
+
+            emailjs.send('service_seljmns', 'template_5lj7i0g', templateParams)
+                .then(function(response) {
+                    showToast("تم إرسال الكود بنجاح!");
+                    setTimeout(() => { window.location.href = "register_step2.html"; }, 1200);
+                }, function(error) {
+                    showToast("الكود التجريبي: " + generatedCode, true);
+                    setTimeout(() => { window.location.href = "register_step2.html"; }, 2500);
+                });
         }
     </script>
 </body>
