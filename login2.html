@@ -82,13 +82,6 @@
             transition: all 0.3s ease;
         }
         .form-control:focus { border-color: #d4af37; box-shadow: 0 0 0 3px rgba(212, 175, 55, 0.15); }
-        .password-icon {
-            position: absolute;
-            left: 15px;
-            top: 42px;
-            color: #94a3b8;
-            cursor: pointer;
-        }
         
         .btn {
             width: 100%;
@@ -141,24 +134,13 @@
             <p id="pageSubtitle" style="font-size: 13px; color: #94a3b8;">استعادة كلمة المرور</p>
         </div>
 
-        <!-- الخطوة الأولى: إدخال الإيميل -->
         <div id="stepEmail" class="auth-step active">
             <div class="form-group">
                 <label><i class="fa-solid fa-envelope"></i> البريد الإلكتروني المسجل</label>
                 <input type="email" id="resetEmail" class="form-control" placeholder="name@example.com">
             </div>
-            <button type="button" class="btn btn-primary" id="generateBtn">التحقق من البريد <i class="fa-solid fa-arrow-left"></i></button>
+            <button type="button" class="btn btn-primary" id="generateBtn">إرسال رابط الاستعادة <i class="fa-solid fa-arrow-left"></i></button>
             <button type="button" class="btn btn-secondary" id="backToLoginBtn">العودة لتسجيل الدخول</button>
-        </div>
-
-        <!-- الخطوة الثانية: كلمة المرور الجديدة -->
-        <div id="stepNewPassword" class="auth-step">
-            <div class="form-group">
-                <label><i class="fa-solid fa-lock"></i> كلمة المرور الجديدة</label>
-                <input type="password" id="newPasswordInput" class="form-control" placeholder="أدخل كلمة المرور الجديدة">
-                <i class="fa-solid fa-eye password-icon" id="togglePassword"></i>
-            </div>
-            <button type="button" class="btn btn-primary" id="updatePasswordBtn">تحديث كلمة المرور <i class="fa-solid fa-check"></i></button>
         </div>
     </div>
 
@@ -166,7 +148,23 @@
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, sendPasswordResetEmail } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyCnLE_iSDSByBEmx1ujLWVVHw3Jv2W62Sc",
+          authDomain: "the-leader-c2f06.firebaseapp.com",
+          projectId: "the-leader-c2f06",
+          storageBucket: "the-leader-c2f06.firebasestorage.app",
+          messagingSenderId: "693921211082",
+          appId: "1:693921211082:web:640e7e5528a9891d368a33",
+          measurementId: "G-RK4LP1HMJY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
@@ -182,31 +180,7 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        function switchStep(stepId, subtitleText) {
-            document.querySelectorAll('.auth-step').forEach(step => step.classList.remove('active'));
-            document.getElementById(stepId).classList.add('active');
-            document.getElementById('pageSubtitle').innerText = subtitleText;
-        }
-
-        let resetTargetEmail = "";
-
         document.addEventListener('DOMContentLoaded', function() {
-            const togglePassword = document.getElementById('togglePassword');
-            if(togglePassword) {
-                togglePassword.addEventListener('click', function() {
-                    const passwordInput = document.getElementById('newPasswordInput');
-                    if (passwordInput.type === 'password') {
-                        passwordInput.type = 'text';
-                        togglePassword.classList.remove('fa-eye');
-                        togglePassword.classList.add('fa-eye-slash');
-                    } else {
-                        passwordInput.type = 'password';
-                        togglePassword.classList.remove('fa-eye-slash');
-                        togglePassword.classList.add('fa-eye');
-                    }
-                });
-            }
-
             document.getElementById('backToLoginBtn').addEventListener('click', function() {
                 window.location.href = 'login.html';
             });
@@ -218,40 +192,16 @@
                     return;
                 }
 
-                let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
-                let userExists = users.some(u => u.email === email);
-
-                if(userExists) {
-                    resetTargetEmail = email;
-                    showToast("تم التعرف على الحساب بنجاح!");
-                    setTimeout(() => {
-                        switchStep('stepNewPassword', 'إنشاء كلمة مرور جديدة');
-                    }, 1000);
-                } else {
-                    showToast("هذا البريد غير مسجل لدينا!", true);
-                }
-            });
-
-            document.getElementById('updatePasswordBtn').addEventListener('click', function() {
-                let newPassword = document.getElementById('newPasswordInput').value.trim();
-                if(!newPassword || newPassword.length < 3) {
-                    showToast("كلمة المرور يجب ألا تقل عن 3 أحرف!", true);
-                    return;
-                }
-
-                let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
-                let userIndex = users.findIndex(u => u.email === resetTargetEmail);
-
-                if(userIndex !== -1) {
-                    users[userIndex].password = newPassword;
-                    localStorage.setItem('leader_users', JSON.stringify(users));
-                    showToast("تم تغيير كلمة المرور بنجاح! جاري تحويلك...");
-                    setTimeout(() => {
-                        window.location.href = 'login.html';
-                    }, 2000);
-                } else {
-                    showToast("حدث خطأ ما، حاول مجدداً.", true);
-                }
+                sendPasswordResetEmail(auth, email)
+                    .then(() => {
+                        showToast("تم إرسال رابط استعادة كلمة المرور إلى بريدك!");
+                        setTimeout(() => {
+                            window.location.href = 'login.html';
+                        }, 2000);
+                    })
+                    .catch((error) => {
+                        showToast("هذا البريد غير مسجل لدينا!", true);
+                    });
             });
         });
     </script>
