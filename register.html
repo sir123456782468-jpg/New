@@ -167,12 +167,22 @@
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
-    <!-- مكتبة Supabase للتخزين السحابي -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const SUPABASE_URL = 'https://gttmvtzsbzcmyjfpavwk.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_a865uHBhaj8j0488nCLJnw_M7e3BQuh';
-        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyCnLE_iSDSByBEmx1ujLWVVHw3Jv2W62Sc",
+          authDomain: "the-leader-c2f06.firebaseapp.com",
+          projectId: "the-leader-c2f06",
+          storageBucket: "the-leader-c2f06.firebasestorage.app",
+          messagingSenderId: "693921211082",
+          appId: "1:693921211082:web:640e7e5528a9891d368a33",
+          measurementId: "G-RK4LP1HMJY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
 
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
@@ -189,7 +199,7 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        async function proceedToVerification() {
+        window.proceedToVerification = async function() {
             let n1 = document.getElementById('name1').value.trim();
             let n2 = document.getElementById('name2').value.trim();
             let n3 = document.getElementById('name3').value.trim();
@@ -208,11 +218,14 @@
             let tempData = { fullName, phone, guardianPhone, email, generatedCode };
             localStorage.setItem('temp_reg_data', JSON.stringify(tempData));
 
-            // تخزين البيانات مؤقتاً في جدول سحابي عبر Supabase (اختياري كنسخة احتياطية سحابية)
             try {
-                await _supabase.from('pending_registrations').upsert([
-                    { email: email, full_name: fullName, phone: phone, guardian_phone: guardianPhone, verification_code: generatedCode }
-                ], { onConflict: 'email' });
+                await setDoc(doc(db, "pending_registrations", email), {
+                    email: email,
+                    full_name: fullName,
+                    phone: phone,
+                    guardian_phone: guardianPhone,
+                    verification_code: generatedCode
+                });
             } catch (err) {
                 console.log("Cloud sync note:", err);
             }
