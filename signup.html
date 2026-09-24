@@ -241,6 +241,11 @@
             </div>
 
             <div class="input-group">
+                <label>البريد الإلكتروني</label>
+                <input type="email" id="studentEmail" placeholder="example@domain.com" required>
+            </div>
+
+            <div class="input-group">
                 <label>رقم الهاتف الشخصي</label>
                 <input type="tel" id="studentPhone" placeholder="أدخل رقمك المكون من 11 رقماً" maxlength="11" oninput="validatePhone('studentPhone', 'studentHint')" required>
                 <span id="studentHint" class="validation-hint error">يجب أن يبدأ بـ 01 ويتكون من 11 رقماً</span>
@@ -253,7 +258,7 @@
             </div>
 
             <div class="submit-btn-wrapper" id="submitWrapper">
-                <button type="submit" class="submit-btn">التالي (متابعة)</button>
+                <button type="submit" class="submit-btn" id="submitBtnText">إرسال كود التحقق (OTP)</button>
             </div>
         </form>
     </div>
@@ -316,10 +321,11 @@
         function checkFormReadiness() {
             const studentVal = document.getElementById('studentPhone').value.trim();
             const parentVal = document.getElementById('parentPhone').value.trim();
+            const emailVal = document.getElementById('studentEmail').value.trim();
             const phoneRegex = /^01[0-9]{9}$/;
             const wrapper = document.getElementById('submitWrapper');
 
-            if (phoneRegex.test(studentVal) && phoneRegex.test(parentVal)) {
+            if (phoneRegex.test(studentVal) && phoneRegex.test(parentVal) && emailVal.includes('@')) {
                 wrapper.classList.add('ready');
             } else {
                 wrapper.classList.remove('ready');
@@ -332,6 +338,7 @@
             const firstName = document.getElementById('firstName').value.trim();
             const middleName = document.getElementById('middleName').value.trim();
             const lastName = document.getElementById('lastName').value.trim();
+            const studentEmail = document.getElementById('studentEmail').value.trim();
             const studentPhone = document.getElementById('studentPhone').value.trim();
             const parentPhone = document.getElementById('parentPhone').value.trim();
 
@@ -341,44 +348,36 @@
                 return;
             }
 
-            try {
-                // 1. التأكد أن الرقم لم يتم التسجيل به مسبقاً في جدول الحسابات الدائمة
-                const { data: existingUser, error: checkError } = await supabaseClient
-                    .from('profiles')
-                    .select('phone')
-                    .eq('phone', studentPhone)
-                    .maybeSingle();
+            const submitBtn = document.getElementById('submitBtnText');
+            submitBtn.innerText = 'جاري إرسال كود التحقق...';
 
-                if (existingUser) {
-                    alert('هذا الرقم مسجل مسبقاً بالفعل! لا يمكن إنشاء أكثر من حساب بنفس الرقم.');
+            try {
+                // 1. إرسال كود الـ OTP عبر Supabase إلى البريد الإلكتروني
+                const { data, error } = await supabaseClient.auth.signInWithOtp({
+                    email: studentEmail,
+                    options: {
+                        shouldCreateUser: true, // يسمح بإنشاء المستخدم مؤقتاً
+                    }
+                });
+
+                if (error) {
+                    alert('خطأ في إرسال الكود: ' + error.message);
+                    submitBtn.innerText = 'إرسال كود التحقق (OTP)';
                     return;
                 }
 
-                // 2. توليد رمز متغير (Dynamic Token) يتغير كل مرة للطالب
-                const dynamicToken = 'token_' + Math.random().toString(36).substring(2) + Date.now().toString(36);
-
-                // 3. حفظ البيانات مؤقتاً ومعها التوكن المتغير في قاعدة البيانات أو التخزين المؤقت
-                const userData = { firstName, middleName, lastName, studentPhone, parentPhone, dynamicToken };
+                // 2. حفظ بيانات الطالب مؤقتاً في LocalStorage عشان ننقلها للصفحات اللي بعد كده
+                const userData = { firstName, middleName, lastName, studentEmail, studentPhone, parentPhone };
                 localStorage.setItem('temp_signup_data', JSON.stringify(userData));
 
-                await supabaseClient.from('temp_students').upsert([
-                    { first_name: firstName, middle_name: middleName, last_name: lastName, phone: studentPhone, parent_phone: parentPhone, verify_token: dynamicToken }
-                ], { onConflict: 'phone' });
+                alert('تم إرسال كود التحقق (OTP) إلى بريدك الإلكتروني بنجاح!');
 
-                // 4. بناء رابط الخطوة الثانية المتغير والخاص بالطالب فقط
-                const step2Url = `${window.location.origin}/signup-step2.html?phone=${studentPhone}&token=${dynamicToken}`;
-
-                // 5. إرسال الرسالة عبر الواتساب للطالب باسمه والرابط المتغير
-                const whatsappMessage = `أهلاً بك يا ${firstName} ${middleName} ${lastName} مع مستر شريف خفاجي.\nلتكملة تسجيل حسابك بأمان، يرجى الدخول حصرياً على رابط الخطوة الثانية الخاص بك:\n${step2Url}`;
-                
-                const formattedStudentPhone = '2' + studentPhone;
-                const whatsappUrl = `https://wa.me/${formattedStudentPhone}?text=${encodeURIComponent(whatsappMessage)}`;
-                
-                window.open(whatsappUrl, '_blank');
-                window.location.href = step2Url;
+                // 3. التوجيه لصفحة إدخال الكود المنفصلة (verify-code.html) ومعها الإيميل في الـ URL
+                window.location.href = `verify-code.html?email=${encodeURIComponent(studentEmail)}`;
 
             } catch (err) {
-                alert('حدث خطأ أثناء الاتصال بقاعدة البيانات، يرجى المحاولة مرة أخرى.');
+                alert('حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.');
+                submitBtn.innerText = 'إرسال كود التحقق (OTP)';
             }
         }
 
