@@ -4,35 +4,39 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>The Leader In English - Mr. Sherif Khafagy</title>
-    <!-- استدعاء خط Cairo الاحترافي المريح للعين -->
-    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800&display=swap" rel="stylesheet">
+    <!-- خطوط عصرية فخمة -->
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Poppins:wght@600;700;900&display=swap" rel="stylesheet">
     <!-- مكتبة Supabase للربط بقاعدة البيانات -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         :root {
-            /* الوضع الفاتح: تصميم ناصح، مرتب، أبيض هادئ مع درجات كحلي وذهبي خفيف */
-            --bg-page: #f8fafc;
-            --card-bg: #ffffff;
+            /* ثيم احترافي ناصع ومريح: أبيض نقي مع أحمر ناري راقي وتيتانيوم */
+            --bg-page: #ffffff;
+            --navbar-bg: rgba(255, 255, 255, 0.95);
             --text-main: #0f172a;
-            --text-secondary: #475569;
-            --border-subtle: #e2e8f0;
-            --primary-color: #1e3a8a; /* كحلي ملكي رايق */
-            --accent-gold: #d97706;   /* لمسة ذهبية شيك */
-            --shadow-subtle: 0 4px 20px rgba(15, 23, 42, 0.05);
-            --shadow-hover: 0 10px 30px rgba(15, 23, 42, 0.1);
+            --text-muted: #64748b;
+            --primary-red: #ef4444; /* أحمر ناري فخم زي الكبار */
+            --primary-red-hover: #dc2626;
+            --hero-bg: linear-gradient(135deg, #fef2f2 0%, #fff1f2 100%);
+            --card-bg: #ffffff;
+            --border-color: #f1f5f9;
+            --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.05);
+            --shadow-lg: 0 20px 40px rgba(239, 68, 68, 0.1);
         }
 
         [data-theme="dark"] {
-            /* الوضع الداكن: كحلي داكن فخم جداً ومريح للقراءة مش أسود مطفي */
-            --bg-page: #090d16;
+            /* الثيم الداكن الاحترافي */
+            --bg-page: #0a0f1d;
+            --navbar-bg: rgba(10, 15, 29, 0.95);
+            --text-main: #f8fafc;
+            --text-muted: #94a3b8;
+            --primary-red: #f87171;
+            --primary-red-hover: #ef4444;
+            --hero-bg: linear-gradient(135deg, #1e1b4b 0%, #0f172a 100%);
             --card-bg: #111827;
-            --text-main: #f9fafb;
-            --text-secondary: #9ca3af;
-            --border-subtle: #1f2937;
-            --primary-color: #3b82f6;
-            --accent-gold: #fbbf24;
-            --shadow-subtle: 0 4px 20px rgba(0, 0, 0, 0.3);
-            --shadow-hover: 0 10px 30px rgba(0, 0, 0, 0.5);
+            --border-color: #1f2937;
+            --shadow-sm: 0 4px 20px rgba(0, 0, 0, 0.4);
+            --shadow-lg: 0 20px 40px rgba(0, 0, 0, 0.6);
         }
 
         * {
@@ -40,103 +44,176 @@
             margin: 0;
             padding: 0;
             font-family: 'Cairo', sans-serif;
-            transition: background-color 0.3s ease, color 0.3s ease, border-color 0.3s ease;
+            transition: background 0.3s ease, color 0.3s ease, border-color 0.3s ease;
         }
 
         body {
             background-color: var(--bg-page);
             color: var(--text-main);
             min-height: 100vh;
+            overflow-x: hidden;
+        }
+
+        /* شريط التنقل العلوي (Navbar) الاحترافي الثابت */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            background: var(--navbar-bg);
+            backdrop-filter: blur(12px);
+            border-bottom: 1px solid var(--border-color);
             display: flex;
-            flex-direction: column;
             justify-content: space-between;
             align-items: center;
-            padding: 30px 20px;
-            position: relative;
+            padding: 15px 5%;
+            z-index: 1000;
+            box-shadow: var(--shadow-sm);
         }
 
-        /* زر تبديل الثيم المرتب في الزاوية */
-        .theme-toggle {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-subtle);
-            color: var(--text-main);
-            padding: 8px 16px;
-            border-radius: 8px;
-            cursor: pointer;
-            font-weight: 600;
-            font-size: 13px;
-            box-shadow: var(--shadow-subtle);
+        .nav-logo {
             display: flex;
             align-items: center;
-            gap: 6px;
-            z-index: 10;
-        }
-        .theme-toggle:hover {
-            border-color: var(--primary-color);
+            gap: 12px;
+            text-decoration: none;
         }
 
-        /* الهيدر العلوي المرتب */
-        header {
-            text-align: center;
-            margin-top: 15px;
-            z-index: 2;
+        .logo-badge {
+            background: var(--primary-red);
+            color: white;
+            font-family: 'Poppins', sans-serif;
+            font-weight: 900;
+            font-size: 18px;
+            padding: 6px 12px;
+            border-radius: 10px;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
         }
 
-        .teacher-title {
-            font-size: 28px;
+        .logo-text {
+            font-size: 20px;
             font-weight: 800;
             color: var(--text-main);
             letter-spacing: 0.5px;
-            margin-bottom: 6px;
-        }
-        .teacher-title span {
-            color: var(--accent-gold);
         }
 
-        .developer-credit {
-            font-size: 12px;
-            color: var(--text-secondary);
-            font-weight: 600;
-            letter-spacing: 1px;
-            text-transform: uppercase;
+        .nav-links {
+            display: flex;
+            align-items: center;
+            gap: 25px;
         }
 
-        /* الكارت الرئيسي المنظم في المنتصف */
-        .main-container {
-            background-color: var(--card-bg);
-            border: 1px solid var(--border-subtle);
-            border-radius: 20px;
-            padding: 50px 40px;
-            width: 100%;
-            max-width: 650px;
-            text-align: center;
-            box-shadow: var(--shadow-subtle);
-            margin: auto 0;
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-muted);
+            font-weight: 700;
+            font-size: 14px;
+        }
+        .nav-links a:hover {
+            color: var(--primary-red);
+        }
+
+        .nav-actions {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        /* أزرار التسجيل في الـ Navbar */
+        .btn-signin {
+            padding: 9px 20px;
+            background: transparent;
+            border: 2px solid var(--primary-red);
+            color: var(--primary-red);
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+        }
+        .btn-signin:hover {
+            background: var(--primary-red);
+            color: white;
+        }
+
+        .btn-signup {
+            padding: 10px 22px;
+            background: var(--primary-red);
+            border: none;
+            color: white;
+            border-radius: 10px;
+            font-weight: 700;
+            font-size: 14px;
+            text-decoration: none;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(239, 68, 68, 0.3);
+        }
+        .btn-signup:hover {
+            background: var(--primary-red-hover);
+            transform: translateY(-2px);
+        }
+
+        .theme-toggle-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            width: 40px;
+            height: 40px;
+            border-radius: 10px;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+        }
+
+        /* قسم الـ Hero الرئيسي الضخم والفخم */
+        .hero-section {
+            margin-top: 80px;
+            min-height: 85vh;
+            background: var(--hero-bg);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 60px 8%;
             position: relative;
+            overflow: hidden;
+        }
+
+        .hero-content {
+            max-width: 600px;
             z-index: 2;
         }
 
-        .platform-title {
-            font-size: clamp(32px, 4vw, 44px);
+        .hero-tag {
+            display: inline-block;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--primary-red);
+            padding: 6px 16px;
+            border-radius: 30px;
             font-weight: 800;
-            color: var(--primary-color);
-            margin-bottom: 12px;
-            min-height: 60px;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-wrap: wrap;
+            font-size: 13px;
+            margin-bottom: 20px;
+            letter-spacing: 0.5px;
         }
 
-        /* مؤشر الكتابة الهادئ اللي بيختفي أول ما الجملة تخلص */
+        .hero-title {
+            font-size: clamp(36px, 5vw, 60px);
+            font-weight: 900;
+            line-height: 1.2;
+            color: var(--text-main);
+            margin-bottom: 20px;
+        }
+
+        .hero-title span {
+            color: var(--primary-red);
+        }
+
+        /* مؤشر الكتابة الاحترافي */
         .typing-cursor {
             display: inline-block;
-            width: 3px;
-            height: 38px;
-            background-color: var(--primary-color);
+            width: 4px;
+            height: 45px;
+            background-color: var(--primary-red);
             margin-right: 5px;
             animation: blink 0.8s infinite;
             vertical-align: middle;
@@ -150,106 +227,262 @@
             50% { opacity: 0; }
         }
 
-        .platform-subtitle {
-            font-size: 15px;
-            color: var(--text-secondary);
-            margin-bottom: 40px;
+        .hero-desc {
+            font-size: 16px;
+            color: var(--text-muted);
+            line-height: 1.7;
+            margin-bottom: 35px;
             font-weight: 600;
         }
 
-        /* أزرار التسجيل (Sign Up & Sign In) منظمة بشكل احترافي مريح */
-        .actions-grid {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
+        .hero-cta-group {
+            display: flex;
             gap: 20px;
         }
 
-        .btn {
-            padding: 16px 20px;
-            border-radius: 12px;
+        .btn-main-action {
+            padding: 16px 35px;
+            background: var(--primary-red);
+            color: white;
+            font-size: 18px;
+            font-weight: 800;
+            border-radius: 14px;
             text-decoration: none;
-            font-size: 16px;
-            font-weight: 700;
-            display: flex;
-            justify-content: center;
+            box-shadow: var(--shadow-lg);
+            display: inline-flex;
             align-items: center;
-            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            gap: 10px;
+        }
+        .btn-main-action:hover {
+            background: var(--primary-red-hover);
+            transform: translateY(-3px);
         }
 
-        .btn-signup {
-            background-color: var(--primary-color);
-            color: #ffffff;
-            box-shadow: 0 4px 14px rgba(30, 58, 138, 0.2);
-        }
-        .btn-signup:hover {
-            transform: translateY(-2px);
-            box-shadow: var(--shadow-hover);
-        }
-
-        .btn-signin {
-            background-color: transparent;
-            color: var(--text-main);
-            border: 2px solid var(--border-subtle);
-        }
-        .btn-signin:hover {
-            border-color: var(--primary-color);
-            transform: translateY(-2px);
+        /* جزء الصور والرسوم البيانية في الـ Hero */
+        .hero-visual {
+            position: relative;
+            width: 450px;
+            height: 450px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        footer {
-            font-size: 12px;
-            color: var(--text-secondary);
+        .hero-card-floating {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 25px;
+            border-radius: 24px;
+            box-shadow: var(--shadow-lg);
+            width: 100%;
             text-align: center;
+            position: relative;
             z-index: 2;
+        }
+
+        .teacher-name-box {
+            font-size: 24px;
+            font-weight: 900;
+            color: var(--text-main);
+            margin-top: 10px;
+        }
+        .teacher-subtitle {
+            font-size: 13px;
+            color: var(--text-muted);
+            font-weight: 700;
+            letter-spacing: 1px;
+            margin-top: 5px;
+        }
+
+        /* قسم المميزات (Features Section) زي الكبار */
+        .features-section {
+            padding: 80px 8%;
+            background: var(--bg-page);
+        }
+
+        .section-header {
+            text-align: center;
+            max-width: 600px;
+            margin: 0 auto 50px auto;
+        }
+        .section-header h2 {
+            font-size: 32px;
+            font-weight: 900;
+            margin-bottom: 12px;
+            color: var(--text-main);
+        }
+        .section-header p {
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 15px;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 30px;
+        }
+
+        .feature-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            padding: 35px 30px;
+            border-radius: 20px;
+            box-shadow: var(--shadow-sm);
+            text-align: right;
+        }
+        .feature-card:hover {
+            transform: translateY(-5px);
+            border-color: var(--primary-red);
+        }
+
+        .feature-icon {
+            width: 55px;
+            height: 55px;
+            background: rgba(239, 68, 68, 0.1);
+            color: var(--primary-red);
+            border-radius: 14px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 24px;
+            margin-bottom: 20px;
+            font-weight: 900;
+        }
+
+        .feature-title {
+            font-size: 18px;
+            font-weight: 800;
+            margin-bottom: 10px;
+            color: var(--text-main);
+        }
+
+        .feature-desc {
+            font-size: 14px;
+            color: var(--text-muted);
+            line-height: 1.6;
             font-weight: 600;
         }
 
-        /* شاشات الموبايل */
-        @media(max-width: 600px) {
-            .actions-grid {
-                grid-template-columns: 1fr;
+        footer {
+            padding: 30px;
+            text-align: center;
+            border-top: 1px solid var(--border-color);
+            color: var(--text-muted);
+            font-size: 13px;
+            font-weight: 700;
+        }
+
+        /* التجاوب مع الموبايل */
+        @media(max-width: 900px) {
+            .hero-section {
+                flex-direction: column;
+                text-align: center;
+                padding: 40px 5%;
             }
-            .main-container {
-                padding: 35px 20px;
+            .hero-content {
+                max-width: 100%;
+                margin-bottom: 40px;
+            }
+            .hero-cta-group {
+                justify-content: center;
+            }
+            .hero-visual {
+                width: 100%;
+                max-width: 350px;
+            }
+            .nav-links {
+                display: none;
             }
         }
     </style>
 </head>
 <body data-theme="light">
 
-    <!-- زر تبديل الثيم -->
-    <button class="theme-toggle" onclick="toggleTheme()">
-        <span id="themeIcon">🌙</span> <span id="themeText">الوضع الداكن</span>
-    </button>
+    <!-- شريط التنقل العلوي الاحترافي (Navbar) -->
+    <nav>
+        <a href="#" class="nav-logo">
+            <div class="logo-badge">LEADER</div>
+            <div class="logo-text">The Leader</div>
+        </a>
 
-    <!-- الهيدر -->
-    <header>
-        <h1 class="teacher-title">Mr. Sherif Khafagy <span>★</span></h1>
-        <div class="developer-credit">Developed By / Mohamed Sherif Khafagy</div>
-    </header>
-
-    <!-- المحتوى الرئيسي المنظم -->
-    <div class="main-container">
-        <h2 class="platform-title">
-            <span id="typedText"></span><span class="typing-cursor" id="typingCursor"></span>
-        </h2>
-        <p class="platform-subtitle">المنصة التعليمية الرسمية لمادة اللغة الإنجليزية للثانوية العامة</p>
-
-        <div class="actions-grid">
-            <!-- Sign In (على الشمال) -->
-            <a href="signin.html" class="btn btn-signin">تسجيل الدخول</a>
-            <!-- Sign Up (على اليمين) -->
-            <a href="signup.html" class="btn btn-signup">حساب جديد</a>
+        <div class="nav-links">
+            <a href="#">الرئيسية</a>
+            <a href="#">عن المنصة</a>
+            <a href="#">الكورسات</a>
+            <a href="#">آراء الطلاب</a>
         </div>
-    </div>
+
+        <div class="nav-actions">
+            <button class="theme-toggle-btn" onclick="toggleTheme()" id="themeIconBtn">🌙</button>
+            <a href="signin.html" class="btn-signin">تسجيل الدخول</a>
+            <a href="signup.html" class="btn-signup">حساب جديد</a>
+        </div>
+    </nav>
+
+    <!-- قسم الـ Hero الرئيسي الملحمي -->
+    <section class="hero-section">
+        <div class="hero-content">
+            <div class="hero-tag">✨ المنصة التعليمية الأولى لمادة الإنجليزية</div>
+            <h1 class="hero-title">
+                تعلم وفهم الإنجليزية <br>بأسلوب <span id="typedText"></span><span class="typing-cursor" id="typingCursor"></span>
+            </h1>
+            <p class="hero-desc">
+                أهلاً بيك في بيتك الثاني! سواء كنت في أولى، ثانية، أو ثالثة ثانوي، هنا هتلاقي كل اللي تحتاجه علشان تقفل إنجليزي وتفهم المنهج صح وبأبسط الطرق الممكنة.
+            </p>
+            <div class="hero-cta-group">
+                <a href="signup.html" class="btn-main-action">اشترك دلوقتي ! 🚀</a>
+            </div>
+        </div>
+
+        <div class="hero-visual">
+            <div class="hero-card-floating">
+                <div class="feature-icon" style="margin: 0 auto 15px auto;">👨‍🏫</div>
+                <div class="teacher-name-box">Mr. Sherif Khafagy</div>
+                <div class="teacher-subtitle">EXPERT ENGLISH INSTRUCTOR</div>
+                <hr style="border: none; border-top: 1px solid var(--border-color); margin: 20px 0;">
+                <div style="font-size: 13px; color: var(--text-muted); font-weight: 700;">
+                    Developed By / Mohamed Sherif Khafagy
+                </div>
+            </div>
+        </div>
+    </section>
+
+    <!-- قسم المميزات والخصائص -->
+    <section class="features-section">
+        <div class="section-header">
+            <h2>ليه تختار منصة The Leader؟</h2>
+            <p>وفرنالك كل الأدوات البرمجية والتعليمية علشان نضمن تفوقك ووصولك للدرجة النهائية</p>
+        </div>
+
+        <div class="features-grid">
+            <div class="feature-card">
+                <div class="feature-icon">📚</div>
+                <div class="feature-title">شروحات فيديو تفصيلية</div>
+                <div class="feature-desc">فيديوهات بأعلى جودة مع حماية كاملة ضد التسجيل لضمان تركيزك التام في المنهج.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">📝</div>
+                <div class="feature-title">اختبارات وواجبات دورية</div>
+                <div class="feature-desc">امتحانات إلكترونية بنظام المراجعة الفورية وعداد زمني يطابق نظام الثانوية العامة الحديث.</div>
+            </div>
+
+            <div class="feature-card">
+                <div class="feature-icon">🔒</div>
+                <div class="feature-title">نظام أمان وحماية متطور</div>
+                <div class="feature-desc">حسابك محمي ببصمة جهاز فريدة تضمن عدم مشاركة الحسابات وتحافظ على مجهودك.</div>
+            </div>
+        </div>
+    </section>
 
     <footer>
-        &copy; 2026 The Leader In English. All Rights Reserved.
+        &copy; 2026 The Leader In English - Developed By Mohamed Sherif Khafagy. All Rights Reserved.
     </footer>
 
     <script>
         // ==========================================
-        // 1. كود الاتصال بقاعدة البيانات (Supabase)
+        // 1. كود الاتصال وقاعدة البيانات (Supabase)
         // ==========================================
         const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lNpmx_7cT_frhxmkMKnlVQ_D9MhsqWi';
@@ -259,7 +492,7 @@
         async function verifyDatabaseConnection() {
             try {
                 const { error } = await supabaseClient.from('profiles').select('id', { count: 'exact', head: true });
-                if (!error) console.log("Database connected and stable.");
+                if (!error) console.log("Database connected successfully for The Leader platform.");
             } catch (err) {
                 console.log("Database initialized.");
             }
@@ -271,7 +504,7 @@
         function initTheme() {
             const savedTheme = localStorage.getItem('platform_theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
-            updateThemeUI(savedTheme);
+            document.getElementById('themeIconBtn').innerText = savedTheme === 'dark' ? '☀️' : '🌙';
         }
 
         function toggleTheme() {
@@ -279,19 +512,7 @@
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
             document.body.setAttribute('data-theme', newTheme);
             localStorage.setItem('platform_theme', newTheme);
-            updateThemeUI(newTheme);
-        }
-
-        function updateThemeUI(theme) {
-            const icon = document.getElementById('themeIcon');
-            const text = document.getElementById('themeText');
-            if (theme === 'dark') {
-                icon.innerText = '☀️';
-                text.innerText = 'الوضع الفاتح';
-            } else {
-                icon.innerText = '🌙';
-                text.innerText = 'الوضع الداكن';
-            }
+            document.getElementById('themeIconBtn').innerText = newTheme === 'dark' ? '☀️' : '🌙';
         }
 
         // ==========================================
@@ -299,23 +520,23 @@
         // ==========================================
         const textTarget = document.getElementById('typedText');
         const cursorTarget = document.getElementById('typingCursor');
-        const phrase = "The Leader In English";
+        const phrase = "بسيط وممتع";
         let charIndex = 0;
 
         function typeWriter() {
             if (charIndex < phrase.length) {
                 textTarget.innerHTML += phrase.charAt(charIndex);
                 charIndex++;
-                setTimeout(typeWriter, 80);
+                setTimeout(typeWriter, 100);
             } else {
-                cursorTarget.classList.add('hidden'); // يختفي تماماً بـشياكة
+                cursorTarget.classList.add('hidden'); // يختفي تماماً شياكة
             }
         }
 
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
             verifyDatabaseConnection();
-            setTimeout(typeWriter, 400);
+            setTimeout(typeWriter, 500);
         });
     </script>
 </body>
