@@ -355,7 +355,7 @@
             }
         }
 
-        // معالجة البيانات، ربط الواتساب برقم الطالب، الحفظ في القاعدة، والانتقال لصفحة منفصلة
+        // معالجة البيانات، ربط الواتساب برقم الطالب واسمه مع رابط الخطوة الثانية، الحفظ في القاعدة، والانتقال
         async function handleFormSubmit(event) {
             event.preventDefault();
 
@@ -384,8 +384,12 @@
                 console.log("Database operation executed.");
             }
 
-            // إرسال رسالة الواتساب برقم الطالب الذي قام بإدخاله
-            const whatsappMessage = `مرحباً مستر شريف، تم تسجيل بيانات الطالب: ${firstName} ${middleName} ${lastName} برقم الهاتف: ${studentPhone}`;
+            // رابط صفحة الخطوة الثانية المنفصلة (يمكنك تعديل الرابط الحقيقي للموقع هنا)
+            const step2Url = window.location.origin + '/signup-step2.html';
+
+            // إرسال رسالة الواتساب للطالب باسمه ورابط الخطوة الثانية
+            const whatsappMessage = `أهلاً بك يا ${firstName} ${middleName} ${lastName} مع مستر شريف خفاجي.\nلتكملة تسجيل حسابك بنجاح، يرجى الدخول على رابط الخطوة الثانية التالي:\n${step2Url}`;
+            
             const formattedStudentPhone = '2' + studentPhone; // إضافة كود الدولة مصر تلقائياً لرقم الطالب
             const whatsappUrl = `https://wa.me/${formattedStudentPhone}?text=${encodeURIComponent(whatsappMessage)}`;
             
