@@ -155,7 +155,23 @@
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
-    <script>
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAuth, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-auth.js";
+
+        const firebaseConfig = {
+          apiKey: "AIzaSyCnLE_iSDSByBEmx1ujLWVVHw3Jv2W62Sc",
+          authDomain: "the-leader-c2f06.firebaseapp.com",
+          projectId: "the-leader-c2f06",
+          storageBucket: "the-leader-c2f06.firebasestorage.app",
+          messagingSenderId: "693921211082",
+          appId: "1:693921211082:web:640e7e5528a9891d368a33",
+          measurementId: "G-RK4LP1HMJY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const auth = getAuth(app);
+
         function showToast(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
@@ -171,7 +187,7 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        function handleLogin() {
+        window.handleLogin = function() {
             let email = document.getElementById('loginEmail').value.trim();
             let password = document.getElementById('loginPassword').value;
 
@@ -180,18 +196,16 @@
                 return;
             }
 
-            let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
-            let matchedUser = users.find(u => u.email === email && u.password === password);
-
-            if(matchedUser) {
-                localStorage.setItem('current_student', JSON.stringify(matchedUser));
-                showToast("أهلاً بك يا بطل! جاري تحويلك...");
-                setTimeout(() => {
-                    window.location.href = "dashboard.html";
-                }, 1500);
-            } else {
-                showToast("البريد أو كلمة المرور غير صحيحة!", true);
-            }
+            signInWithEmailAndPassword(auth, email, password)
+                .then((userCredential) => {
+                    showToast("أهلاً بك يا بطل! جاري تحويلك...");
+                    setTimeout(() => {
+                        window.location.href = "dashboard.html";
+                    }, 1500);
+                })
+                .catch((error) => {
+                    showToast("البريد أو كلمة المرور غير صحيحة!", true);
+                });
         }
     </script>
 </body>
