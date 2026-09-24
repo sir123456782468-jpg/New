@@ -12,8 +12,8 @@
             --card-bg: rgba(255, 255, 255, 0.9);
             --text-main: #1e293b;
             --text-muted: #64748b;
-            --accent-primary: #0284c7;
-            --border-color: rgba(2, 132, 199, 0.2);
+            --accent-primary: #ef4444; /* أحمر ناري للمنصة */
+            --border-color: rgba(239, 68, 68, 0.2);
             --input-bg: rgba(255, 255, 255, 0.8);
             --error-color: #ef4444;
             --success-color: #10b981;
@@ -24,8 +24,8 @@
             --card-bg: rgba(15, 23, 42, 0.85);
             --text-main: #f1f5f9;
             --text-muted: #94a3b8;
-            --accent-primary: #38bdf8;
-            --border-color: rgba(56, 189, 248, 0.25);
+            --accent-primary: #f87171;
+            --border-color: rgba(248, 113, 113, 0.25);
             --input-bg: rgba(15, 23, 42, 0.6);
             --error-color: #f87171;
             --success-color: #34d399;
@@ -85,9 +85,7 @@
             font-family: 'Cinzel', serif;
             font-size: 28px;
             font-weight: 800;
-            background: linear-gradient(135deg, #f59e0b 0%, #ec4899 50%, #3b82f6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent-primary);
         }
 
         .form-container {
@@ -144,7 +142,7 @@
 
         input:focus {
             border-color: var(--accent-primary);
-            box-shadow: 0 0 10px rgba(2, 132, 199, 0.2);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
         }
 
         input.invalid-phone { border-color: var(--error-color) !important; }
@@ -164,7 +162,7 @@
             padding: 2px;
             overflow: hidden;
             margin-top: 10px;
-            background: linear-gradient(135deg, #38bdf8, #10b981);
+            background: var(--accent-primary);
         }
 
         .submit-btn {
@@ -208,13 +206,13 @@
     </header>
 
     <div class="form-container">
-        <h2 class="form-title">إنشاء حساب جديد</h2>
+        <h2 class="form-title">إنشاء حساب جديد (الخطوة الأولى)</h2>
         
-        <form id="signupForm" onsubmit="handleFormSubmit(event)">
+        <form id="signupForm" onsubmit="handleFirstStep(event)">
             <div class="name-row">
                 <div class="input-group">
                     <label>الاسم الأول</label>
-                    <input type="text" id="firstName" placeholder="الاسم الاول" required>
+                    <input type="text" id="firstName" placeholder="الاسم الأول" required>
                 </div>
                 <div class="input-group">
                     <label>الاسم الثاني</label>
@@ -222,7 +220,7 @@
                 </div>
                 <div class="input-group">
                     <label>الاسم الأخير</label>
-                    <input type="text" id="lastName" placeholder="الاسم الاخير" required>
+                    <input type="text" id="lastName" placeholder="الاسم الأخير" required>
                 </div>
             </div>
 
@@ -233,23 +231,18 @@
 
             <div class="input-group">
                 <label>رقم الهاتف الشخصي</label>
-                <input type="tel" id="studentPhone" placeholder="أدخل رقمك المكون من 11 رقماً" maxlength="11" oninput="validatePhone('studentPhone', 'studentHint')" required>
+                <input type="tel" id="studentPhone" placeholder="01xxxxxxxxx" maxlength="11" oninput="validatePhone('studentPhone', 'studentHint')" required>
                 <span id="studentHint" class="validation-hint error">يجب أن يبدأ بـ 01 ويتكون من 11 رقماً</span>
             </div>
 
             <div class="input-group">
                 <label>رقم ولي الأمر</label>
-                <input type="tel" id="parentPhone" placeholder="أدخل رقم ولي الأمر" maxlength="11" oninput="validatePhone('parentPhone', 'parentHint')" required>
+                <input type="tel" id="parentPhone" placeholder="01xxxxxxxxx" maxlength="11" oninput="validatePhone('parentPhone', 'parentHint')" required>
                 <span id="parentHint" class="validation-hint error">يجب أن يبدأ بـ 01 ويتكون من 11 رقماً</span>
             </div>
 
-            <div class="input-group">
-                <label>كلمة المرور</label>
-                <input type="password" id="password" placeholder="أدخل كلمة مرور قوية" required>
-            </div>
-
-            <div class="submit-btn-wrapper" id="submitWrapper">
-                <button type="submit" class="submit-btn" id="submitBtnText">إنشاء الحساب وإرسال رابط التفعيل</button>
+            <div class="submit-btn-wrapper">
+                <button type="submit" class="submit-btn">التالي: تعيين كلمة المرور ⬅️</button>
             </div>
         </form>
     </div>
@@ -259,10 +252,6 @@
     </footer>
 
     <script>
-        const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_lNpmx_7cT_frhxmkMKnlVQ_D9MhsqWi';
-        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-
         function initTheme() {
             const savedTheme = localStorage.getItem('platform_theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
@@ -308,65 +297,32 @@
             }
         }
 
-        async function handleFormSubmit(event) {
+        function handleFirstStep(event) {
             event.preventDefault();
 
-            const firstName = document.getElementById('firstName').value.trim();
-            const middleName = document.getElementById('middleName').value.trim();
-            const lastName = document.getElementById('lastName').value.trim();
-            const email = document.getElementById('studentEmail').value.trim();
-            const password = document.getElementById('password').value.trim();
             const studentPhone = document.getElementById('studentPhone').value.trim();
             const parentPhone = document.getElementById('parentPhone').value.trim();
-
             const phoneRegex = /^01[0-9]{9}$/;
+
             if (!phoneRegex.test(studentPhone) || !phoneRegex.test(parentPhone)) {
-                alert('يرجى التأكد من أن أرقام الهواتف تتكون من 11 رقماً وتبدأ بـ 01');
+                alert('يرجى التأكد من صحة أرقام الهواتف (11 رقماً تبدأ بـ 01)');
                 return;
             }
 
-            const submitBtn = document.getElementById('submitBtnText');
-            submitBtn.innerText = 'جاري إرسال رابط التفعيل...';
+            // جمع البيانات في كائن مؤقت وحفظه في الـ LocalStorage
+            const tempData = {
+                firstName: document.getElementById('firstName').value.trim(),
+                middleName: document.getElementById('middleName').value.trim(),
+                lastName: document.getElementById('lastName').value.trim(),
+                studentEmail: document.getElementById('studentEmail').value.trim(),
+                studentPhone: studentPhone,
+                parentPhone: parentPhone
+            };
 
-            try {
-                // 1. إنشاء الحساب وإرسال رابط التفعيل في الإيميل تلقائياً من Supabase
-                const { data, error: authError } = await supabaseClient.auth.signUp({
-                    email: email,
-                    password: password
-                });
+            localStorage.setItem('temp_signup_data', JSON.stringify(tempData));
 
-                if (authError) {
-                    alert('خطأ في التسجيل: ' + authError.message);
-                    submitBtn.innerText = 'إنشاء الحساب وإرسال رابط التفعيل';
-                    return;
-                }
-
-                // 2. تخزين بيانات الطالب الإضافية في جدول الـ profiles
-                const { error: dbError } = await supabaseClient
-                    .from('profiles')
-                    .insert([
-                        {
-                            first_name: firstName,
-                            middle_name: middleName,
-                            last_name: lastName,
-                            email: email,
-                            student_phone: studentPhone,
-                            parent_phone: parentPhone
-                        }
-                    ]);
-
-                if (dbError) {
-                    console.error(dbError);
-                }
-
-                alert('تم إرسال رابط تفعيل الحساب إلى بريدك الإلكتروني بنجاح! يرجى تفقد بريدك (أو صندوق الـ Spam) للضغط على الرابط وتفعيل حسابك.');
-                window.location.href = 'signin.html';
-
-            } catch (err) {
-                console.error(err);
-                alert('حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.');
-                submitBtn.innerText = 'إنشاء الحساب وإرسال رابط التفعيل';
-            }
+            // الانتقال للخطوة الثانية مباشرة
+            window.location.href = 'signup-step2.html';
         }
 
         window.addEventListener('DOMContentLoaded', () => {
