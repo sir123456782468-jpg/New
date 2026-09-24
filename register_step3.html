@@ -143,14 +143,27 @@
         Developed with <i class="fa-solid fa-heart" style="color: #f43f5e;"></i> by <span>Mohamed Sherif Khafagy</span>
     </div>
 
-    <!-- مكتبة Supabase للتخزين السحابي -->
-    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <script>
-        const SUPABASE_URL = 'https://gttmvtzsbzcmyjfpavwk.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_a865uHBhaj8j0488nCLJnw_M7e3BQuh';
-        const _supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    <!-- مكتبات Firebase (SDKs) واتصال Firestore -->
+    <script type="module">
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+        import { getAnalytics } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-analytics.js";
+        import { getFirestore, doc, setDoc } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-firestore.js";
 
-        function showToast(message, isError = false) {
+        const firebaseConfig = {
+          apiKey: "AIzaSyCnLE_iSDSByBEmx1ujLWVVHw3Jv2W62Sc",
+          authDomain: "the-leader-c2f06.firebaseapp.com",
+          projectId: "the-leader-c2f06",
+          storageBucket: "the-leader-c2f06.firebasestorage.app",
+          messagingSenderId: "693921211082",
+          appId: "1:693921211082:web:640e7e5528a9891d368a33",
+          measurementId: "G-RK4LP1HMJY"
+        };
+
+        const app = initializeApp(firebaseConfig);
+        const analytics = getAnalytics(app);
+        const db = getFirestore(app);
+
+        window.showToast = function(message, isError = false) {
             const toast = document.getElementById('toastNotification');
             const icon = document.getElementById('toastIcon');
             document.getElementById('toastText').innerText = message;
@@ -165,7 +178,7 @@
             setTimeout(() => { toast.classList.remove('show'); }, 4000);
         }
 
-        function checkMatch() {
+        window.checkMatch = function() {
             let p1 = document.getElementById('pass1').value;
             let p2 = document.getElementById('pass2').value;
             let input2 = document.getElementById('pass2');
@@ -184,23 +197,23 @@
             }
         }
 
-        async function finalizeRegistration() {
+        window.finalizeRegistration = async function() {
             let p1 = document.getElementById('pass1').value;
             let p2 = document.getElementById('pass2').value;
 
             if(p1.length < 3) {
-                showToast("كلمة المرور يجب ألا تقل عن 3 أحرف!", true);
+                window.showToast("كلمة المرور يجب ألا تقل عن 3 أحرف!", true);
                 return;
             }
 
             if(p1 !== p2) {
-                showToast("كلمتا المرور غير متطابقتين!", true);
+                window.showToast("كلمتا المرور غير متطابقتين!", true);
                 return;
             }
 
             let tempData = JSON.parse(localStorage.getItem('temp_reg_data') || '{}');
             if(!tempData.email) {
-                showToast("حدث خطأ بالبيانات، اعد محاولة التسجيل من البداية", true);
+                window.showToast("حدث خطأ بالبيانات، اعد محاولة التسجيل من البداية", true);
                 setTimeout(() => { window.location.href = "register.html"; }, 2000);
                 return;
             }
@@ -209,7 +222,7 @@
 
             let users = JSON.parse(localStorage.getItem('leader_users') || '[]');
             if(users.some(u => u.email === tempData.email)) {
-                showToast("هذا البريد مسجل مسبقاً!", true);
+                window.showToast("هذا البريد مسجل مسبقاً!", true);
                 return;
             }
 
@@ -217,22 +230,22 @@
             localStorage.setItem('leader_users', JSON.stringify(users));
             localStorage.removeItem('temp_reg_data');
 
-            // حفظ المستخدم نهائياً سحابياً عبر Supabase
+            // الحفظ في قاعدة بيانات Firebase Firestore السحابية
             try {
-                await _supabase.from('users').upsert([
-                    { 
-                        email: tempData.email, 
-                        full_name: tempData.fullName, 
-                        phone: tempData.phone, 
-                        guardian_phone: tempData.guardianPhone, 
-                        password: tempData.password 
-                    }
-                ], { onConflict: 'email' });
+                const safeEmailKey = tempData.email.replace(/\./g, '_');
+                await setDoc(doc(db, "users", safeEmailKey), {
+                    email: tempData.email,
+                    full_name: tempData.fullName,
+                    phone: tempData.phone,
+                    guardian_phone: tempData.guardianPhone,
+                    password: tempData.password,
+                    createdAt: new Date().toISOString()
+                });
             } catch (err) {
                 console.log("Cloud sync note:", err);
             }
 
-            showToast("تم إنشاء حسابك بنجاح يا بطل!");
+            window.showToast("تم إنشاء حسابك بنجاح يا بطل!");
             setTimeout(() => {
                 window.location.href = "login.html";
             }, 2000);
