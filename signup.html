@@ -8,6 +8,13 @@
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
     <!-- مكتبة Supabase للربط بقاعدة البيانات -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- مكتبة EmailJS لإرسال إيميلات الـ OTP -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
+    <script type="text/javascript">
+        (function() {
+            emailjs.init("gU8jVHuVqdaZT6CD1");
+        })();
+    </script>
     <style>
         :root {
             --bg-gradient: radial-gradient(circle at 50% 20%, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
@@ -352,31 +359,29 @@
             submitBtn.innerText = 'جاري إرسال كود التحقق...';
 
             try {
-                // 1. إرسال كود الـ OTP عبر Supabase إلى البريد الإلكتروني
-                const { data, error } = await supabaseClient.auth.signInWithOtp({
-                    email: studentEmail,
-                    options: {
-                        shouldCreateUser: true, // يسمح بإنشاء المستخدم مؤقتاً
-                    }
-                });
+                // 1. توليد كود OTP عشوائي مكون من 6 أرقام
+                const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-                if (error) {
-                    alert('خطأ في إرسال الكود: ' + error.message);
-                    submitBtn.innerText = 'إرسال كود التحقق (OTP)';
-                    return;
-                }
+                // 2. إرسال الكود عبر EmailJS بالمعطيات بتاعتك
+                const templateParams = {
+                    to_email: studentEmail,
+                    to_name: `${firstName} ${lastName}`,
+                    passcode: otpCode
+                };
 
-                // 2. حفظ بيانات الطالب مؤقتاً في LocalStorage عشان ننقلها للصفحات اللي بعد كده
-                const userData = { firstName, middleName, lastName, studentEmail, studentPhone, parentPhone };
+                await emailjs.send('service_seljmns', 'Template_5lj7i0g', templateParams);
+
+                // 3. حفظ بيانات الطالب المؤقتة وكود التحقق في LocalStorage
+                const userData = { firstName, middleName, lastName, studentEmail, studentPhone, parentPhone, otpCode };
                 localStorage.setItem('temp_signup_data', JSON.stringify(userData));
 
                 alert('تم إرسال كود التحقق (OTP) إلى بريدك الإلكتروني بنجاح!');
 
-                // 3. التوجيه لصفحة إدخال الكود المنفصلة (verify-code.html) ومعها الإيميل في الـ URL
+                // 4. التوجيه لصفحة إدخال الكود (verify-code.html)
                 window.location.href = `verify-code.html?email=${encodeURIComponent(studentEmail)}`;
 
             } catch (err) {
-                alert('حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.');
+                alert('حدث خطأ أثناء إرسال الكود، يرجى المحاولة مرة أخرى.');
                 submitBtn.innerText = 'إرسال كود التحقق (OTP)';
             }
         }
