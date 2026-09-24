@@ -12,8 +12,8 @@
             --card-bg: rgba(255, 255, 255, 0.9);
             --text-main: #1e293b;
             --text-muted: #64748b;
-            --accent-primary: #0284c7;
-            --border-color: rgba(2, 132, 199, 0.2);
+            --accent-primary: #ef4444;
+            --border-color: rgba(239, 68, 68, 0.2);
             --input-bg: rgba(255, 255, 255, 0.8);
             --error-color: #ef4444;
             --success-color: #10b981;
@@ -24,8 +24,8 @@
             --card-bg: rgba(15, 23, 42, 0.85);
             --text-main: #f1f5f9;
             --text-muted: #94a3b8;
-            --accent-primary: #38bdf8;
-            --border-color: rgba(56, 189, 248, 0.25);
+            --accent-primary: #f87171;
+            --border-color: rgba(248, 113, 113, 0.25);
             --input-bg: rgba(15, 23, 42, 0.6);
             --error-color: #f87171;
             --success-color: #34d399;
@@ -85,9 +85,7 @@
             font-family: 'Cinzel', serif;
             font-size: 28px;
             font-weight: 800;
-            background: linear-gradient(135deg, #f59e0b 0%, #ec4899 50%, #3b82f6 100%);
-            -webkit-background-clip: text;
-            -webkit-text-fill-color: transparent;
+            color: var(--accent-primary);
         }
 
         .form-container {
@@ -143,7 +141,7 @@
 
         input:focus {
             border-color: var(--accent-primary);
-            box-shadow: 0 0 10px rgba(2, 132, 199, 0.2);
+            box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
         }
 
         input.invalid-match { border-color: var(--error-color) !important; }
@@ -176,18 +174,7 @@
             padding: 2px;
             overflow: hidden;
             margin-top: 15px;
-            background: var(--error-color);
-            transition: background 0.4s ease;
-        }
-
-        .submit-btn-wrapper.ready {
-            background: linear-gradient(135deg, #38bdf8, #10b981);
-            animation: rotateLed 4s linear infinite;
-        }
-
-        @keyframes rotateLed {
-            0% { filter: hue-rotate(0deg); }
-            100% { filter: hue-rotate(360deg); }
+            background: var(--accent-primary);
         }
 
         .submit-btn {
@@ -201,7 +188,6 @@
             font-weight: 700;
             cursor: pointer;
             backdrop-filter: blur(15px);
-            transition: background 0.3s ease, color 0.3s ease;
         }
 
         .submit-btn:hover {
@@ -230,7 +216,7 @@
     <div class="form-container">
         <h2 class="form-title">تعيين كلمة المرور (الخطوة الثانية)</h2>
         
-        <form id="passwordForm" onsubmit="handlePasswordSubmit(event)">
+        <form id="passwordForm" onsubmit="handleFinalSignup(event)">
             <div class="input-group">
                 <label>كلمة المرور</label>
                 <div class="password-wrapper">
@@ -248,8 +234,8 @@
                 <span id="matchHint" class="validation-hint error"></span>
             </div>
 
-            <div class="submit-btn-wrapper" id="submitWrapper">
-                <button type="submit" class="submit-btn" id="finalSubmitBtn">إتمام إنشاء الحساب</button>
+            <div class="submit-btn-wrapper">
+                <button type="submit" class="submit-btn" id="finalSubmitBtn">إتمام إنشاء الحساب 🚀</button>
             </div>
         </form>
     </div>
@@ -298,17 +284,9 @@
             const pass = document.getElementById('password').value;
             const confirmPass = document.getElementById('confirmPassword').value;
             const hint = document.getElementById('matchHint');
-            const wrapper = document.getElementById('submitWrapper');
             const confirmInput = document.getElementById('confirmPassword');
 
-            let isValid = true;
-
-            if (pass.length > 0 && pass.length < 4) {
-                isValid = false;
-            }
-
             if (confirmPass.length > 0 && pass !== confirmPass) {
-                isValid = false;
                 hint.innerText = 'كلمتا المرور غير متطابقتين';
                 hint.className = 'validation-hint error';
                 confirmInput.classList.add('invalid-match');
@@ -322,15 +300,9 @@
                 hint.innerText = '';
                 confirmInput.classList.remove('invalid-match', 'valid-match');
             }
-
-            if (isValid && pass === confirmPass && pass.length >= 4) {
-                wrapper.classList.add('ready');
-            } else {
-                wrapper.classList.remove('ready');
-            }
         }
 
-        async function handlePasswordSubmit(event) {
+        async function handleFinalSignup(event) {
             event.preventDefault();
 
             const pass = document.getElementById('password').value;
@@ -338,7 +310,7 @@
             const finalBtn = document.getElementById('finalSubmitBtn');
 
             if (pass.length < 4) {
-                alert('يجب أن تتكون كلمة السر على الأقل من 4 حروف');
+                alert('يجب أن تتكون كلمة السر على الأقل من 4 حروف أو أرقام');
                 return;
             }
 
@@ -347,88 +319,62 @@
                 return;
             }
 
-            // استرجاع بيانات الطالب المحفوظة مؤقتاً من الخطوة الأولى
+            // استرجاع البيانات المحفوظة من الخطوة الأولى
             let tempData = JSON.parse(localStorage.getItem('temp_signup_data') || '{}');
 
             if (!tempData.studentEmail) {
                 alert('انتهت جلسة التسجيل، يرجى إعادة إدخال البيانات من البداية.');
-                window.location.href = 'index.html';
+                window.location.href = 'signup.html';
                 return;
             }
 
-            finalBtn.innerText = 'جاري إتمام الحساب...';
+            finalBtn.innerText = 'جاري إرسال الطلب وحفظ الحساب...';
 
             try {
-                // 1. تحديث كلمة المرور في نظام المصادقة لـ Supabase Auth
-                const { error: updateError } = await supabaseClient.auth.updateUser({
+                // 1. إنشاء الحساب في Supabase Auth مع إرسال رابط التفعيل للإيميل تلقائياً
+                const { error: authError } = await supabaseClient.auth.signUp({
+                    email: tempData.studentEmail,
                     password: pass
                 });
 
-                if (updateError) {
-                    alert('خطأ في حفظ كلمة المرور: ' + updateError.message);
-                    finalBtn.innerText = 'إتمام إنشاء الحساب';
+                if (authError) {
+                    alert('خطأ في إنشاء الحساب: ' + authError.message);
+                    finalBtn.innerText = 'إتمام إنشاء الحساب 🚀';
                     return;
                 }
 
-                // 2. توليد معرف جلسة فريد لهذا الجهاز لتطبيق قاعدة (الجهاز الواحد)
+                // 2. توليد جلسة فريدة للجهاز (لنظام الجهاز الواحد)
                 const deviceSessionId = 'session_' + Math.random().toString(36).substring(2) + Date.now();
 
-                // 3. حفظ بيانات الطالب التفصيلية في جدول الـ profiles
-                const { error: profileError } = await supabaseClient.from('profiles').insert([
+                // 3. تخزين بيانات الطالب التفصيلية في جدول profiles
+                const { error: dbError } = await supabaseClient.from('profiles').insert([
                     {
                         first_name: tempData.firstName,
                         middle_name: tempData.middleName,
                         last_name: tempData.lastName,
                         email: tempData.studentEmail,
-                        phone: tempData.studentPhone,
+                        student_phone: tempData.studentPhone,
                         parent_phone: tempData.parentPhone,
                         active_session: deviceSessionId
                     }
                 ]);
 
-                if (profileError) {
-                    alert('حدث خطأ أثناء حفظ الملف الشخصي: ' + profileError.message);
-                    finalBtn.innerText = 'إتمام إنشاء الحساب';
-                    return;
+                if (dbError) {
+                    console.error(dbError);
                 }
 
-                // 4. حفظ الجلسة محلياً وتنظيف الـ temp data
-                localStorage.setItem('user_session', deviceSessionId);
-                localStorage.setItem('user_email', tempData.studentEmail);
+                // تنظيف البيانات المؤقتة
                 localStorage.removeItem('temp_signup_data');
 
-                alert('تم إنشاء الحساب بنجاح يا نجم الفن والهندسة!');
-                
-                // هنا توجهه للوحة تحكم الطالب (Dashboard) بعدين
-                // window.location.href = 'dashboard.html';
+                alert('تم إنشاء الحساب وإرسال رابط التفعيل إلى بريدك الإلكتروني بنجاح! يرجى تفقد بريدك لتفعيل الحساب ثم تسجيل الدخول.');
+                window.location.href = 'signin.html';
 
             } catch (err) {
+                console.error(err);
                 alert('حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.');
-                finalBtn.innerText = 'إتمام إنشاء الحساب';
+                finalBtn.innerText = 'إتمام إنشاء الحساب 🚀';
             }
         }
-
-        // فحص دوري لجلسة الجهاز الواحد
-        async function checkDeviceSession() {
-            const currentEmail = localStorage.getItem('user_email');
-            const currentSession = localStorage.getItem('user_session');
-
-            if (currentEmail && currentSession) {
-                const { data } = await supabaseClient
-                    .from('profiles')
-                    .select('active_session')
-                    .eq('email', currentEmail)
-                    .maybeSingle();
-
-                if (data && data.active_session !== currentSession) {
-                    alert('تم تسجيل الدخول إلى هذا الحساب من جهاز آخر، سيتم تسجيل خروجك.');
-                    localStorage.clear();
-                    window.location.href = 'index.html';
-                }
-            }
-        }
-
-        setInterval(checkDeviceSession, 10000); // يفحص كل 10 ثوانٍ
 
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
