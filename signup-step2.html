@@ -249,7 +249,7 @@
             </div>
 
             <div class="submit-btn-wrapper" id="submitWrapper">
-                <button type="submit" class="submit-btn">إتمام إنشاء الحساب</button>
+                <button type="submit" class="submit-btn" id="finalSubmitBtn">إتمام إنشاء الحساب</button>
             </div>
         </form>
     </div>
@@ -335,6 +335,7 @@
 
             const pass = document.getElementById('password').value;
             const confirmPass = document.getElementById('confirmPassword').value;
+            const finalBtn = document.getElementById('finalSubmitBtn');
 
             if (pass.length < 4) {
                 alert('يجب أن تتكون كلمة السر على الأقل من 4 حروف');
@@ -346,64 +347,77 @@
                 return;
             }
 
-            // التحقق من الرابط المتغير (Token) ورقم الهاتف الواردين في الـ URL
-            const urlParams = new URLSearchParams(window.location.search);
-            const phone = urlParams.get('phone');
-            const token = urlParams.get('token');
-
+            // استرجاع بيانات الطالب المحفوظة مؤقتاً من الخطوة الأولى
             let tempData = JSON.parse(localStorage.getItem('temp_signup_data') || '{}');
 
-            if (!phone || !token || tempData.studentPhone !== phone) {
-                alert('رابط غير صالح أو انتهت صلاحيته. يرجى إعادة طلب التسجيل.');
+            if (!tempData.studentEmail) {
+                alert('انتهت جلسة التسجيل، يرجى إعادة إدخال البيانات من البداية.');
                 window.location.href = 'index.html';
                 return;
             }
 
+            finalBtn.innerText = 'جاري إتمام الحساب...';
+
             try {
-                // توليد معرف جلسة فريد لهذا الجهاز لتطبيق قاعدة (الجهاز الواحد)
+                // 1. تحديث كلمة المرور في نظام المصادقة لـ Supabase Auth
+                const { error: updateError } = await supabaseClient.auth.updateUser({
+                    password: pass
+                });
+
+                if (updateError) {
+                    alert('خطأ في حفظ كلمة المرور: ' + updateError.message);
+                    finalBtn.innerText = 'إتمام إنشاء الحساب';
+                    return;
+                }
+
+                // 2. توليد معرف جلسة فريد لهذا الجهاز لتطبيق قاعدة (الجهاز الواحد)
                 const deviceSessionId = 'session_' + Math.random().toString(36).substring(2) + Date.now();
 
-                // حفظ الحساب النهائي في قاعدة البيانات مع ربطه بجلسة الجهاز الحالي
-                const { error } = await supabaseClient.from('profiles').insert([
+                // 3. حفظ بيانات الطالب التفصيلية في جدول الـ profiles
+                const { error: profileError } = await supabaseClient.from('profiles').insert([
                     {
                         first_name: tempData.firstName,
                         middle_name: tempData.middleName,
                         last_name: tempData.lastName,
+                        email: tempData.studentEmail,
                         phone: tempData.studentPhone,
                         parent_phone: tempData.parentPhone,
-                        password: pass,
                         active_session: deviceSessionId
                     }
                 ]);
 
-                if (error) {
-                    alert('هذا الرقم مسجل مسبقاً بالفعل.');
+                if (profileError) {
+                    alert('حدث خطأ أثناء حفظ الملف الشخصي: ' + profileError.message);
+                    finalBtn.innerText = 'إتمام إنشاء الحساب';
                     return;
                 }
 
-                // حفظ جلسة الجهاز الحالي محلياً
+                // 4. حفظ الجلسة محلياً وتنظيف الـ temp data
                 localStorage.setItem('user_session', deviceSessionId);
-                localStorage.setItem('user_phone', tempData.studentPhone);
+                localStorage.setItem('user_email', tempData.studentEmail);
                 localStorage.removeItem('temp_signup_data');
 
-                alert('تم إنشاء الحساب بنجاح يا نجم!');
+                alert('تم إنشاء الحساب بنجاح يا نجم الفن والهندسة!');
+                
+                // هنا توجهه للوحة تحكم الطالب (Dashboard) بعدين
                 // window.location.href = 'dashboard.html';
 
             } catch (err) {
-                alert('حدث خطأ أثناء إتمام التسجيل.');
+                alert('حدث خطأ غير متوقع، يرجى المحاولة مرة أخرى.');
+                finalBtn.innerText = 'إتمام إنشاء الحساب';
             }
         }
 
-        // فحص دوري لجلسة الجهاز الواحد (لو تم تسجيل الدخول من جهاز آخر يتم الخروج تلقائياً)
+        // فحص دوري لجلسة الجهاز الواحد
         async function checkDeviceSession() {
-            const currentPhone = localStorage.getItem('user_phone');
+            const currentEmail = localStorage.getItem('user_email');
             const currentSession = localStorage.getItem('user_session');
 
-            if (currentPhone && currentSession) {
+            if (currentEmail && currentSession) {
                 const { data } = await supabaseClient
                     .from('profiles')
                     .select('active_session')
-                    .eq('phone', currentPhone)
+                    .eq('email', currentEmail)
                     .maybeSingle();
 
                 if (data && data.active_session !== currentSession) {
