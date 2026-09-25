@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>التحقق من الكود - The Leader In English</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-gradient: radial-gradient(circle at 50% 20%, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
+            --card-bg: rgba(255, 255, 255, 0.9);
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --accent-primary: #ef4444;
+            --border-color: rgba(239, 68, 68, 0.2);
+            --input-bg: rgba(255, 255, 255, 0.8);
+        }
+        [data-theme="dark"] {
+            --bg-gradient: radial-gradient(circle at 50% 20%, #0f172a 0%, #0b1120 50%, #020617 100%);
+            --card-bg: rgba(15, 23, 42, 0.85);
+            --text-main: #f1f5f9;
+            --text-muted: #94a3b8;
+            --accent-primary: #f87171;
+            --border-color: rgba(248, 113, 113, 0.25);
+            --input-bg: rgba(15, 23, 42, 0.6);
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
+        body { background: var(--bg-gradient); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 25px; }
+        .form-container { width: 100%; max-width: 500px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); margin: auto 0; text-align: center; }
+        .form-title { font-size: 22px; font-weight: 800; margin-bottom: 15px; color: var(--text-main); }
+        .form-subtitle { font-size: 13px; color: var(--text-muted); margin-bottom: 25px; }
+        input { width: 100%; padding: 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 22px; text-align: center; letter-spacing: 5px; outline: none; margin-bottom: 20px; }
+        input:focus { border-color: var(--accent-primary); }
+        .submit-btn-wrapper { border-radius: 16px; padding: 2px; background: var(--accent-primary); }
+        .submit-btn { width: 100%; background: var(--card-bg); color: var(--text-main); border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; }
+        .submit-btn:hover { background: var(--accent-primary); color: #fff; }
+        footer { font-size: 11px; color: var(--text-muted); }
+    </style>
+</head>
+<body data-theme="light">
+    <div class="form-container">
+        <h2 class="form-title">إدخال كود التحقق</h2>
+        <p class="form-subtitle">تم إرسال كود مكون من 6 أرقام إلى بريدك الإلكتروني، يرجى إدخاله أدناه:</p>
+        
+        <form onsubmit="verifyCode(event)">
+            <input type="text" id="enteredCode" placeholder="------" maxlength="6" required>
+            <div class="submit-btn-wrapper">
+                <button type="submit" class="submit-btn">تحقق والمتابعة ⬅️</button>
+            </div>
+        </form>
+    </div>
+
+    <footer>&copy; 2026 The Leader In English. All Rights Reserved.</footer>
+
+    <script>
+        window.addEventListener('DOMContentLoaded', () => {
+            const savedTheme = localStorage.getItem('platform_theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
+        });
+
+        function verifyCode(event) {
+            event.preventDefault();
+            const entered = document.getElementById('enteredCode').value.trim();
+            const tempData = JSON.parse(localStorage.getItem('temp_signup_data') || '{}');
+
+            if (!tempData.code) {
+                alert('انتهت الجلسة، يرجى إعادة التسجيل من البداية.');
+                window.location.href = 'signup.html';
+                return;
+            }
+
+            if (entered === tempData.code) {
+                // الكود صح، ننتقل لصفحة تعيين كلمة المرور
+                window.location.href = 'signup-step2.html';
+            } else {
+                alert('كود التحقق غير صحيح، يرجى التأكد وإعادة المحاولة.');
+            }
+        }
+    </script>
+</body>
+</html>
