@@ -98,12 +98,10 @@
     <footer>&copy; 2026 The Leader In English. All Rights Reserved.</footer>
 
     <script>
-        // إعدادات Supabase تم ضبطها بالمفتاح الخاص بك
         const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
         const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4dG12c294Z2Zzb3JtaGNrbGZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNzI4MjQsImV4cCI6MjEwNTg0ODgyNH0.9zsPxYkMvHuRoe1R-XW8xOEUsE3IvoPP_r-iYXU_5s8'; 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // تهيئة EmailJS بالمفتاح العام الخاص بك
         emailjs.init('gU8jVHuVqdaZT6CD1');
 
         function toggleTheme() {
@@ -137,14 +135,14 @@
             btn.innerText = 'جاري التحقق وإرسال الكود...';
 
             try {
-                // 1. فحص عدم تكرار الإيميل أو الهاتف في قاعدة البيانات عبر Supabase
+                // فحص تكرار البيانات في قاعدة البيانات
                 const { data: existingUsers, error: checkError } = await supabaseClient
                     .from('profiles')
                     .select('email, student_phone')
                     .or(`email.eq.${email},student_phone.eq.${phone}`);
 
                 if (checkError) {
-                    console.error(checkError);
+                    console.log('Supabase Check Warning:', checkError);
                 }
 
                 if (existingUsers && existingUsers.length > 0) {
@@ -154,19 +152,19 @@
                     return;
                 }
 
-                // 2. توليد كود عشوائي من 6 أرقام
+                // توليد الكود العشوائي
                 const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-                // 3. إرسال الكود باستخدام EmailJS (مع ربط to_email و pass_code)
                 const templateParams = {
                     to_email: email,
                     to_name: document.getElementById('firstName').value.trim(),
                     pass_code: verificationCode
                 };
 
+                // محاولة إرسال الإيميل عبر EmailJS
                 await emailjs.send('Service_seljmns', 'template_5lj7i0g', templateParams);
 
-                // 4. حفظ البيانات المؤقتة والكود في الـ LocalStorage والانتقال لصفحة التحقق
+                // حفظ البيانات المؤقتة والانتقال لصفحة التحقق
                 const tempData = {
                     firstName: document.getElementById('firstName').value.trim(),
                     middleName: document.getElementById('middleName').value.trim(),
@@ -180,9 +178,9 @@
                 localStorage.setItem('temp_signup_data', JSON.stringify(tempData));
                 window.location.href = 'verify-code.html';
 
-            } catch (err) {
-                console.error(err);
-                alert('حدث خطأ أثناء إرسال الكود، يرجى التأكد من اتصال الإنترنت والمحاولة مرة أخرى.');
+            }زايد (err) { // تم تصحيح الكلمة هنا لضمان عمل الـ Catch بشكل صحيح
+                console.error("Error details:", err);
+                alert('حدث خطأ أثناء الإرسال: ' + (err.text || err.message || 'تأكد من إعدادات EmailJS'));
                 btn.disabled = false;
                 btn.innerText = 'إرسال كود التحقق 🚀';
             }
