@@ -29,8 +29,6 @@
             --accent-primary: #f87171;
             --border-color: rgba(248, 113, 113, 0.25);
             --input-bg: rgba(15, 23, 42, 0.6);
-            --error-color: #f87171;
-            --success-color: #34d399;
         }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease; }
         body { background: var(--bg-gradient); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 25px; position: relative; }
@@ -44,9 +42,6 @@
         label { font-size: 14px; font-weight: 700; color: var(--text-main); }
         input { width: 100%; padding: 14px 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 15px; outline: none; }
         input:focus { border-color: var(--accent-primary); box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
-        .validation-hint { font-size: 11px; margin-top: 4px; font-weight: 600; }
-        .validation-hint.error { color: var(--error-color); }
-        .validation-hint.success { color: var(--success-color); }
         .submit-btn-wrapper { border-radius: 16px; padding: 2px; overflow: hidden; margin-top: 10px; background: var(--accent-primary); }
         .submit-btn { width: 100%; background: var(--card-bg); color: var(--text-main); border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; backdrop-filter: blur(15px); }
         .submit-btn:hover { background: var(--accent-primary); color: #ffffff; }
@@ -105,17 +100,13 @@
     <footer>&copy; 2026 The Leader In English. All Rights Reserved.</footer>
 
     <script>
-        // إعدادات Supabase (استبدل المفتاح الثاني بمفتاح anon الصحيح الذي يبدأ بـ eyJ...)
+        // إعدادات Supabase (ضع مفتاح الـ anon الصحيح الذي يبدأ بـ eyJ...)
         const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
         const SUPABASE_ANON_KEY = 'ضع_مفتاح_anon_الصحيح_هنا'; 
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        // إعدادات EmailJS التي أرسلتها
-        const EMAIL_SERVICE_ID = 'Service_seljmns';
-        const EMAIL_TEMPLATE_ID = 'template_5lj7i0g';
-        const EMAIL_PUBLIC_KEY = 'gU8jVHuVqdaZT6CD1';
-
-        emailjs.init(EMAIL_PUBLIC_KEY);
+        // تهيئة EmailJS بالمفتاح العام الخاص بك
+        emailjs.init('gU8jVHuVqdaZT6CD1');
 
         function toggleTheme() {
             const currentTheme = document.body.getAttribute('data-theme');
@@ -140,7 +131,7 @@
             const btn = document.getElementById('submitBtn');
 
             if (!/^01[0-9]{9}$/.test(phone)) {
-                alert('رقم الهاتف الشخصي غير صحيح، يجب أن يتكون من 11 رقماً ويتبدأ بـ 01');
+                alert('رقم الهاتف الشخصي غير صحيح، يجب أن يتكون من 11 رقماً ويبدأ بـ 01');
                 return;
             }
 
@@ -148,7 +139,7 @@
             btn.innerText = 'جاري التحقق وإرسال الكود...';
 
             try {
-                // 1. فحص هل الإيميل أو الهاتف مسجلين من قبل في قاعدة البيانات
+                // 1. فحص عدم تكرار الإيميل أو الهاتف في قاعدة البيانات عبر Supabase
                 const { data: existingUsers, error: checkError } = await supabaseClient
                     .from('profiles')
                     .select('email, student_phone')
@@ -165,19 +156,19 @@
                     return;
                 }
 
-                // 2. توليد كود تحقق عشوائي من 6 أرقام
+                // 2. توليد كود عشوائي من 6 أرقام
                 const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
-                // 3. إرسال الكود عبر EmailJS
+                // 3. إرسال الكود باستخدام EmailJS
                 const templateParams = {
                     to_email: email,
                     to_name: document.getElementById('firstName').value.trim(),
                     pass_code: verificationCode
                 };
 
-                await emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams);
+                await emailjs.send('Service_seljmns', 'template_5lj7i0g', templateParams);
 
-                // 4. حفظ البيانات المؤقتة مع الكود في الـ LocalStorage والانتقال لصفحة التحقق
+                // 4. حفظ البيانات المؤقتة والكود في الـ LocalStorage والانتقال لصفحة التحقق
                 const tempData = {
                     firstName: document.getElementById('firstName').value.trim(),
                     middleName: document.getElementById('middleName').value.trim(),
