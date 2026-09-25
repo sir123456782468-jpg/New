@@ -5,20 +5,22 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إنشاء حساب - The Leader In English</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
+    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <!-- مكتبة EmailJS -->
+    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         :root {
             --bg-gradient: radial-gradient(circle at 50% 20%, #f8fafc 0%, #f1f5f9 50%, #e2e8f0 100%);
             --card-bg: rgba(255, 255, 255, 0.9);
             --text-main: #1e293b;
             --text-muted: #64748b;
-            --accent-primary: #ef4444; /* أحمر ناري للمنصة */
+            --accent-primary: #ef4444;
             --border-color: rgba(239, 68, 68, 0.2);
             --input-bg: rgba(255, 255, 255, 0.8);
             --error-color: #ef4444;
             --success-color: #10b981;
         }
-
         [data-theme="dark"] {
             --bg-gradient: radial-gradient(circle at 50% 20%, #0f172a 0%, #0b1120 50%, #020617 100%);
             --card-bg: rgba(15, 23, 42, 0.85);
@@ -30,174 +32,30 @@
             --error-color: #f87171;
             --success-color: #34d399;
         }
-
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            font-family: 'Cairo', sans-serif;
-            transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease;
-        }
-
-        body {
-            background: var(--bg-gradient);
-            color: var(--text-main);
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            align-items: center;
-            padding: 25px;
-            position: relative;
-        }
-
-        .theme-toggle {
-            position: absolute;
-            top: 25px;
-            left: 25px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            color: var(--text-main);
-            padding: 10px 18px;
-            border-radius: 50px;
-            cursor: pointer;
-            font-weight: 700;
-            font-size: 13px;
-            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
-            z-index: 10;
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            backdrop-filter: blur(12px);
-        }
-        .theme-toggle:hover {
-            transform: scale(1.05);
-            border-color: var(--accent-primary);
-        }
-
-        header {
-            text-align: center;
-            margin-top: 15px;
-            z-index: 2;
-        }
-
-        .teacher-title {
-            font-family: 'Cinzel', serif;
-            font-size: 28px;
-            font-weight: 800;
-            color: var(--accent-primary);
-        }
-
-        .form-container {
-            width: 100%;
-            max-width: 650px;
-            background: var(--card-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 24px;
-            padding: 30px;
-            box-shadow: 0 20px 40px rgba(0,0,0,0.08);
-            backdrop-filter: blur(16px);
-            margin: 20px 0;
-            z-index: 2;
-        }
-
-        .form-title {
-            font-size: 22px;
-            font-weight: 800;
-            text-align: center;
-            margin-bottom: 25px;
-            color: var(--text-main);
-        }
-
-        .name-row {
-            display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 15px;
-            margin-bottom: 20px;
-        }
-
-        .input-group {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            margin-bottom: 20px;
-        }
-
-        label {
-            font-size: 14px;
-            font-weight: 700;
-            color: var(--text-main);
-        }
-
-        input {
-            width: 100%;
-            padding: 14px 16px;
-            background: var(--input-bg);
-            border: 1px solid var(--border-color);
-            border-radius: 12px;
-            color: var(--text-main);
-            font-size: 15px;
-            outline: none;
-        }
-
-        input:focus {
-            border-color: var(--accent-primary);
-            box-shadow: 0 0 10px rgba(239, 68, 68, 0.2);
-        }
-
-        input.invalid-phone { border-color: var(--error-color) !important; }
-        input.valid-phone { border-color: var(--success-color) !important; }
-
-        .validation-hint {
-            font-size: 11px;
-            margin-top: 4px;
-            font-weight: 600;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; transition: background 0.4s ease, color 0.4s ease, border-color 0.4s ease; }
+        body { background: var(--bg-gradient); color: var(--text-main); min-height: 100vh; display: flex; flex-direction: column; justify-content: space-between; align-items: center; padding: 25px; position: relative; }
+        .theme-toggle { position: absolute; top: 25px; left: 25px; background: var(--card-bg); border: 1px solid var(--border-color); color: var(--text-main); padding: 10px 18px; border-radius: 50px; cursor: pointer; font-weight: 700; font-size: 13px; z-index: 10; display: flex; align-items: center; gap: 8px; backdrop-filter: blur(12px); }
+        header { text-align: center; margin-top: 15px; z-index: 2; }
+        .teacher-title { font-family: 'Cinzel', serif; font-size: 28px; font-weight: 800; color: var(--accent-primary); }
+        .form-container { width: 100%; max-width: 650px; background: var(--card-bg); border: 1px solid var(--border-color); border-radius: 24px; padding: 30px; box-shadow: 0 20px 40px rgba(0,0,0,0.08); backdrop-filter: blur(16px); margin: 20px 0; z-index: 2; }
+        .form-title { font-size: 22px; font-weight: 800; text-align: center; margin-bottom: 25px; color: var(--text-main); }
+        .name-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 15px; margin-bottom: 20px; }
+        .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; }
+        label { font-size: 14px; font-weight: 700; color: var(--text-main); }
+        input { width: 100%; padding: 14px 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 15px; outline: none; }
+        input:focus { border-color: var(--accent-primary); box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+        .validation-hint { font-size: 11px; margin-top: 4px; font-weight: 600; }
         .validation-hint.error { color: var(--error-color); }
         .validation-hint.success { color: var(--success-color); }
-
-        .submit-btn-wrapper {
-            position: relative;
-            border-radius: 16px;
-            padding: 2px;
-            overflow: hidden;
-            margin-top: 10px;
-            background: var(--accent-primary);
-        }
-
-        .submit-btn {
-            width: 100%;
-            background: var(--card-bg);
-            color: var(--text-main);
-            border: none;
-            padding: 16px;
-            border-radius: 14px;
-            font-size: 16px;
-            font-weight: 700;
-            cursor: pointer;
-            backdrop-filter: blur(15px);
-        }
-
-        .submit-btn:hover {
-            background: var(--accent-primary);
-            color: #ffffff;
-        }
-
-        footer {
-            font-size: 11px;
-            color: var(--text-muted);
-            text-align: center;
-            z-index: 2;
-        }
-
-        @media(max-width: 768px) {
-            .name-row { grid-template-columns: 1fr; gap: 15px; }
-        }
+        .submit-btn-wrapper { border-radius: 16px; padding: 2px; overflow: hidden; margin-top: 10px; background: var(--accent-primary); }
+        .submit-btn { width: 100%; background: var(--card-bg); color: var(--text-main); border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; backdrop-filter: blur(15px); }
+        .submit-btn:hover { background: var(--accent-primary); color: #ffffff; }
+        footer { font-size: 11px; color: var(--text-muted); text-align: center; z-index: 2; }
+        @media(max-width: 768px) { .name-row { grid-template-columns: 1fr; gap: 15px; } }
     </style>
 </head>
 <body data-theme="light">
-
-    <button class="theme-toggle" id="themeToggleBtn" onclick="toggleTheme()">
+    <button class="theme-toggle" onclick="toggleTheme()">
         <span id="themeIcon">🌙</span> <span id="themeText">الوضع الداكن</span>
     </button>
 
@@ -206,21 +64,20 @@
     </header>
 
     <div class="form-container">
-        <h2 class="form-title">إنشاء حساب جديد (الخطوة الأولى)</h2>
-        
+        <h2 class="form-title">إنشاء حساب جديد (الخطوة 1: البيانات)</h2>
         <form id="signupForm" onsubmit="handleFirstStep(event)">
             <div class="name-row">
                 <div class="input-group">
                     <label>الاسم الأول</label>
-                    <input type="text" id="firstName" placeholder="الاسم الأول" required>
+                    <input type="text" id="firstName" required>
                 </div>
                 <div class="input-group">
                     <label>الاسم الثاني</label>
-                    <input type="text" id="middleName" placeholder="الاسم الثاني" required>
+                    <input type="text" id="middleName" required>
                 </div>
                 <div class="input-group">
                     <label>الاسم الأخير</label>
-                    <input type="text" id="lastName" placeholder="الاسم الأخير" required>
+                    <input type="text" id="lastName" required>
                 </div>
             </div>
 
@@ -231,103 +88,116 @@
 
             <div class="input-group">
                 <label>رقم الهاتف الشخصي</label>
-                <input type="tel" id="studentPhone" placeholder="01xxxxxxxxx" maxlength="11" oninput="validatePhone('studentPhone', 'studentHint')" required>
-                <span id="studentHint" class="validation-hint error">يجب أن يبدأ بـ 01 ويتكون من 11 رقماً</span>
+                <input type="tel" id="studentPhone" placeholder="01xxxxxxxxx" maxlength="11" required>
             </div>
 
             <div class="input-group">
                 <label>رقم ولي الأمر</label>
-                <input type="tel" id="parentPhone" placeholder="01xxxxxxxxx" maxlength="11" oninput="validatePhone('parentPhone', 'parentHint')" required>
-                <span id="parentHint" class="validation-hint error">يجب أن يبدأ بـ 01 ويتكون من 11 رقماً</span>
+                <input type="tel" id="parentPhone" placeholder="01xxxxxxxxx" maxlength="11" required>
             </div>
 
             <div class="submit-btn-wrapper">
-                <button type="submit" class="submit-btn">التالي: تعيين كلمة المرور ⬅️</button>
+                <button type="submit" class="submit-btn" id="submitBtn">إرسال كود التحقق 🚀</button>
             </div>
         </form>
     </div>
 
-    <footer>
-        &copy; 2026 The Leader In English. All Rights Reserved.
-    </footer>
+    <footer>&copy; 2026 The Leader In English. All Rights Reserved.</footer>
 
     <script>
-        function initTheme() {
-            const savedTheme = localStorage.getItem('platform_theme') || 'light';
-            document.body.setAttribute('data-theme', savedTheme);
-            updateThemeToggleUI(savedTheme);
-        }
+        // إعدادات Supabase (استبدل المفتاح الثاني بمفتاح anon الصحيح الذي يبدأ بـ eyJ...)
+        const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
+        const SUPABASE_ANON_KEY = 'ضع_مفتاح_anon_الصحيح_هنا'; 
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        // إعدادات EmailJS التي أرسلتها
+        const EMAIL_SERVICE_ID = 'Service_seljmns';
+        const EMAIL_TEMPLATE_ID = 'template_5lj7i0g';
+        const EMAIL_PUBLIC_KEY = 'gU8jVHuVqdaZT6CD1';
+
+        emailjs.init(EMAIL_PUBLIC_KEY);
 
         function toggleTheme() {
             const currentTheme = document.body.getAttribute('data-theme');
             const newTheme = currentTheme === 'light' ? 'dark' : 'light';
             document.body.setAttribute('data-theme', newTheme);
             localStorage.setItem('platform_theme', newTheme);
-            updateThemeToggleUI(newTheme);
-        }
-
-        function updateThemeToggleUI(theme) {
-            const icon = document.getElementById('themeIcon');
-            const text = document.getElementById('themeText');
-            if (theme === 'dark') {
-                icon.innerText = '☀️';
-                text.innerText = 'الوضع الفاتح';
-            } else {
-                icon.innerText = '🌙';
-                text.innerText = 'الوضع الداكن';
-            }
-        }
-
-        function validatePhone(inputId, hintId) {
-            const inputField = document.getElementById(inputId);
-            const hintField = document.getElementById(hintId);
-            const val = inputField.value.trim();
-            const phoneRegex = /^01[0-9]{9}$/;
-
-            if (phoneRegex.test(val)) {
-                inputField.classList.remove('invalid-phone');
-                inputField.classList.add('valid-phone');
-                hintField.innerText = 'الرقم صحيح ✓';
-                hintField.className = 'validation-hint success';
-            } else {
-                inputField.classList.remove('valid-phone');
-                inputField.classList.add('invalid-phone');
-                hintField.innerText = 'يجب أن يبدأ بـ 01 ويتكون من 11 رقماً صحيحاً';
-                hintField.className = 'validation-hint error';
-            }
-        }
-
-        function handleFirstStep(event) {
-            event.preventDefault();
-
-            const studentPhone = document.getElementById('studentPhone').value.trim();
-            const parentPhone = document.getElementById('parentPhone').value.trim();
-            const phoneRegex = /^01[0-9]{9}$/;
-
-            if (!phoneRegex.test(studentPhone) || !phoneRegex.test(parentPhone)) {
-                alert('يرجى التأكد من صحة أرقام الهواتف (11 رقماً تبدأ بـ 01)');
-                return;
-            }
-
-            // جمع البيانات في كائن مؤقت وحفظه في الـ LocalStorage
-            const tempData = {
-                firstName: document.getElementById('firstName').value.trim(),
-                middleName: document.getElementById('middleName').value.trim(),
-                lastName: document.getElementById('lastName').value.trim(),
-                studentEmail: document.getElementById('studentEmail').value.trim(),
-                studentPhone: studentPhone,
-                parentPhone: parentPhone
-            };
-
-            localStorage.setItem('temp_signup_data', JSON.stringify(tempData));
-
-            // الانتقال للخطوة الثانية مباشرة
-            window.location.href = 'signup-step2.html';
+            document.getElementById('themeIcon').innerText = newTheme === 'dark' ? '☀️' : '🌙';
+            document.getElementById('themeText').innerText = newTheme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن';
         }
 
         window.addEventListener('DOMContentLoaded', () => {
-            initTheme();
+            const savedTheme = localStorage.getItem('platform_theme') || 'light';
+            document.body.setAttribute('data-theme', savedTheme);
         });
+
+        async function handleFirstStep(event) {
+            event.preventDefault();
+
+            const email = document.getElementById('studentEmail').value.trim();
+            const phone = document.getElementById('studentPhone').value.trim();
+            const parentPhone = document.getElementById('parentPhone').value.trim();
+            const btn = document.getElementById('submitBtn');
+
+            if (!/^01[0-9]{9}$/.test(phone)) {
+                alert('رقم الهاتف الشخصي غير صحيح، يجب أن يتكون من 11 رقماً ويتبدأ بـ 01');
+                return;
+            }
+
+            btn.disabled = true;
+            btn.innerText = 'جاري التحقق وإرسال الكود...';
+
+            try {
+                // 1. فحص هل الإيميل أو الهاتف مسجلين من قبل في قاعدة البيانات
+                const { data: existingUsers, error: checkError } = await supabaseClient
+                    .from('profiles')
+                    .select('email, student_phone')
+                    .or(`email.eq.${email},student_phone.eq.${phone}`);
+
+                if (checkError) {
+                    console.error(checkError);
+                }
+
+                if (existingUsers && existingUsers.length > 0) {
+                    alert('هذا البريد الإلكتروني أو رقم الهاتف مسجل مسبقاً! يرجى تسجيل الدخول.');
+                    btn.disabled = false;
+                    btn.innerText = 'إرسال كود التحقق 🚀';
+                    return;
+                }
+
+                // 2. توليد كود تحقق عشوائي من 6 أرقام
+                const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
+
+                // 3. إرسال الكود عبر EmailJS
+                const templateParams = {
+                    to_email: email,
+                    to_name: document.getElementById('firstName').value.trim(),
+                    pass_code: verificationCode
+                };
+
+                await emailjs.send(EMAIL_SERVICE_ID, EMAIL_TEMPLATE_ID, templateParams);
+
+                // 4. حفظ البيانات المؤقتة مع الكود في الـ LocalStorage والانتقال لصفحة التحقق
+                const tempData = {
+                    firstName: document.getElementById('firstName').value.trim(),
+                    middleName: document.getElementById('middleName').value.trim(),
+                    lastName: document.getElementById('lastName').value.trim(),
+                    studentEmail: email,
+                    studentPhone: phone,
+                    parentPhone: parentPhone,
+                    code: verificationCode
+                };
+
+                localStorage.setItem('temp_signup_data', JSON.stringify(tempData));
+                window.location.href = 'verify-code.html';
+
+            } catch (err) {
+                console.error(err);
+                alert('حدث خطأ أثناء إرسال الكود، يرجى التأكد من اتصال الإنترنت والمحاولة مرة أخرى.');
+                btn.disabled = false;
+                btn.innerText = 'إرسال كود التحقق 🚀';
+            }
+        }
     </script>
 </body>
 </html>
