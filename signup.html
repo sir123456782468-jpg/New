@@ -135,7 +135,7 @@
             btn.innerText = 'جاري التحقق وإرسال الكود...';
 
             try {
-                // فحص تكرار البيانات في قاعدة البيانات
+                // الفحص في قاعدة البيانات لمنع التسجيل المكرر (الإيميل أو الهاتف الشخصي)
                 const { data: existingUsers, error: checkError } = await supabaseClient
                     .from('profiles')
                     .select('email, student_phone')
@@ -146,13 +146,13 @@
                 }
 
                 if (existingUsers && existingUsers.length > 0) {
-                    alert('هذا البريد الإلكتروني أو رقم الهاتف مسجل مسبقاً! يرجى تسجيل الدخول.');
+                    alert('عذراً، هذا البريد الإلكتروني أو رقم الهاتف مسجل مسبقاً في المنصة! لا يمكن تكرار التسجيل بهما.');
                     btn.disabled = false;
                     btn.innerText = 'إرسال كود التحقق 🚀';
                     return;
                 }
 
-                // توليد الكود العشوائي
+                // توليد كود التحقق (6 أرقام)
                 const verificationCode = Math.floor(100000 + Math.random() * 900000).toString();
 
                 const templateParams = {
@@ -161,10 +161,9 @@
                     pass_code: verificationCode
                 };
 
-                // محاولة إرسال الإيميل عبر EmailJS
+                // إرسال الكود عبر EmailJS
                 await emailjs.send('Service_seljmns', 'template_5lj7i0g', templateParams);
 
-                // حفظ البيانات المؤقتة والانتقال لصفحة التحقق
                 const tempData = {
                     firstName: document.getElementById('firstName').value.trim(),
                     middleName: document.getElementById('middleName').value.trim(),
@@ -178,9 +177,9 @@
                 localStorage.setItem('temp_signup_data', JSON.stringify(tempData));
                 window.location.href = 'verify-code.html';
 
-            }زايد (err) { // تم تصحيح الكلمة هنا لضمان عمل الـ Catch بشكل صحيح
+            } catch (err) {
                 console.error("Error details:", err);
-                alert('حدث خطأ أثناء الإرسال: ' + (err.text || err.message || 'تأكد من إعدادات EmailJS'));
+                alert('حدث خطأ أثناء الإرسال: ' + (err.text || err.message || 'تأكد من إعدادات EmailJS وانترنت الجهاز'));
                 btn.disabled = false;
                 btn.innerText = 'إرسال كود التحقق 🚀';
             }
