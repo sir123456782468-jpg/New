@@ -55,7 +55,7 @@
 
     <div class="form-container">
         <h2 class="form-title">تأكيد البريد الإلكتروني</h2>
-        <p class="form-desc">تم إرسال كود التحقق المكون من 6 أرقام إلى بريدك الإلكتروني، برجاء إدخاله أدناه لإتمام إنشاء الحساب.</p>
+        <p class="form-desc">تم إرسال كود التحقق المكون من 6 أرقام إلى بريدك الإلكتروني، برجاء إدخاله أدناه للمتابعة.</p>
         
         <form id="verifyForm" onsubmit="handleVerification(event)">
             <div class="input-group">
@@ -64,7 +64,7 @@
             </div>
 
             <div class="submit-btn-wrapper">
-                <button type="submit" class="submit-btn" id="verifyBtn">تأكيد وإنشاء الحساب ✅</button>
+                <button type="submit" class="submit-btn" id="verifyBtn">تحقق وتابع لتعيين كلمة المرور ➔</button>
             </div>
         </form>
     </div>
@@ -109,41 +109,12 @@
             }
 
             btn.disabled = true;
-            btn.innerText = 'جاري حفظ البيانات وإنشاء الحساب...';
+            btn.innerText = 'تم التحقق بنجاح، جاري التحويل...';
 
-            try {
-                // ملاحظة: لو كنت عامل صفحة مستقلة للباسورد بتسجل بيها في الـ Auth، هنا ممكن نكتفي بحفظ البيانات في جدول profiles مباشرة
-                // أو لو حابب ننشئ حساب افتراضي بكلمة مرور مؤقتة يتم تغيرها لاحقاً، قولي.
-                // حالياً هنحفظ بيانات الطالب كاملة في جدول profiles كما طلبت:
-
-                // استخدام البريد كمعرف أو توليد عشوائي مؤقت لو لسه صفحة الباسورد منفصلة
-                const { error: profileError } = await supabaseClient
-                    .from('profiles')
-                    .insert([
-                        {
-                            first_name: tempData.firstName,
-                            middle_name: tempData.middleName,
-                            last_name: tempData.lastName,
-                            email: tempData.studentEmail,
-                            phone_number: tempData.studentPhone,
-                            parent_phone: tempData.parentPhone
-                        }
-                    ]);
-
-                if (profileError) {
-                    throw profileError;
-                }
-
-                alert('تم إنشاء الحساب وحفظ بيانات الطالب بنجاح! 🎉');
-                localStorage.removeItem('temp_signup_data');
-                window.location.href = 'dashboard.html';
-
-            } catch (err) {
-                console.error('Error:', err);
-                alert('حدث خطأ أثناء حفظ البيانات: ' + (err.message || 'يرجى المحاولة مرة أخرى'));
-                btn.disabled = false;
-                btn.innerText = 'تأكيد وإنشاء الحساب ✅';
-            }
+            // الانتقال لصفحة تعيين كلمة المرور (تأكد أن اسم الصفحة عندك password.html أو غيره حسب ما سميتها)
+            setTimeout(() => {
+                window.location.href = 'password.html';
+            }, 800);
         }
     </script>
 </body>
