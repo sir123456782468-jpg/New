@@ -161,8 +161,8 @@
                     pass_code: verificationCode
                 };
 
-                // إرسال الكود عبر EmailJS
-                await emailjs.send('Service_seljmns', 'template_5lj7i0g', templateParams);
+                // إرسال الكود عبر EmailJS باستخدام الـ Service ID الصحيح
+                await emailjs.send('service_seljmns', 'template_5lj7i0g', templateParams);
 
                 const tempData = {
                     firstName: document.getElementById('firstName').value.trim(),
