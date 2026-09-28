@@ -332,9 +332,6 @@
     </footer>
 
     <script>
-        // ==========================================
-        // 1. الربط بقاعدة بيانات Supabase
-        // ==========================================
         const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
         const SUPABASE_ANON_KEY = 'sb_publishable_lNpmx_7cT_frhxmkMKnlVQ_D9MhsqWi';
         
@@ -351,9 +348,6 @@
             }
         }
 
-        // ==========================================
-        // 2. إدارة الثيمات (داكن / فاتح)
-        // ==========================================
         function initTheme() {
             const savedTheme = localStorage.getItem('platform_theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
@@ -380,9 +374,6 @@
             }
         }
 
-        // ==========================================
-        // 3. تأثير الكتابة التلقائية
-        // ==========================================
         const textTarget = document.getElementById('typedText');
         const cursorTarget = document.getElementById('typingCursor');
         const phrase = "The Leader In English";
