@@ -103,11 +103,11 @@
             finalBtn.innerText = 'جاري حفظ الحساب في القاعدة...';
 
             try {
-                // الفحص مرة أخيرة أماناً قبل الحفظ النهائي لمنع أي تجاوز
+                // الفحص مرة أخيرة أماناً قبل الحفظ النهائي
                 const { data: doubleCheck } = await supabaseClient
                     .from('profiles')
-                    .select('email, student_phone')
-                    .or(`email.eq.${tempData.studentEmail},student_phone.eq.${tempData.studentPhone}`);
+                    .select('email, phone_number')
+                    .or(`email.eq.${tempData.studentEmail},phone_number.eq.${tempData.studentPhone}`);
 
                 if (doubleCheck && doubleCheck.length > 0) {
                     alert('هذا الحساب مسجل بالفعل مسبقاً.');
@@ -115,8 +115,8 @@
                     return;
                 }
 
-                // 1. إنشاء الحساب في Supabase Auth
-                const { error: authError } = await supabaseClient.auth.signUp({
+                // 1. إنشاء الحساب في Supabase Auth واستخراج الـ ID الناتج
+                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email: tempData.studentEmail,
                     password: pass
                 });
@@ -128,30 +128,33 @@
                     return;
                 }
 
-                // 2. توليد جلسة فريدة للجهاز (لتفعيل حظر فتح الحساب على أكثر من جهاز)
-                const deviceSessionId = 'session_' + Math.random().toString(36).substring(2) + Date.now();
+                const userId = authData.user ? authData.user.id : null;
 
-                // 3. تخزين بيانات الطالب التفصيلية وجلسة الجهاز في جدول profiles
+                // 2. تخزين بيانات الطالب التفصيلية في جدول profiles وربطها بالـ ID
                 const { error: dbError } = await supabaseClient.from('profiles').insert([
                     {
+                        id: userId,
                         first_name: tempData.firstName,
                         middle_name: tempData.middleName,
                         last_name: tempData.lastName,
                         email: tempData.studentEmail,
-                        student_phone: tempData.studentPhone,
-                        parent_phone: tempData.parentPhone,
-                        active_session: deviceSessionId
+                        phone_number: tempData.studentPhone,
+                        parent_phone: tempData.parentPhone
                     }
                 ]);
 
                 if (dbError) {
                     console.error(dbError);
+                    alert('حدث خطأ أثناء حفظ تفاصيل الملف الشخصي: ' + dbError.message);
+                    finalBtn.disabled = false;
+                    finalBtn.innerText = 'إتمام الحفظ وإنشاء الحساب 🚀';
+                    return;
                 }
 
                 // تنظيف البيانات المؤقتة
                 localStorage.removeItem('temp_signup_data');
 
-                alert('تم إنشاء الحساب وحفظ البيانات بنجاح! يمكنك الآن تسجيل الدخول.');
+                alert('تم إنشاء الحساب وحفظ البيانات بنجاح! يمكنك الآن تسجيل الدخول. 🎉');
                 window.location.href = 'signin.html';
 
             } catch (err) {
