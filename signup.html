@@ -5,9 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>إنشاء حساب - The Leader In English</title>
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;900&family=Cinzel:wght@600;800&display=swap" rel="stylesheet">
-    <!-- مكتبة Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-    <!-- مكتبة EmailJS -->
     <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
     <style>
         :root {
@@ -58,7 +56,7 @@
     </header>
 
     <div class="form-container">
-        <h2 class="form-title">إنشاء حساب جديد (الخطوة 1: البيانات)</h2>
+        <h2 class="form-title">إنشاء حساب جديد (الخطوة 1: البيانات الأساسية)</h2>
         <form id="signupForm" onsubmit="handleFirstStep(event)">
             <div class="name-row">
                 <div class="input-group">
@@ -147,21 +145,17 @@
             }
 
             btn.disabled = true;
-            btn.innerText = 'جاري التحقق وإرسال الكود...';
+            btn.innerText = 'جاري التحقق من التكرار وإرسال الكود...';
 
             try {
-                // الفحص في قاعدة البيانات لمنع التسجيل المكرر برقم الهاتف
+                // الفحص في قاعدة البيانات لمنع التسجيل المكرر (الإيميل أو الهاتف)
                 const { data: existingUsers, error: checkError } = await supabaseClient
                     .from('profiles')
-                    .select('phone_number')
-                    .eq('phone_number', phone);
-
-                if (checkError) {
-                    console.log('Supabase Check Warning:', checkError);
-                }
+                    .select('email, phone_number')
+                    .or(`email.eq.${email},phone_number.eq.${phone}`);
 
                 if (existingUsers && existingUsers.length > 0) {
-                    alert('عذراً، رقم الهاتف الشخصي هذا مسجل مسبقاً في المنصة! لا يمكن تكرار التسجيل به.');
+                    alert('عذراً، البريد الإلكتروني أو رقم الهاتف الشخصي مسجل مسبقاً في المنصة!');
                     btn.disabled = false;
                     btn.innerText = 'إرسال كود التحقق 🚀';
                     return;
