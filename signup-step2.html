@@ -103,7 +103,7 @@
             finalBtn.innerText = 'جاري حفظ الحساب في القاعدة...';
 
             try {
-                // الفحص مرة أخيرة أماناً قبل الحفظ النهائي
+                // الفحص مرة أخيرة أماناً باستخدام اسم العمود الصحيح phone_number
                 const { data: doubleCheck } = await supabaseClient
                     .from('profiles')
                     .select('email, phone_number')
@@ -115,7 +115,7 @@
                     return;
                 }
 
-                // 1. إنشاء الحساب في Supabase Auth واستخراج الـ ID الناتج
+                // 1. إنشاء الحساب في Supabase Auth واستخراج الـ ID
                 const { data: authData, error: authError } = await supabaseClient.auth.signUp({
                     email: tempData.studentEmail,
                     password: pass
@@ -130,7 +130,7 @@
 
                 const userId = authData.user ? authData.user.id : null;
 
-                // 2. تخزين بيانات الطالب التفصيلية في جدول profiles وربطها بالـ ID
+                // 2. تخزين بيانات الطالب التفصيلية وربطها بالـ ID واسم العمود phone_number الصحيح
                 const { error: dbError } = await supabaseClient.from('profiles').insert([
                     {
                         id: userId,
@@ -145,7 +145,7 @@
 
                 if (dbError) {
                     console.error(dbError);
-                    alert('حدث خطأ أثناء حفظ تفاصيل الملف الشخصي: ' + dbError.message);
+                    alert('حدث خطأ أثناء حفظ البيانات: ' + dbError.message);
                     finalBtn.disabled = false;
                     finalBtn.innerText = 'إتمام الحفظ وإنشاء الحساب 🚀';
                     return;
