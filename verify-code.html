@@ -36,7 +36,7 @@
         .form-desc { font-size: 14px; color: var(--text-muted); margin-bottom: 25px; }
         .input-group { display: flex; flex-direction: column; gap: 8px; margin-bottom: 20px; text-align: right; }
         label { font-size: 14px; font-weight: 700; color: var(--text-main); }
-        input { width: 100%; padding: 14px 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 16px; text-align: center; letter-spacing: 3px; outline: none; }
+        input { width: 100%; padding: 14px 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-main); font-size: 18px; text-align: center; letter-spacing: 5px; outline: none; }
         input:focus { border-color: var(--accent-primary); box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
         .submit-btn-wrapper { border-radius: 16px; padding: 2px; overflow: hidden; margin-top: 10px; background: var(--accent-primary); }
         .submit-btn { width: 100%; background: var(--card-bg); color: var(--text-main); border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; backdrop-filter: blur(15px); }
@@ -61,12 +61,6 @@
             <div class="input-group">
                 <label>كود التحقق</label>
                 <input type="text" id="verificationCodeInput" placeholder="------" maxlength="6" required>
-            </div>
-
-            <!-- حقل تعيين كلمة المرور الخاصة بحساب الطالب -->
-            <div class="input-group">
-                <label>أنشئ كلمة المرور لحسابك</label>
-                <input type="password" id="userPassword" placeholder="••••••••" style="letter-spacing: normal; text-align: right;" required>
             </div>
 
             <div class="submit-btn-wrapper">
@@ -95,7 +89,6 @@
             const savedTheme = localStorage.getItem('platform_theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
             
-            // التأكد من وجود البيانات المؤقتة
             if (!localStorage.getItem('temp_signup_data')) {
                 alert('انتهت صلاحية الجلسة أو لم تقم بإدخال البيانات الأساسية.');
                 window.location.href = 'signup.html';
@@ -106,7 +99,6 @@
             event.preventDefault();
 
             const enteredCode = document.getElementById('verificationCodeInput').value.trim();
-            const password = document.getElementById('userPassword').value.trim();
             const btn = document.getElementById('verifyBtn');
 
             const tempData = JSON.parse(localStorage.getItem('temp_signup_data'));
@@ -116,37 +108,19 @@
                 return;
             }
 
-            if (password.length < 6) {
-                alert('كلمة المرور يجب أن تكون 6 أحرف أو أرقام على الأقل.');
-                return;
-            }
-
             btn.disabled = true;
-            btn.innerText = 'جاري إنشاء الحساب وحفظ البيانات...';
+            btn.innerText = 'جاري حفظ البيانات وإنشاء الحساب...';
 
             try {
-                // 1. إنشاء المستخدم في مصادقة Supabase Auth
-                const { data: authData, error: authError } = await supabaseClient.auth.signUp({
-                    email: tempData.studentEmail,
-                    password: password
-                });
+                // ملاحظة: لو كنت عامل صفحة مستقلة للباسورد بتسجل بيها في الـ Auth، هنا ممكن نكتفي بحفظ البيانات في جدول profiles مباشرة
+                // أو لو حابب ننشئ حساب افتراضي بكلمة مرور مؤقتة يتم تغيرها لاحقاً، قولي.
+                // حالياً هنحفظ بيانات الطالب كاملة في جدول profiles كما طلبت:
 
-                if (authError) {
-                    throw authError;
-                }
-
-                const userId = authData.user ? authData.user.id : null;
-
-                if (!userId) {
-                    throw new Error('فشل استخراج معرف المستخدم.');
-                }
-
-                // 2. حفظ كافة بيانات الطالب تفصيلياً في جدول profiles لتظهر للآدمن
+                // استخدام البريد كمعرف أو توليد عشوائي مؤقت لو لسه صفحة الباسورد منفصلة
                 const { error: profileError } = await supabaseClient
                     .from('profiles')
                     .insert([
                         {
-                            id: userId,
                             first_name: tempData.firstName,
                             middle_name: tempData.middleName,
                             last_name: tempData.lastName,
@@ -160,13 +134,13 @@
                     throw profileError;
                 }
 
-                alert('تم إنشاء الحساب بنجاح! أهلاً بك في المنصة.');
+                alert('تم إنشاء الحساب وحفظ بيانات الطالب بنجاح! 🎉');
                 localStorage.removeItem('temp_signup_data');
-                window.location.href = 'dashboard.html'; // أو صفحة الدخول الخاصة بك
+                window.location.href = 'dashboard.html';
 
             } catch (err) {
                 console.error('Error:', err);
-                alert('حدث خطأ أثناء إنشاء الحساب: ' + (err.message || 'يرجى المحاولة مرة أخرى'));
+                alert('حدث خطأ أثناء حفظ البيانات: ' + (err.message || 'يرجى المحاولة مرة أخرى'));
                 btn.disabled = false;
                 btn.innerText = 'تأكيد وإنشاء الحساب ✅';
             }
