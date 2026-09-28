@@ -135,18 +135,18 @@
             btn.innerText = 'جاري التحقق وإرسال الكود...';
 
             try {
-                // الفحص في قاعدة البيانات لمنع التسجيل المكرر (الإيميل أو الهاتف الشخصي)
+                // الفحص في قاعدة البيانات لمنع التسجيل المكرر برقم الهاتف
                 const { data: existingUsers, error: checkError } = await supabaseClient
                     .from('profiles')
-                    .select('email, student_phone')
-                    .or(`email.eq.${email},student_phone.eq.${phone}`);
+                    .select('phone_number')
+                    .eq('phone_number', phone);
 
                 if (checkError) {
                     console.log('Supabase Check Warning:', checkError);
                 }
 
                 if (existingUsers && existingUsers.length > 0) {
-                    alert('عذراً، هذا البريد الإلكتروني أو رقم الهاتف مسجل مسبقاً في المنصة! لا يمكن تكرار التسجيل بهما.');
+                    alert('عذراً، رقم الهاتف الشخصي هذا مسجل مسبقاً في المنصة! لا يمكن تكرار التسجيل به.');
                     btn.disabled = false;
                     btn.innerText = 'إرسال كود التحقق 🚀';
                     return;
@@ -161,7 +161,7 @@
                     pass_code: verificationCode
                 };
 
-                // إرسال الكود عبر EmailJS باستخدام الـ Service ID الصحيح
+                // إرسال الكود عبر EmailJS
                 await emailjs.send('service_seljmns', 'template_5lj7i0g', templateParams);
 
                 const tempData = {
@@ -179,7 +179,7 @@
 
             } catch (err) {
                 console.error("Error details:", err);
-                alert('حدث خطأ أثناء الإرسال: ' + (err.text || err.message || 'تأكد من إعدادات EmailJS وانترنت الجهاز'));
+                alert('حدث خطأ أثناء الإرسال: ' + (err.text || err.message || 'تأكد من إعدادات الاتصال'));
                 btn.disabled = false;
                 btn.innerText = 'إرسال كود التحقق 🚀';
             }
