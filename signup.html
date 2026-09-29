@@ -204,7 +204,7 @@
                 const msg = (err.message || '').toLowerCase().includes('rate')
                     ? 'تم إرسال طلبات كثيرة، برجاء الانتظار دقيقة ثم المحاولة مرة أخرى.'
                     : 'حدث خطأ أثناء الإرسال، برجاء المحاولة مرة أخرى.';
-                showMsg(msg);
+                showMsg(msg + '<br><small dir="ltr" style="font-weight:400;opacity:.8;">' + (err.message || err) + ' [' + (err.status || err.code || '') + ']</small>');
                 btn.disabled = false;
                 btn.innerText = 'إرسال كود التحقق 🚀';
             }
