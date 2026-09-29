@@ -333,19 +333,20 @@
 
     <script>
         const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
-        const SUPABASE_ANON_KEY = 'sb_publishable_lNpmx_7cT_frhxmkMKnlVQ_D9MhsqWi';
+        const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4dG12c294Z2Zzb3JtaGNrbGZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNzI4MjQsImV4cCI6MjEwNTg0ODgyNH0.9zsPxYkMvHuRoe1R-XW8xOEUsE3IvoPP_r-iYXU_5s8';
         
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
-        async function verifyDatabaseConnection() {
+        // لو الطالب مسجل دخوله بالفعل ينتقل مباشرة للصفحة الرئيسية
+        async function redirectIfLoggedIn() {
             try {
-                const { error } = await supabaseClient.from('profiles').select('id', { count: 'exact', head: true });
-                if (!error) {
-                    console.log("Database connection established successfully.");
+                const { data } = await supabaseClient.auth.getSession();
+                if (data && data.session) {
+                    const { data: profile } = await supabaseClient
+                        .from('profiles').select('id').eq('id', data.session.user.id).maybeSingle();
+                    if (profile) { window.location.replace('home.html'); return; }
                 }
-            } catch (err) {
-                console.log("Database ready for runtime actions.");
-            }
+            } catch (e) { console.error(e); }
         }
 
         function initTheme() {
@@ -391,7 +392,7 @@
 
         window.addEventListener('DOMContentLoaded', () => {
             initTheme();
-            verifyDatabaseConnection();
+            redirectIfLoggedIn();
             setTimeout(typeWriterEffect, 600);
         });
     </script>
