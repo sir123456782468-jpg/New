@@ -125,9 +125,21 @@
             document.getElementById('themeText').innerText = newTheme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن';
         }
 
-        window.addEventListener('DOMContentLoaded', () => {
+        window.addEventListener('DOMContentLoaded', async () => {
             const savedTheme = localStorage.getItem('platform_theme') || 'light';
             document.body.setAttribute('data-theme', savedTheme);
+            document.getElementById('themeIcon').innerText = savedTheme === 'dark' ? '☀️' : '🌙';
+            document.getElementById('themeText').innerText = savedTheme === 'dark' ? 'الوضع الفاتح' : 'الوضع الداكن';
+
+            // لو الطالب مسجل دخوله بالفعل ينتقل للصفحة الرئيسية
+            try {
+                const { data } = await supabaseClient.auth.getSession();
+                if (data && data.session) {
+                    const { data: profile } = await supabaseClient
+                        .from('profiles').select('id').eq('id', data.session.user.id).maybeSingle();
+                    if (profile) { window.location.replace('home.html'); return; }
+                }
+            } catch (e) { console.error(e); }
         });
 
         function showMsg(html) {
@@ -204,7 +216,7 @@
                 const msg = (err.message || '').toLowerCase().includes('rate')
                     ? 'تم إرسال طلبات كثيرة، برجاء الانتظار دقيقة ثم المحاولة مرة أخرى.'
                     : 'حدث خطأ أثناء الإرسال، برجاء المحاولة مرة أخرى.';
-                showMsg(msg + '<br><small dir="ltr" style="font-weight:400;opacity:.8;">' + (err.message || err) + ' [' + (err.status || err.code || '') + ']</small>');
+                showMsg(msg);
                 btn.disabled = false;
                 btn.innerText = 'إرسال كود التحقق 🚀';
             }
