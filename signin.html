@@ -135,7 +135,9 @@
                 }
             } catch (e) { console.error(e); }
             document.getElementById('mainCard').style.visibility = 'visible';
-            if (new URLSearchParams(location.search).get('blocked')) showMsg('تم إيقاف حسابك، برجاء التواصل مع الإدارة.');
+            const qs = new URLSearchParams(location.search);
+            if (qs.get('blocked')) showMsg('تم إيقاف حسابك، برجاء التواصل مع الإدارة.');
+            if (qs.get('kicked')) showMsg('تم تسجيل خروجك لأنك سجّلت الدخول من جهاز آخر. الحساب يعمل على جهاز واحد فقط.');
         });
 
         async function handleSignin(event) {
@@ -171,6 +173,10 @@
                     btn.textContent = 'دخول ➔';
                     return;
                 }
+
+                // جهاز واحد فقط: نطلّع أي جهاز تاني ونحجز الجلسة دي
+                try { await supabaseClient.auth.signOut({ scope: 'others' }); } catch (e) {}
+                try { await supabaseClient.rpc('claim_session'); } catch (e) {}
 
                 window.location.href = HOME_PAGE;
 
