@@ -41,6 +41,22 @@
         .submit-btn-wrapper { border-radius: 16px; padding: 2px; overflow: hidden; margin-top: 10px; background: var(--accent-primary); }
         .submit-btn { width: 100%; background: var(--card-bg); color: var(--text-main); border: none; padding: 16px; border-radius: 14px; font-size: 16px; font-weight: 700; cursor: pointer; backdrop-filter: blur(15px); }
         .submit-btn:hover { background: var(--accent-primary); color: #ffffff; }
+        .select { position: relative; --panel-bg: #ffffff; }
+        [data-theme="dark"] .select { --panel-bg: #0f172a; }
+        .select-trigger { width: 100%; display: flex; align-items: center; justify-content: space-between; padding: 14px 16px; background: var(--input-bg); border: 1px solid var(--border-color); border-radius: 12px; color: var(--text-muted); font-size: 15px; cursor: pointer; outline: none; }
+        .select-trigger.has-value { color: var(--text-main); font-weight: 700; }
+        .select.open .select-trigger, .select-trigger:focus { border-color: var(--accent-primary); box-shadow: 0 0 10px rgba(239, 68, 68, 0.2); }
+        .chev { width: 18px; height: 18px; color: var(--accent-primary); transition: transform 0.25s ease; }
+        .select.open .chev { transform: rotate(180deg); }
+        .select-panel { position: absolute; top: calc(100% + 8px); left: 0; right: 0; z-index: 30; max-height: 330px; overflow-y: auto; background: var(--panel-bg); border: 1px solid var(--border-color); border-radius: 16px; box-shadow: 0 20px 40px rgba(0,0,0,0.18); padding: 8px; opacity: 0; transform: translateY(-8px) scale(0.98); pointer-events: none; transition: opacity 0.2s ease, transform 0.2s ease; }
+        .select.open .select-panel { opacity: 1; transform: none; pointer-events: auto; }
+        .grp { display: flex; align-items: center; gap: 8px; font-size: 12px; font-weight: 800; color: var(--accent-primary); padding: 10px 12px 6px; }
+        .grp::after { content: ""; flex: 1; height: 1px; background: var(--border-color); }
+        .opt { display: flex; align-items: center; justify-content: space-between; padding: 12px 14px; border-radius: 10px; cursor: pointer; font-size: 15px; font-weight: 600; color: var(--text-main); outline: none; }
+        .opt:hover, .opt:focus { background: rgba(239, 68, 68, 0.1); }
+        .opt[aria-selected="true"] { background: var(--accent-primary); color: #ffffff; }
+        .tick { width: 18px; height: 18px; opacity: 0; }
+        .opt[aria-selected="true"] .tick { opacity: 1; }
         .form-msg { display: none; margin-top: 16px; padding: 12px 14px; border-radius: 12px; font-size: 14px; font-weight: 600; text-align: center; line-height: 1.8; background: rgba(239,68,68,0.1); border: 1px solid var(--border-color); color: var(--text-main); }
         .form-msg a { color: var(--accent-primary); font-weight: 800; }
         footer { font-size: 11px; color: var(--text-muted); text-align: center; z-index: 2; }
@@ -81,15 +97,23 @@
 
             <div class="input-group">
                 <label>السنة الدراسية (الصف)</label>
-                <select id="academicYear" required>
-                    <option value="" disabled selected>اختر السنة الدراسية</option>
-                    <option value="أولى إعدادي">أولى إعدادي</option>
-                    <option value="ثانية إعدادي">ثانية إعدادي</option>
-                    <option value="ثالثة إعدادي">ثالثة إعدادي</option>
-                    <option value="أولى ثانوي">أولى ثانوي</option>
-                    <option value="ثانية ثانوي">ثانية ثانوي</option>
-                    <option value="ثالثة ثانوي">ثالثة ثانوي</option>
-                </select>
+                <div class="select" id="yearSelect">
+                    <input type="hidden" id="academicYear" value="">
+                    <button type="button" class="select-trigger" id="yearTrigger" aria-haspopup="listbox" aria-expanded="false">
+                        <span id="yearText">اختر السنة الدراسية</span>
+                        <svg class="chev" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M6 9l6 6 6-6"/></svg>
+                    </button>
+                    <div class="select-panel" role="listbox" id="yearPanel">
+                        <div class="grp">المرحلة الإعدادية</div>
+                        <div class="opt" role="option" tabindex="0" data-v="أولى إعدادي">أولى إعدادي<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
+                        <div class="opt" role="option" tabindex="0" data-v="ثانية إعدادي">ثانية إعدادي<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
+                        <div class="opt" role="option" tabindex="0" data-v="ثالثة إعدادي">ثالثة إعدادي<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
+                        <div class="grp">المرحلة الثانوية</div>
+                        <div class="opt" role="option" tabindex="0" data-v="أولى ثانوي">أولى ثانوي<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
+                        <div class="opt" role="option" tabindex="0" data-v="ثانية ثانوي">ثانية ثانوي<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
+                        <div class="opt" role="option" tabindex="0" data-v="ثالثة ثانوي">ثالثة ثانوي<svg class="tick" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12l5 5 9-10"/></svg></div>
+                    </div>
+                </div>
             </div>
 
             <div class="input-group">
@@ -142,6 +166,33 @@
             } catch (e) { console.error(e); }
         });
 
+        // قائمة السنة الدراسية
+        const yearSelect = document.getElementById('yearSelect');
+        const yearTrigger = document.getElementById('yearTrigger');
+        const yearOpts = Array.from(document.querySelectorAll('#yearPanel .opt'));
+        function setOpen(o) { yearSelect.classList.toggle('open', o); yearTrigger.setAttribute('aria-expanded', o); }
+        function pickYear(opt) {
+            yearOpts.forEach(x => x.setAttribute('aria-selected', x === opt));
+            document.getElementById('academicYear').value = opt.dataset.v;
+            document.getElementById('yearText').textContent = opt.dataset.v;
+            yearTrigger.classList.add('has-value');
+            document.getElementById('formMsg').style.display = 'none';
+            setOpen(false);
+            yearTrigger.focus();
+        }
+        yearTrigger.addEventListener('click', () => setOpen(!yearSelect.classList.contains('open')));
+        yearTrigger.addEventListener('keydown', e => { if (e.key === 'ArrowDown') { e.preventDefault(); setOpen(true); yearOpts[0].focus(); } });
+        yearOpts.forEach((opt, i) => {
+            opt.addEventListener('click', () => pickYear(opt));
+            opt.addEventListener('keydown', e => {
+                if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); pickYear(opt); }
+                if (e.key === 'ArrowDown') { e.preventDefault(); (yearOpts[i + 1] || opt).focus(); }
+                if (e.key === 'ArrowUp') { e.preventDefault(); (yearOpts[i - 1] || opt).focus(); }
+            });
+        });
+        document.addEventListener('click', e => { if (!yearSelect.contains(e.target)) setOpen(false); });
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') setOpen(false); });
+
         function showMsg(html) {
             const box = document.getElementById('formMsg');
             box.innerHTML = html;
@@ -158,6 +209,11 @@
             const academicYear = document.getElementById('academicYear').value;
             const btn = document.getElementById('submitBtn');
             const phoneRegex = /^01[0-9]{9}$/;
+
+            if (!academicYear) {
+                showMsg('برجاء اختيار السنة الدراسية');
+                return;
+            }
 
             if (!phoneRegex.test(phone)) {
                 showMsg('رقم الهاتف الشخصي غير صحيح، يجب أن يتكون من 11 رقماً ويبدأ بـ 01');
