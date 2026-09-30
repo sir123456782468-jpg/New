@@ -135,6 +135,7 @@
                 }
             } catch (e) { console.error(e); }
             document.getElementById('mainCard').style.visibility = 'visible';
+            if (new URLSearchParams(location.search).get('blocked')) showMsg('تم إيقاف حسابك، برجاء التواصل مع الإدارة.');
         });
 
         async function handleSignin(event) {
@@ -153,11 +154,19 @@
 
                 // نتأكد إن الحساب مكتمل (له بيانات طالب)
                 const { data: profile } = await supabaseClient
-                    .from('profiles').select('id').eq('id', data.user.id).maybeSingle();
+                    .from('profiles').select('*').eq('id', data.user.id).maybeSingle();
 
                 if (!profile) {
                     await supabaseClient.auth.signOut();
                     showMsg('حسابك غير مكتمل، برجاء <a href="signup.html" style="color:var(--accent-primary);font-weight:800;">إنشاء الحساب من جديد</a>.');
+                    btn.disabled = false;
+                    btn.textContent = 'دخول ➔';
+                    return;
+                }
+
+                if (profile.is_blocked === true) {
+                    await supabaseClient.auth.signOut();
+                    showMsg('تم إيقاف حسابك، برجاء التواصل مع الإدارة.');
                     btn.disabled = false;
                     btn.textContent = 'دخول ➔';
                     return;
