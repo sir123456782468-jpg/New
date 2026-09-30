@@ -181,10 +181,97 @@
 <canvas id="confetti"></canvas><div id="toasts"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
-<script src="auth-guard.js" onerror="location.replace('signin.html')"></script>
 <script>
-    // لو الحماية ماتحمّلتش أو فشلت: الصفحة تفضل مخفية ويتم تحويلك لتسجيل الدخول
-    setTimeout(() => { if (!window.currentUser) location.replace('signin.html'); }, 10000);
+    // لو الحماية فشلت لأي سبب: المحتوى مايظهرش، وتظهر رسالة توضح السبب بدل ما الصفحة ترجع لوحدها
+    window.guardFail = function (msg) {
+        document.documentElement.style.visibility = 'visible';
+        document.body.innerHTML = '<div style="max-width:460px;margin:12vh auto;padding:28px;font-family:Cairo,sans-serif;text-align:center;direction:rtl;border:2px solid #ef4444;border-radius:20px;line-height:2;background:#fff;color:#0f172a"><div style="font-size:46px">🔒</div><b style="font-size:20px">تعذر فتح الصفحة</b><p style="color:#64748b;font-weight:600">' + msg + '</p><a href="signin.html" style="display:inline-block;margin-top:10px;padding:10px 26px;border-radius:12px;background:#ef4444;color:#fff;text-decoration:none;font-weight:800">تسجيل الدخول</a></div>';
+    };
+</script>
+<script>
+/* ===== الحماية (كانت في auth-guard.js وبقت جوه الصفحة نفسها) ===== */
+(function () {
+    const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4dG12c294Z2Zzb3JtaGNrbGZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNzI4MjQsImV4cCI6MjEwNTg0ODgyNH0.9zsPxYkMvHuRoe1R-XW8xOEUsE3IvoPP_r-iYXU_5s8';
+    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    document.documentElement.style.visibility = 'hidden';
+
+    (async () => { try {
+        const { data } = await supabaseClient.auth.getSession();
+        const session = data && data.session;
+        if (!session) { location.replace('signin.html'); return; }
+
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+        if (!profile) {
+            await supabaseClient.auth.signOut({ scope: 'local' });
+            location.replace('signup.html');
+            return;
+        }
+
+        if (profile.is_blocked === true) {
+            await supabaseClient.auth.signOut({ scope: 'local' });
+            location.replace('signin.html?blocked=1');
+            return;
+        }
+
+        const kicked = async (allowReclaim) => {
+            try {
+                let { data: ok, error } = await supabaseClient.rpc('session_ok');
+                if (!error && ok === false && allowReclaim) {
+                    await supabaseClient.rpc('claim_session');
+                    ({ data: ok, error } = await supabaseClient.rpc('session_ok'));
+                }
+                if (!error && ok === false) {
+                    await supabaseClient.auth.signOut({ scope: 'local' });   // local: مايطلّعش الجهاز الجديد
+                    location.replace('signin.html?kicked=1');
+                    return true;
+                }
+            } catch (e) {}
+            return false;
+        };
+        const fresh = sessionStorage.getItem('just_logged_in') === '1';
+        sessionStorage.removeItem('just_logged_in');
+        if (await kicked(fresh)) return;
+        setInterval(() => kicked(false), 15000);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) kicked(false); });
+
+        let admin = false;
+        try {
+            const { data: a } = await supabaseClient.rpc('is_admin');
+            admin = a === true;
+        } catch (e) {}
+        window.isAdmin = admin;
+
+        window.currentUser = session.user;
+        window.currentProfile = profile;
+        document.documentElement.style.visibility = 'visible';
+        document.dispatchEvent(new CustomEvent('auth-ready'));
+    } catch (e) {
+        console.error('auth-guard error:', e);
+        if (window.guardFail) window.guardFail('حدث خطأ أثناء التحقق من حسابك: ' + (e && e.message ? e.message : e));
+        else location.replace('signin.html');
+    } })();
+
+    window.requireAdmin = function () {
+        if (!window.isAdmin) { location.replace('home.html'); return false; }
+        return true;
+    };
+
+    window.logout = async function () {
+        await supabaseClient.auth.signOut({ scope: 'local' });
+        location.replace('signin.html');
+    };
+})();
+
+</script>
+<script>
+    setTimeout(() => { if (!window.currentUser && !window.__leaving) guardFail('تأخر التحقق من حسابك. تأكد من اتصال الإنترنت وحدّث الصفحة.'); }, 15000);
 
     // روابط التواصل: اكتب الرابط الكامل (https://...) وسيظهر تلقائياً، واتركه فارغاً لإخفائه
     const SOCIAL = { facebook: '', instagram: '', tiktok: '', youtube: '' };
@@ -250,11 +337,11 @@
     // ===== رسومات =====
     function ring(p) { const r = 54, c = (2 * Math.PI * r).toFixed(1); return '<svg class="ring" viewBox="0 0 140 140"><circle class="rbg" cx="70" cy="70" r="' + r + '"/><circle class="rfg" cx="70" cy="70" r="' + r + '" stroke-dasharray="' + c + '" stroke-dashoffset="' + (c * (1 - p / 100)).toFixed(1) + '" style="--c:' + c + '" transform="rotate(-90 70 70)"/><text class="rt" x="70" y="80" text-anchor="middle">' + p + '%</text></svg>'; }
     function lineChart(a, b) {
-        const days = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'], W = 560, H = 210, L = 30, R = 20, T = 14, B = 34, mx = Math.max(1, ...a, ...b), st = (W - L - R) / 6;
+        const days = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'], W = 560, H = 210, L = 30, R = 20, T = 14, B = 34, mx = Math.max(4, Math.ceil(Math.max(...a, ...b) / 4) * 4), st = (W - L - R) / 6;
         const X = i => W - R - i * st, Y = v => T + (H - T - B) * (1 - v / mx);
         const pts = s => s.map((v, i) => X(i).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ');
         let g = '';
-        for (let i = 0; i <= 4; i++) { const y = T + (H - T - B) * i / 4; g += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '"/><text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end">' + Math.round(mx * (1 - i / 4) * 10) / 10 + '</text>'; }
+        for (let i = 0; i <= 4; i++) { const y = T + (H - T - B) * i / 4; g += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '"/><text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end">' + mx * (1 - i / 4) + '</text>'; }
         const xl = days.map((d, i) => '<text x="' + X(i) + '" y="' + (H - 10) + '" text-anchor="middle">' + d + '</text>').join('');
         const dots = (s, c) => s.map((v, i) => '<circle cx="' + X(i) + '" cy="' + Y(v) + '" r="4" fill="' + c + '"/>').join('');
         return '<svg class="line" viewBox="0 0 ' + W + ' ' + H + '">' + g + xl + '<polyline points="' + pts(b) + '" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="6 6" stroke-linecap="round"/><polyline points="' + pts(a) + '" fill="none" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>' + dots(b, '#10b981') + dots(a, '#ef4444') + '</svg>';
