@@ -153,16 +153,15 @@ async function init() {
 }
 async function loadExam() {
   if (!QID) return msg('⚠️', 'رابط غير صحيح');
-  const { data: qz } = await supabaseClient.from('quizzes').select('id,title,kind,pass_percent,time_limit_minutes,max_attempts,shuffle,courses(title)').eq('id', QID).maybeSingle();
-  if (!qz) return msg('🔒', 'الامتحان غير متاح', 'تأكد إنك مشترك في الكورس وإن الامتحان منشور.');
-  const [a, b] = await Promise.all([supabaseClient.from('quiz_questions').select('id,position,question,options,qtype,points,image_url').eq('quiz_id', QID).order('position'), supabaseClient.from('quiz_attempts').select('id', { count: 'exact', head: true }).eq('quiz_id', QID)]);
-  if ((b.count || 0) >= qz.max_attempts) return msg('✅', 'تم تسليم هذا الامتحان', 'استنفدت عدد المحاولات المسموحة.');
-  if (!a.data || !a.data.length) return msg('📭', 'لا توجد أسئلة في هذا الامتحان');
-  const r = rng(currentUser.id + QID);
-  let list = a.data.map(q => ({ id: q.id, type: q.qtype, text: q.question, img: q.image_url, pts: q.points, opts: q.options ? q.options.map((t, i) => ({ t, i })) : [] }));
-  if (qz.shuffle) { list = shuffle(list, r); list.forEach(q => q.opts = shuffle(q.opts, r)); }
-  E = { qz, qs: list, ans: {}, idx: 0, viol: 0, left: qz.time_limit_minutes ? qz.time_limit_minutes * 60 : null };
-  try { const s = JSON.parse(sessionStorage.getItem(KEY)); if (s) { E.ans = s.ans || {}; E.idx = Math.min(s.idx || 0, list.length - 1); E.viol = s.viol || 0; } } catch (e) {}
+  const [a, m, c] = await Promise.all([
+    supabaseClient.from('quizzes').select('id,title,kind,pass_percent,time_limit_minutes,max_attempts,shuffle,opens_at,closes_at').eq('id', QID).maybeSingle(),
+    supabaseClient.rpc('quiz_meta', { p_quiz: QID }),
+    supabaseClient.from('quiz_attempts').select('id', { count: 'exact', head: true }).eq('quiz_id', QID)
+  ]);
+  const qz = a.data; if (!qz) return msg('🔒', 'الامتحان غير متاح', 'تأكد إنك مشترك في الكورس وإن الامتحان منشور.');
+  if ((c.count || 0) >= qz.max_attempts) return msg('✅', 'تم تسليم هذا الامتحان', 'استنفدت عدد المحاولات المسموحة.');
+  const meta = m.data || { n: 0, pts: 0 }; if (!meta.n) return msg('📭', 'لا توجد أسئلة في هذا الامتحان');
+  E = { qz, meta, qs: [], ans: {}, idx: 0, viol: 0, endAt: null, off: 0 };
   intro();
 }
 async function loadMistakes() {
@@ -170,18 +169,20 @@ async function loadMistakes() {
   const seen = new Set(), uniq = (data || []).filter(m => m.options && !seen.has(m.question) && seen.add(m.question));
   if (uniq.length < 3) return msg('🎉', 'مفيش أخطاء كفاية', 'الامتحان ده بيتعمل من الأسئلة اللي غلطت فيها. لما تتجمع عندك 3 أخطاء على الأقل هيتفتح لك.');
   const list = shuffle(uniq, Math.random).slice(0, 20).map((m, k) => ({ id: 'm' + k, type: 'mcq', text: m.question, pts: 1, correct: m.correct_index, opts: shuffle(m.options.map((t, i) => ({ t, i })), Math.random) }));
-  E = { qz: { title: 'امتحان من أخطائي', pass_percent: 50 }, qs: list, ans: {}, idx: 0, viol: 0, left: null, practice: true };
+  E = { qz: { title: 'امتحان من أخطائي', pass_percent: 50 }, qs: list, ans: {}, idx: 0, viol: 0, endAt: null, practice: true };
   intro();
 }
 function intro() {
-  const q = E.qz, n = E.qs.length, pts = E.qs.reduce((s, x) => s + x.pts, 0);
+  const q = E.qz, n = E.practice ? E.qs.length : E.meta.n, pts = E.practice ? E.qs.reduce((s, x) => s + x.pts, 0) : E.meta.pts, fd = d => new Date(d).toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
+  const now = Date.now(), notYet = !E.practice && q.opens_at && new Date(q.opens_at) > now, over = !E.practice && q.closes_at && new Date(q.closes_at) < now;
   $('#stage').innerHTML = '<div class="card c"><div class="big">' + (E.practice ? '🎯' : '📝') + '</div><h2>' + esc(q.title) + '</h2>'
-    + '<div class="meta"><span class="pill">' + n + ' سؤال</span><span class="pill">' + pts + ' درجة</span>' + (E.left != null ? '<span class="pill t">⏱ ' + q.time_limit_minutes + ' دقيقة</span>' : '') + '</div>'
+    + '<div class="meta"><span class="pill">' + n + ' سؤال</span><span class="pill">' + pts + ' درجة</span>' + (q.time_limit_minutes ? '<span class="pill t">⏱ ' + q.time_limit_minutes + ' دقيقة</span>' : '') + '</div>'
+    + (!E.practice && q.opens_at ? '<p style="margin:0">⏰ يفتح: ' + fd(q.opens_at) + '</p>' : '') + (!E.practice && q.closes_at ? '<p>🔒 يقفل ويتسلّم تلقائياً: ' + fd(q.closes_at) + '</p>' : '')
     + '<ul class="rules">' + (E.practice
       ? '<li>🔒 تدريب خاص بك: نتيجته لا تُسجَّل ولا تظهر لأي حد، ولا تأثير لها على درجاتك.</li><li>🎯 الأسئلة من الأخطاء اللي غلطت فيها قبل كده.</li>'
-      : '<li>🖥️ الامتحان بيتفتح بملء الشاشة، ومحاولة واحدة فقط (حسب إعداد الامتحان).</li><li>🚫 ممنوع الخروج من الصفحة أو فتح تبويب آخر: تحذيرين، وفي الثالثة بيتسلّم الامتحان تلقائياً.</li><li>🚫 النسخ واللصق والطباعة والتصوير مقفولة، واسمك ورقمك ظاهرين على الصفحة.</li><li>➡️ مفيش رجوع للسؤال اللي فات، والإجابات بتتحفظ لو الصفحة اتعمل لها ريفريش.</li>')
-    + '</ul><button class="btn" id="go">' + (E.practice ? 'ابدأ التدريب' : 'ابدأ الامتحان') + '</button> <a class="btn g" href="home.html">رجوع</a></div>';
-  $('#go').onclick = start;
+      : '<li>🖥️ الامتحان بيتفتح بملء الشاشة، والأسئلة بتظهر بعد ما تبدأ.</li><li>⏰ لما الوقت يخلص الامتحان بيتسلّم تلقائياً بإجاباتك الحالية.</li><li>🚫 ممنوع الخروج من الصفحة أو فتح تبويب آخر: تحذيرين، وفي الثالثة بيتسلّم الامتحان تلقائياً.</li><li>🚫 النسخ واللصق والطباعة والتصوير مقفولة، واسمك ورقمك ظاهرين على الصفحة.</li><li>➡️ مفيش رجوع للسؤال اللي فات، وإجاباتك بتتحفظ لو الصفحة اتعمل لها ريفريش.</li>')
+    + '</ul>' + (notYet ? '<p>الامتحان لسه ما فتحش.</p>' : over ? '<p>انتهى وقت الامتحان.</p>' : '<button class="btn" id="go">' + (E.practice ? 'ابدأ التدريب' : 'ابدأ الامتحان') + '</button> ') + '<a class="btn g" href="home.html">رجوع</a></div>';
+  if ($('#go')) $('#go').onclick = start;
 }
 
 // ===== البدء والحماية =====
@@ -189,11 +190,22 @@ async function start() {
   $('#go').disabled = true;
   if (!E.practice) {
     try { await document.documentElement.requestFullscreen(); } catch (e) {}
-    try { const { data } = await supabaseClient.rpc('start_quiz', { p_quiz: QID }); if (E.qz.time_limit_minutes && data) { const el = Math.floor((Date.now() - new Date(data).getTime()) / 1000); E.left = Math.max(5, E.qz.time_limit_minutes * 60 - el); } } catch (e) {}
+    const { data, error } = await supabaseClient.rpc('start_quiz', { p_quiz: QID });
+    if (error) { const t = error.message || ''; if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); return msg('⚠️', 'تعذر بدء الامتحان', t.includes('not_open') ? 'الامتحان لسه ما فتحش.' : t.includes('closed') ? 'انتهى وقت الامتحان.' : t.includes('max_attempts') ? 'استنفدت عدد المحاولات المسموحة.' : 'تأكد من الاتصال وحاول مرة أخرى.'); }
+    E.off = new Date(data.now).getTime() - Date.now();
+    const ends = [], st = new Date(data.started_at).getTime();
+    if (E.qz.time_limit_minutes) ends.push(st + E.qz.time_limit_minutes * 60000);
+    if (data.closes_at) ends.push(new Date(data.closes_at).getTime());
+    E.endAt = ends.length ? Math.min(...ends) : null;      // الأقرب: وقت الامتحان أو موعد الإغلاق
+    const r = rng(currentUser.id + QID);
+    let list = (data.questions || []).map(x => ({ id: x.id, type: x.qtype, text: x.question, img: x.image_url, pts: x.points, opts: x.options ? x.options.map((t, i) => ({ t, i })) : [] }));
+    if (E.qz.shuffle) { list = shuffle(list, r); list.forEach(x => x.opts = shuffle(x.opts, r)); }
+    E.qs = list;
+    try { const s = JSON.parse(sessionStorage.getItem(KEY)); if (s) { E.ans = s.ans || {}; E.idx = Math.min(s.idx || 0, list.length - 1); E.viol = s.viol || 0; } } catch (e) {}
   }
   running = true; if (!E.practice) arm();
   $('#stage').innerHTML = ''; $('#wmo').style.display = E.practice ? 'none' : 'block';
-  render(); if (E.left != null) timer = setInterval(tick, 1000);
+  render(); if (E.endAt != null) timer = setInterval(tick, 1000);
 }
 function arm() {
   const v = why => { if (!running || Date.now() - lastV < 1500) return; lastV = Date.now(); violation(why); };
@@ -214,20 +226,21 @@ function violation(why) {
   $('#bk').onclick = async () => { o.remove(); try { await document.documentElement.requestFullscreen(); } catch (e) {} };
 }
 function tick() {
-  E.left--; const m = Math.floor(Math.max(E.left, 0) / 60), s = Math.max(E.left, 0) % 60, t = $('#tm');
-  if (t) t.textContent = '⏱ ' + m + ':' + String(s).padStart(2, '0');
-  if (E.left <= 0) submit(true);
+  if (E.endAt == null) return;
+  const left = Math.round((E.endAt - (Date.now() + (E.off || 0))) / 1000), t = $('#tm');
+  if (t) t.textContent = '⏱ ' + Math.floor(Math.max(left, 0) / 60) + ':' + String(Math.max(left, 0) % 60).padStart(2, '0');
+  if (left <= 0) submit(true);     // الوقت خلص: تسليم تلقائي بالإجابات الحالية
 }
 
 // ===== عرض السؤال =====
 function render() {
   const q = E.qs[E.idx], n = E.qs.length, last = E.idx === n - 1;
-  $('#stage').innerHTML = '<div class="qhead"><span>سؤال ' + (E.idx + 1) + ' من ' + n + '</span><span class="pill t" id="tm">' + (E.left != null ? '⏱' : '') + '</span></div><div class="bar"><i style="width:' + (E.idx / n * 100) + '%"></i></div>'
+  $('#stage').innerHTML = '<div class="qhead"><span>سؤال ' + (E.idx + 1) + ' من ' + n + '</span><span class="pill t" id="tm">' + (E.endAt != null ? '⏱' : '') + '</span></div><div class="bar"><i style="width:' + (E.idx / n * 100) + '%"></i></div>'
     + '<div class="card q"><canvas id="qc"></canvas>' + (q.img ? '<img class="qi" draggable="false" src="' + esc(q.img) + '">' : '') + '<div class="pts">' + q.pts + (q.pts === 1 ? ' درجة' : ' درجات') + '</div>'
     + (q.type === 'essay' ? '<textarea id="es" placeholder="اكتب إجابتك هنا...">' + esc(E.ans[q.id] || '') + '</textarea>'
       : '<div class="opts">' + q.opts.map((o, k) => '<button class="op' + (E.ans[q.id] === o.i ? ' on' : '') + '" data-i="' + o.i + '" dir="auto"><b>' + LET[k] + '</b><span>' + esc(o.t) + '</span></button>').join('') + '</div>')
     + '</div><button class="btn" id="nx">' + (last ? 'تسليم الامتحان ✅' : 'التالي ←') + '</button>';
-  drawQ(q.text); tick2();
+  drawQ(q.text); tick();
   document.querySelectorAll('.op').forEach(b => b.onclick = () => { E.ans[q.id] = +b.dataset.i; save(); document.querySelectorAll('.op').forEach(x => x.classList.toggle('on', x === b)); });
   const es = $('#es'); if (es) es.oninput = () => { E.ans[q.id] = es.value; save(); };
   $('#nx').onclick = () => {
@@ -235,7 +248,6 @@ function render() {
     if (last) { if (confirm('تسليم الامتحان الآن؟ مش هتقدر تعدّل بعد كده.')) submit(false); } else { E.idx++; save(); render(); }
   };
 }
-function tick2() { if (E.left != null) { E.left++; tick(); } }
 function drawQ(text) {
   const c = $('#qc'), w = Math.min(c.parentElement.clientWidth - 48, 720), dpr = window.devicePixelRatio || 1, ar = /[\u0600-\u06FF]/.test(text);
   const ctx = c.getContext('2d'); ctx.font = '700 21px Cairo, sans-serif'; ctx.direction = ar ? 'rtl' : 'ltr';
