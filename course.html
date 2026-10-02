@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>الكورس - The Leader In English</title>
+<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@700;800&display=swap" rel="stylesheet">
+<style>
+html{visibility:hidden}
+:root{--bg:#f4f6fb;--card:#fff;--ink:#0f172a;--muted:#64748b;--line:#e6eaf2;--brand:#ef4444;--grad:linear-gradient(135deg,#ef4444,#ec4899);--ok:#16a34a}
+[data-theme=dark]{--bg:#0a1020;--card:#121b30;--ink:#f1f5f9;--muted:#94a3b8;--line:#22304d;--brand:#f87171}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Cairo',sans-serif}a{color:inherit;text-decoration:none}
+body{background:var(--bg);color:var(--ink);min-height:100vh}
+.hdr{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 20px;background:var(--card);border-bottom:3px solid;border-image:linear-gradient(90deg,#ef4444,#ec4899) 1}
+.brand{display:flex;align-items:center;gap:10px}.brand svg{width:42px;height:42px}.brand b{display:block;font-family:'Cinzel',serif;font-size:16px;line-height:1.15}.brand small{font-size:11px;font-weight:800;color:var(--brand)}
+.btn{display:inline-block;border:none;border-radius:13px;padding:11px 22px;font-weight:800;font-size:14px;cursor:pointer;background:var(--grad);color:#fff;transition:.2s}.btn:hover{transform:translateY(-2px)}.btn.g{background:none;border:2px solid var(--brand);color:var(--brand)}.btn:disabled{opacity:.6}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 50px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px}.top h1{font-size:26px;font-weight:900}.top p{color:var(--muted);font-weight:600;margin-top:4px}
+.bar{height:9px;border-radius:9px;background:var(--line);overflow:hidden;min-width:220px;margin-top:6px}.bar i{display:block;height:100%;background:var(--grad);transition:width .8s}
+.grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px}
+.vwrap{position:relative;aspect-ratio:16/9;background:#000;border-radius:18px;overflow:hidden}.vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.sh{position:absolute;z-index:3}.sh.t{top:0;left:0;right:0;height:62px}.sh.b{bottom:0;right:0;width:130px;height:46px}
+.wm{position:absolute;z-index:4;pointer-events:none;color:rgba(255,255,255,.55);font-weight:800;font-size:15px;text-shadow:0 1px 3px rgba(0,0,0,.8);transition:all 2.5s ease;direction:ltr;white-space:nowrap}
+.empty{aspect-ratio:16/9;display:grid;place-items:center;text-align:center;background:var(--card);border:2px dashed var(--line);border-radius:18px;color:var(--muted);font-weight:700;line-height:2;padding:20px}.empty i{display:block;font-size:46px;font-style:normal}
+.lt{margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.lt h2{font-size:19px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.note{margin-top:12px;padding:14px;border-radius:14px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.5);font-weight:600;line-height:1.9;white-space:pre-wrap}
+.sec{font-size:12px;font-weight:900;color:var(--brand);padding:12px 6px 6px}
+.ls{max-height:70vh;overflow:auto}.li{display:flex;align-items:center;gap:10px;padding:11px 10px;margin-bottom:5px;border-radius:12px;border:1px solid transparent;cursor:pointer;font-weight:700;font-size:14px}
+.li:hover{background:var(--bg)}.li.on{background:rgba(239,68,68,.1);border-color:var(--brand)}.li .n{flex:none;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:var(--bg);font-size:13px}.li.dn .n{background:var(--ok);color:#fff}.li small{display:block;color:var(--muted);font-weight:600;font-size:11.5px}.li .g{flex:1}
+.ex{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;margin-top:8px;font-weight:700;font-size:14px}
+.join{padding:18px;text-align:center}.join p{color:var(--muted);font-weight:600;margin-bottom:10px;line-height:1.9}.join input{width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:15px;font-weight:800;letter-spacing:2px;text-align:center;text-transform:uppercase;margin-bottom:8px;outline:none}
+#toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99}.toast{background:#1e293b;color:#fff;padding:12px 22px;border-radius:14px;font-weight:700;font-size:14px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.brand div{display:none}.ls{max-height:none}}
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ef4444"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs><symbol id="logo" viewBox="0 0 64 64"><path d="M14 4h36a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H32L20 61V50h-6A10 10 0 0 1 4 40V14A10 10 0 0 1 14 4z" fill="url(#rg)"/><path d="M21 21h8v19h14v8H21z" fill="#fff"/><path d="M18 19V11l5 4 4-7 4 7 5-4v8z" fill="#fbbf24"/></symbol></svg>
+<header class="hdr"><a class="brand" href="home.html"><svg><use href="#logo"/></svg><div><b>The Leader In English</b><small>Mr. Sherif Khafagy</small></div></a><a class="btn g" href="home.html#courses">← رجوع للمنصة</a></header>
+<main class="wrap" id="root"><div class="empty"><div><i>⏳</i>جاري تحميل الكورس...</div></div></main>
+<div id="toasts"></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script>
+window.guardFail = function (m) { document.documentElement.style.visibility = 'visible'; document.body.innerHTML = '<div style="max-width:460px;margin:12vh auto;padding:28px;font-family:Cairo,sans-serif;text-align:center;direction:rtl;border:2px solid #ef4444;border-radius:20px;line-height:2"><div style="font-size:46px">🔒</div><b>تعذر فتح الصفحة</b><p style="color:#64748b">' + m + '</p><a href="signin.html" style="color:#ef4444;font-weight:800">تسجيل الدخول</a></div>'; };
+setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق من حسابك. حدّث الصفحة.'); }, 15000);
+</script>
+<script>
+(function () {
+    const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
+    const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4dG12c294Z2Zzb3JtaGNrbGZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNzI4MjQsImV4cCI6MjEwNTg0ODgyNH0.9zsPxYkMvHuRoe1R-XW8xOEUsE3IvoPP_r-iYXU_5s8';
+    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+    document.documentElement.style.visibility = 'hidden';
+
+    (async () => { try {
+        const { data } = await supabaseClient.auth.getSession();
+        const session = data && data.session;
+        if (!session) { location.replace('signin.html'); return; }
+
+        const { data: profile } = await supabaseClient
+            .from('profiles')
+            .select('*')
+            .eq('id', session.user.id)
+            .maybeSingle();
+
+        if (!profile) {
+            await supabaseClient.auth.signOut({ scope: 'local' });
+            location.replace('signup.html');
+            return;
+        }
+
+        if (profile.is_blocked === true) {
+            await supabaseClient.auth.signOut({ scope: 'local' });
+            location.replace('signin.html?blocked=1');
+            return;
+        }
+
+        const kicked = async (allowReclaim) => {
+            try {
+                let { data: ok, error } = await supabaseClient.rpc('session_ok');
+                if (!error && ok === false && allowReclaim) {
+                    await supabaseClient.rpc('claim_session');
+                    ({ data: ok, error } = await supabaseClient.rpc('session_ok'));
+                }
+                if (!error && ok === false) {
+                    await supabaseClient.auth.signOut({ scope: 'local' });   // local: مايطلّعش الجهاز الجديد
+                    location.replace('signin.html?kicked=1');
+                    return true;
+                }
+            } catch (e) {}
+            return false;
+        };
+        const fresh = sessionStorage.getItem('just_logged_in') === '1';
+        sessionStorage.removeItem('just_logged_in');
+        if (await kicked(fresh)) return;
+        setInterval(() => kicked(false), 15000);
+        document.addEventListener('visibilitychange', () => { if (!document.hidden) kicked(false); });
+
+        let admin = false;
+        try {
+            const { data: a } = await supabaseClient.rpc('is_admin');
+            admin = a === true;
+        } catch (e) {}
+        window.isAdmin = admin;
+
+        window.currentUser = session.user;
+        window.currentProfile = profile;
+        document.documentElement.style.visibility = 'visible';
+        document.dispatchEvent(new CustomEvent('auth-ready'));
+    } catch (e) {
+        console.error('auth-guard error:', e);
+        if (window.guardFail) window.guardFail('حدث خطأ أثناء التحقق من حسابك: ' + (e && e.message ? e.message : e));
+        else location.replace('signin.html');
+    } })();
+
+    window.requireAdmin = function () {
+        if (!window.isAdmin) { location.replace('home.html'); return false; }
+        return true;
+    };
+
+    window.logout = async function () {
+        await supabaseClient.auth.signOut({ scope: 'local' });
+        location.replace('signin.html');
+    };
+})();
+
+</script>
+<script>
+const CID = new URLSearchParams(location.search).get('id');
+const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+document.body.setAttribute('data-theme', localStorage.getItem('platform_theme') || 'light');
+const C = { course: null, lessons: [], on: false, done: new Set(), exams: [], cur: null };
+let wmTimer = null;
+const toast = m => { const e = document.createElement('div'); e.className = 'toast'; e.textContent = m; $('#toasts').appendChild(e); setTimeout(() => e.remove(), 3000); };
+const canOpen = l => C.on || l.is_free;
+
+async function init() {
+  if (!CID) return fail('رابط الكورس غير صحيح');
+  const [c, l, e, p, q] = await Promise.all([
+    supabaseClient.from('courses').select('id,title,description,price,academic_year').eq('id', CID).maybeSingle(),
+    supabaseClient.from('lessons').select('id,title,section_title,position,is_free,duration_minutes').eq('course_id', CID).order('position'),
+    supabaseClient.from('enrollments').select('course_id').eq('course_id', CID),
+    supabaseClient.from('lesson_progress').select('lesson_id'),
+    supabaseClient.from('quizzes').select('id,title,kind,time_limit_minutes').eq('course_id', CID)
+  ]);
+  if (!c.data) return fail('الكورس غير موجود أو غير متاح لك.');
+  C.course = c.data; C.lessons = l.data || []; C.on = !!(e.data && e.data.length); C.exams = q.data || [];
+  const ids = new Set(C.lessons.map(x => x.id)); (p.data || []).forEach(x => { if (ids.has(x.lesson_id)) C.done.add(x.lesson_id); });
+  draw();
+  const first = C.lessons.find(canOpen); if (first) open(first.id);
+}
+function fail(t) { $('#root').innerHTML = '<div class="empty"><div><i>🔒</i>' + t + '<br><br><a class="btn" href="home.html">الرئيسية</a></div></div>'; }
+function pct() { return C.lessons.length ? Math.round(C.done.size / C.lessons.length * 100) : 0; }
+
+function draw() {
+  const c = C.course; let sec = null, html = '';
+  C.lessons.forEach((l, i) => {
+    if (l.section_title && l.section_title !== sec) { sec = l.section_title; html += '<div class="sec">' + esc(sec) + '</div>'; }
+    html += '<div class="li' + (C.done.has(l.id) ? ' dn' : '') + (C.cur === l.id ? ' on' : '') + '" data-l="' + l.id + '"><span class="n">' + (C.done.has(l.id) ? '✓' : i + 1) + '</span><span class="g">' + esc(l.title) + '<small>' + (l.duration_minutes ? l.duration_minutes + ' دقيقة' : '') + (l.is_free && !C.on ? ' • مجاني' : '') + '</small></span>' + (canOpen(l) ? '' : '🔒') + '</div>';
+  });
+  const join = C.on ? '' : '<div class="card join"><p>🔒 لازم تشترك في الكورس عشان تفتح كل الدروس.</p>' + (Number(c.price) === 0 ? '<button class="btn" id="jf">اشترك مجاناً</button>' : '<input id="jc" dir="ltr" placeholder="XXXX-XXXX-XXXX" maxlength="14"><button class="btn" id="jb" style="width:100%">تفعيل بالكود</button>') + '</div>';
+  const ex = C.on && C.exams.length ? '<div class="card" style="margin-top:14px"><b>📝 امتحانات الكورس</b>' + C.exams.map(x => '<div class="ex"><span>' + esc(x.title) + '</span><a class="btn" href="quiz.html?id=' + x.id + '">ابدأ</a></div>').join('') + '</div>' : '';
+  $('#root').innerHTML = '<div class="top"><div><h1>' + esc(c.title) + '</h1><p>' + esc(c.description) + '</p></div><div><b id="pc">' + pct() + '% مكتمل</b><div class="bar"><i id="pb" style="width:' + pct() + '%"></i></div></div></div>'
+    + '<div class="grid"><div><div id="player"><div class="empty"><div><i>🎬</i>اختار درس من القائمة</div></div></div><div id="info"></div>' + ex + '</div><aside>' + join + '<div class="card ls" style="margin-top:' + (C.on ? 0 : 14) + 'px">' + (html || '<div class="empty" style="aspect-ratio:auto;border:0">لا توجد دروس بعد</div>') + '</div></aside></div>';
+  $$('.li').forEach(el => el.onclick = () => open(el.dataset.l));
+  const jf = $('#jf'); if (jf) jf.onclick = async () => { jf.disabled = true; const { error } = await supabaseClient.from('enrollments').insert({ student_id: currentUser.id, course_id: CID }); if (error && error.code !== '23505') { toast('تعذر الاشتراك'); jf.disabled = false; return; } location.reload(); };
+  const jb = $('#jb'); if (jb) jb.onclick = async () => { jb.disabled = true; const { data, error } = await supabaseClient.rpc('redeem_code', { p_code: $('#jc').value.trim() }); if (error) { const m = error.message || ''; toast(m.includes('invalid_code') ? 'الكود غير صحيح' : m.includes('code_used') ? 'الكود ده اتستخدم قبل كده' : 'تعذر التفعيل'); jb.disabled = false; return; } if (data !== CID) { toast('الكود ده لكورس تاني، اتفعّل في حسابك ✅'); jb.disabled = false; return; } location.reload(); };
+}
+
+async function open(id) {
+  const l = C.lessons.find(x => x.id === id); if (!l) return;
+  if (!canOpen(l)) return toast('🔒 اشترك في الكورس الأول عشان تفتح الدرس');
+  C.cur = id; $$('.li').forEach(el => el.classList.toggle('on', el.dataset.l === id));
+  const { data } = await supabaseClient.from('lesson_content').select('video_url,notes,attachment_path').eq('lesson_id', id).maybeSingle();
+  const p = currentProfile, wm = [p.first_name, p.last_name].join(' ') + ' • ' + p.phone_number;
+  let v = '<div class="empty"><div><i>📭</i>لا يوجد فيديو لهذا الدرس</div></div>';
+  if (data && data.video_url) {
+    const m = data.video_url.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/);
+    const src = m ? 'https://www.youtube-nocookie.com/embed/' + m[1] + '?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&disablekb=1&origin=' + encodeURIComponent(location.origin) : (/^https:\/\//.test(data.video_url) ? data.video_url : '');
+    if (src) v = '<div class="vwrap" id="vw"><iframe src="' + esc(src) + '" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><div class="sh t"></div><div class="sh b"></div><div class="wm" id="wm">' + esc(wm) + '</div></div>';
+  }
+  $('#player').innerHTML = v;
+  const idx = C.lessons.findIndex(x => x.id === id), nx = C.lessons.slice(idx + 1).find(canOpen), dn = C.done.has(id);
+  $('#info').innerHTML = '<div class="lt"><h2>' + esc(l.title) + '</h2></div><div class="acts"><button class="btn' + (dn ? ' g' : '') + '" id="dn">' + (dn ? '✓ تم الإنجاز (إلغاء)' : 'تم إنجاز الدرس ✅') + '</button>'
+    + (data && data.attachment_path ? '<button class="btn g" id="pdf">📄 ملف الدرس (PDF)</button>' : '') + (nx ? '<button class="btn g" id="nx">الدرس التالي ←</button>' : '') + '</div>'
+    + (data && data.notes ? '<div class="note">' + esc(data.notes) + '</div>' : '');
+  $('#dn').onclick = () => toggleDone(id);
+  if ($('#nx')) $('#nx').onclick = () => open(nx.id);
+  if ($('#pdf')) $('#pdf').onclick = async () => { const { data: s, error } = await supabaseClient.storage.from('lesson-files').createSignedUrl(data.attachment_path, 3600); if (error) return toast('تعذر فتح الملف'); window.open(s.signedUrl, '_blank', 'noopener'); };
+  startWm();
+}
+function startWm() {
+  clearInterval(wmTimer); const w = $('#wm'), box = $('#vw'); if (!w || !box) return;
+  const mv = () => { w.style.top = (8 + Math.random() * (box.clientHeight - 50)) + 'px'; w.style.left = (8 + Math.random() * Math.max(10, box.clientWidth - w.clientWidth - 16)) + 'px'; };
+  mv(); wmTimer = setInterval(mv, 4000);
+}
+async function toggleDone(id) {
+  const b = $('#dn'); b.disabled = true;
+  const q = C.done.has(id) ? supabaseClient.from('lesson_progress').delete().eq('student_id', currentUser.id).eq('lesson_id', id) : supabaseClient.from('lesson_progress').insert({ student_id: currentUser.id, lesson_id: id });
+  const { error } = await q; if (error && error.code !== '23505') { toast('تعذر الحفظ'); b.disabled = false; return; }
+  if (C.done.has(id)) C.done.delete(id); else { C.done.add(id); toast('أحسنت! ✅'); }
+  $('#pc').textContent = pct() + '% مكتمل'; $('#pb').style.width = pct() + '%';
+  $$('.li').forEach(el => { const d = C.done.has(el.dataset.l); el.classList.toggle('dn', d); el.querySelector('.n').textContent = d ? '✓' : C.lessons.findIndex(x => x.id === el.dataset.l) + 1; });
+  open(id);
+}
+// منع كليك يمين على المشغّل
+document.addEventListener('contextmenu', e => { if (e.target.closest('.vwrap')) e.preventDefault(); });
+if (window.currentProfile) init(); else document.addEventListener('auth-ready', init);
+</script>
+</body>
+</html>
