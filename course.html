@@ -21,7 +21,8 @@ body{background:var(--bg);color:var(--ink);min-height:100vh}
 .grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
 .card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px}
 .vwrap{position:relative;aspect-ratio:16/9;background:#000;border-radius:18px;overflow:hidden}.vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
-.sh{position:absolute;z-index:3}.sh.t{top:0;left:0;right:0;height:62px}.sh.b{bottom:0;right:0;width:130px;height:46px}
+.sh{position:absolute;z-index:3}.sh.t{top:0;left:0;right:0;height:62px}.sh.dr{top:0;right:0;width:70px;height:56px}.vwrap.pdf{aspect-ratio:auto;height:78vh}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.tab{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;border-radius:50px;font-weight:800;font-size:13.5px;cursor:pointer}.tab.on{background:var(--grad);color:#fff;border-color:transparent}.sh.b{bottom:0;right:0;width:130px;height:46px}
 .wm{position:absolute;z-index:4;pointer-events:none;color:rgba(255,255,255,.55);font-weight:800;font-size:15px;text-shadow:0 1px 3px rgba(0,0,0,.8);transition:all 2.5s ease;direction:ltr;white-space:nowrap}
 .empty{aspect-ratio:16/9;display:grid;place-items:center;text-align:center;background:var(--card);border:2px dashed var(--line);border-radius:18px;color:var(--muted);font-weight:700;line-height:2;padding:20px}.empty i{display:block;font-size:46px;font-style:normal}
 .lt{margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.lt h2{font-size:19px}
@@ -144,7 +145,7 @@ async function init() {
     supabaseClient.from('lessons').select('id,title,section_title,position,is_free,duration_minutes').eq('course_id', CID).order('position'),
     supabaseClient.from('enrollments').select('course_id').eq('course_id', CID),
     supabaseClient.from('lesson_progress').select('lesson_id'),
-    supabaseClient.from('quizzes').select('id,title,kind,time_limit_minutes').eq('course_id', CID)
+    supabaseClient.from('quizzes').select('id,title,kind,time_limit_minutes,opens_at,closes_at').eq('course_id', CID)
   ]);
   if (!c.data) return fail('الكورس غير موجود أو غير متاح لك.');
   C.course = c.data; C.lessons = l.data || []; C.on = !!(e.data && e.data.length); C.exams = q.data || [];
@@ -162,35 +163,52 @@ function draw() {
     html += '<div class="li' + (C.done.has(l.id) ? ' dn' : '') + (C.cur === l.id ? ' on' : '') + '" data-l="' + l.id + '"><span class="n">' + (C.done.has(l.id) ? '✓' : i + 1) + '</span><span class="g">' + esc(l.title) + '<small>' + (l.duration_minutes ? l.duration_minutes + ' دقيقة' : '') + (l.is_free && !C.on ? ' • مجاني' : '') + '</small></span>' + (canOpen(l) ? '' : '🔒') + '</div>';
   });
   const join = C.on ? '' : '<div class="card join"><p>🔒 لازم تشترك في الكورس عشان تفتح كل الدروس.</p>' + (Number(c.price) === 0 ? '<button class="btn" id="jf">اشترك مجاناً</button>' : '<input id="jc" dir="ltr" placeholder="XXXX-XXXX-XXXX" maxlength="14"><button class="btn" id="jb" style="width:100%">تفعيل بالكود</button>') + '</div>';
-  const ex = C.on && C.exams.length ? '<div class="card" style="margin-top:14px"><b>📝 امتحانات الكورس</b>' + C.exams.map(x => '<div class="ex"><span>' + esc(x.title) + '</span><a class="btn" href="quiz.html?id=' + x.id + '">ابدأ</a></div>').join('') + '</div>' : '';
+  const ex = C.on && C.exams.length ? '<div class="card" style="margin-top:14px"><b>📝 امتحانات الكورس</b>' + C.exams.map(x => { const n = Date.now(), o = x.opens_at && new Date(x.opens_at) > n, cl = x.closes_at && new Date(x.closes_at) < n, f = d => new Date(d).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }); return '<div class="ex"><span>' + esc(x.title) + (o ? '<br><small style="color:var(--muted)">يفتح ' + f(x.opens_at) + '</small>' : x.closes_at && !cl ? '<br><small style="color:var(--muted)">يقفل ' + f(x.closes_at) + '</small>' : '') + '</span>' + (o ? '<b style="color:var(--muted)">قريباً</b>' : cl ? '<b style="color:#dc2626">انتهى</b>' : '<a class="btn" href="quiz.html?id=' + x.id + '">ابدأ</a>') + '</div>'; }).join('') + '</div>' : '';
   $('#root').innerHTML = '<div class="top"><div><h1>' + esc(c.title) + '</h1><p>' + esc(c.description) + '</p></div><div><b id="pc">' + pct() + '% مكتمل</b><div class="bar"><i id="pb" style="width:' + pct() + '%"></i></div></div></div>'
-    + '<div class="grid"><div><div id="player"><div class="empty"><div><i>🎬</i>اختار درس من القائمة</div></div></div><div id="info"></div>' + ex + '</div><aside>' + join + '<div class="card ls" style="margin-top:' + (C.on ? 0 : 14) + 'px">' + (html || '<div class="empty" style="aspect-ratio:auto;border:0">لا توجد دروس بعد</div>') + '</div></aside></div>';
+    + '<div class="grid"><div><div id="itemTabs" class="tabs"></div><div id="player"><div class="empty"><div><i>🎬</i>اختار درس من القائمة</div></div></div><div id="info"></div>' + ex + '</div><aside>' + join + '<div class="card ls" style="margin-top:' + (C.on ? 0 : 14) + 'px">' + (html || '<div class="empty" style="aspect-ratio:auto;border:0">لا توجد دروس بعد</div>') + '</div></aside></div>';
   $$('.li').forEach(el => el.onclick = () => open(el.dataset.l));
   const jf = $('#jf'); if (jf) jf.onclick = async () => { jf.disabled = true; const { error } = await supabaseClient.from('enrollments').insert({ student_id: currentUser.id, course_id: CID }); if (error && error.code !== '23505') { toast('تعذر الاشتراك'); jf.disabled = false; return; } location.reload(); };
   const jb = $('#jb'); if (jb) jb.onclick = async () => { jb.disabled = true; const { data, error } = await supabaseClient.rpc('redeem_code', { p_code: $('#jc').value.trim() }); if (error) { const m = error.message || ''; toast(m.includes('invalid_code') ? 'الكود غير صحيح' : m.includes('code_used') ? 'الكود ده اتستخدم قبل كده' : 'تعذر التفعيل'); jb.disabled = false; return; } if (data !== CID) { toast('الكود ده لكورس تاني، اتفعّل في حسابك ✅'); jb.disabled = false; return; } location.reload(); };
 }
 
+let ITEMS = [];
+function embedOf(u) {
+  let m;
+  if (/youtu/.test(u) && (m = u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/))) return { src: 'https://www.youtube-nocookie.com/embed/' + m[1] + '?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&disablekb=1&origin=' + encodeURIComponent(location.origin), yt: 1 };
+  if (/drive\.google\.com/.test(u) && (m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/))) return { src: 'https://drive.google.com/file/d/' + m[1] + '/preview', dr: 1 };
+  if ((m = u.match(/vimeo\.com\/(\d+)/))) return { src: 'https://player.vimeo.com/video/' + m[1] };
+  return /^https:\/\//.test(u) ? { src: u } : null;
+}
+function showItem(i) {
+  const x = ITEMS[i], p = currentProfile, wm = [p.first_name, p.last_name].join(' ') + ' • ' + p.phone_number;
+  $$('#itemTabs .tab').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
+  clearInterval(wmTimer);
+  if (x.kind === 'link') { $('#player').innerHTML = '<div class="empty"><div><i>🔗</i>' + esc(x.title) + '<br><br><a class="btn" href="' + esc(x.url) + '" target="_blank" rel="noopener">فتح الرابط</a></div></div>'; return; }
+  const e = embedOf(x.url);
+  if (!e) { $('#player').innerHTML = '<div class="empty"><div><i>⚠️</i>الرابط غير صالح</div></div>'; return; }
+  $('#player').innerHTML = '<div class="vwrap' + (x.kind === 'pdf' ? ' pdf' : '') + '" id="vw"><iframe src="' + esc(e.src) + '" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>' + (e.yt ? '<div class="sh t"></div><div class="sh b"></div>' : '') + (e.dr ? '<div class="sh dr"></div>' : '') + '<div class="wm" id="wm">' + esc(wm) + '</div></div>';
+  startWm();
+}
 async function open(id) {
   const l = C.lessons.find(x => x.id === id); if (!l) return;
   if (!canOpen(l)) return toast('🔒 اشترك في الكورس الأول عشان تفتح الدرس');
   C.cur = id; $$('.li').forEach(el => el.classList.toggle('on', el.dataset.l === id));
-  const { data } = await supabaseClient.from('lesson_content').select('video_url,notes,attachment_path').eq('lesson_id', id).maybeSingle();
-  const p = currentProfile, wm = [p.first_name, p.last_name].join(' ') + ' • ' + p.phone_number;
-  let v = '<div class="empty"><div><i>📭</i>لا يوجد فيديو لهذا الدرس</div></div>';
-  if (data && data.video_url) {
-    const m = data.video_url.match(/(?:v=|youtu\.be\/|embed\/)([\w-]{11})/);
-    const src = m ? 'https://www.youtube-nocookie.com/embed/' + m[1] + '?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&disablekb=1&origin=' + encodeURIComponent(location.origin) : (/^https:\/\//.test(data.video_url) ? data.video_url : '');
-    if (src) v = '<div class="vwrap" id="vw"><iframe src="' + esc(src) + '" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe><div class="sh t"></div><div class="sh b"></div><div class="wm" id="wm">' + esc(wm) + '</div></div>';
-  }
-  $('#player').innerHTML = v;
+  const [it, ct] = await Promise.all([
+    supabaseClient.from('lesson_items').select('id,kind,title,url,position').eq('lesson_id', id).order('position'),
+    supabaseClient.from('lesson_content').select('video_url,notes,attachment_path').eq('lesson_id', id).maybeSingle()
+  ]);
+  ITEMS = (it.data || []).slice(); const d = ct.data || {};
+  if (d.video_url) ITEMS.unshift({ kind: 'video', title: 'فيديو الدرس', url: d.video_url });
+  $('#itemTabs').innerHTML = ITEMS.map((x, i) => '<button class="tab" data-i="' + i + '">' + (x.kind === 'video' ? '🎬 ' : x.kind === 'pdf' ? '📄 ' : '🔗 ') + esc(x.title) + '</button>').join('') + (d.attachment_path ? '<button class="tab" data-pdf="1">📄 ملف الدرس</button>' : '');
+  $$('#itemTabs .tab').forEach(b => b.onclick = async () => {
+    if (b.dataset.pdf) { const { data: s, error } = await supabaseClient.storage.from('lesson-files').createSignedUrl(d.attachment_path, 3600); if (error) return toast('تعذر فتح الملف'); window.open(s.signedUrl, '_blank', 'noopener'); return; }
+    showItem(+b.dataset.i);
+  });
+  if (ITEMS.length) showItem(0); else { clearInterval(wmTimer); $('#player').innerHTML = '<div class="empty"><div><i>📭</i>لا يوجد محتوى لهذا الدرس بعد</div></div>'; }
   const idx = C.lessons.findIndex(x => x.id === id), nx = C.lessons.slice(idx + 1).find(canOpen), dn = C.done.has(id);
-  $('#info').innerHTML = '<div class="lt"><h2>' + esc(l.title) + '</h2></div><div class="acts"><button class="btn' + (dn ? ' g' : '') + '" id="dn">' + (dn ? '✓ تم الإنجاز (إلغاء)' : 'تم إنجاز الدرس ✅') + '</button>'
-    + (data && data.attachment_path ? '<button class="btn g" id="pdf">📄 ملف الدرس (PDF)</button>' : '') + (nx ? '<button class="btn g" id="nx">الدرس التالي ←</button>' : '') + '</div>'
-    + (data && data.notes ? '<div class="note">' + esc(data.notes) + '</div>' : '');
+  $('#info').innerHTML = '<div class="lt"><h2>' + esc(l.title) + '</h2></div><div class="acts"><button class="btn' + (dn ? ' g' : '') + '" id="dn">' + (dn ? '✓ تم الإنجاز (إلغاء)' : 'تم إنجاز الدرس ✅') + '</button>' + (nx ? '<button class="btn g" id="nx">الدرس التالي ←</button>' : '') + '</div>' + (d.notes ? '<div class="note">' + esc(d.notes) + '</div>' : '');
   $('#dn').onclick = () => toggleDone(id);
   if ($('#nx')) $('#nx').onclick = () => open(nx.id);
-  if ($('#pdf')) $('#pdf').onclick = async () => { const { data: s, error } = await supabaseClient.storage.from('lesson-files').createSignedUrl(data.attachment_path, 3600); if (error) return toast('تعذر فتح الملف'); window.open(s.signedUrl, '_blank', 'noopener'); };
-  startWm();
 }
 function startWm() {
   clearInterval(wmTimer); const w = $('#wm'), box = $('#vw'); if (!w || !box) return;
