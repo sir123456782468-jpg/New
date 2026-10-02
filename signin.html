@@ -175,9 +175,15 @@
                 }
 
                 // جهاز واحد فقط: نطلّع أي جهاز تاني ونحجز الجلسة دي
-                try { await supabaseClient.auth.signOut({ scope: 'others' }); } catch (e) {}
-                try { await supabaseClient.rpc('claim_session'); } catch (e) {}
-
+                // (بحد أقصى 4 ثواني عشان الانتقال يحصل دايماً)
+                await Promise.race([
+                    (async () => {
+                        try { await supabaseClient.auth.signOut({ scope: 'others' }); } catch (e) {}
+                        try { await supabaseClient.rpc('claim_session', { p_ua: navigator.userAgent }); } catch (e) {}
+                    })(),
+                    new Promise(r => setTimeout(r, 4000))
+                ]);
+                sessionStorage.setItem('just_logged_in', '1');
                 window.location.href = HOME_PAGE;
 
             } catch (err) {
