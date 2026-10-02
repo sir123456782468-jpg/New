@@ -109,6 +109,7 @@
             <a href="#courses" data-v="courses"><b class="ic">📚</b><span class="lbl">الكورسات</span></a>
             <a href="#exams" data-v="exams"><b class="ic">📝</b><span class="lbl">الاختبارات ونتائجي</span></a>
             <a href="#mistakes" data-v="mistakes"><b class="ic">🧠</b><span class="lbl">أخطائي</span></a>
+            <a href="quiz.html?mode=mistakes"><b class="ic">🎯</b><span class="lbl">امتحان من أخطائي</span></a>
             <a href="#account" data-v="account"><b class="ic">👤</b><span class="lbl">حسابي</span></a>
         </nav>
     </aside>
@@ -152,6 +153,7 @@
 
         <section class="view" id="v-mistakes">
             <div class="note" style="margin:0 0 16px">🧠 هنا كل الأسئلة اللي غلطت فيها في الاختبارات مع الإجابة الصحيحة، راجعها كويس عشان متكررش الغلطة.</div>
+            <a class="btn main" href="quiz.html?mode=mistakes" style="margin-bottom:16px">🎯 ابدأ امتحان من أخطائي</a>
             <div id="mistakeList"></div>
         </section>
 
@@ -173,7 +175,7 @@
 </footer>
 
 <nav class="bottom">
-    <a href="#home" data-v="home"><span>🏠</span>الرئيسية</a><a href="#courses" data-v="courses"><span>📚</span>كورسات</a><a href="#exams" data-v="exams"><span>📝</span>اختبارات</a><a href="#mistakes" data-v="mistakes"><span>🧠</span>أخطائي</a><a href="#account" data-v="account"><span>👤</span>حسابي</a>
+    <a href="#home" data-v="home"><span>🏠</span>الرئيسية</a><a href="#courses" data-v="courses"><span>📚</span>كورسات</a><a href="#exams" data-v="exams"><span>📝</span>اختبارات</a><a href="#mistakes" data-v="mistakes"><span>🧠</span>أخطائي</a><a href="quiz.html?mode=mistakes"><span>🎯</span>تدريب</a><a href="#account" data-v="account"><span>👤</span>حسابي</a>
 </nav>
 
 <div class="modal" id="logoutModal"><div class="box"><i>🚪</i><h3>تسجيل الخروج</h3><p>هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟</p>
@@ -394,7 +396,7 @@
 
     // ===== الاختبارات والأخطاء =====
     function renderExams() {
-        $('#quizList').innerHTML = S.quizzes.length ? S.quizzes.map(q => '<div class="card row"><div class="ic">📝</div><div class="grow"><b>' + esc(q.title) + '</b><small>' + esc(q.courses && q.courses.title) + '</small></div><a class="btn main sm" href="quiz.html?id=' + esc(q.id) + '">ابدأ الاختبار</a></div>').join('') : empty('📝', 'لا توجد اختبارات متاحة حالياً');
+        $('#quizList').innerHTML = S.quizzes.length ? S.quizzes.map(q => '<div class="card row"><div class="ic">📝</div><div class="grow"><b>' + esc(q.title) + '</b><small>' + esc((q.courses && q.courses.title) || 'امتحان شامل') + '</small></div><a class="btn main sm" href="quiz.html?id=' + esc(q.id) + '">ابدأ الاختبار</a></div>').join('') : empty('📝', 'لا توجد اختبارات متاحة حالياً');
         $('#attemptList').innerHTML = S.attempts.length ? S.attempts.map(a => {
             const p = a.total ? Math.round(a.score / a.total * 100) : 0, ok = p >= ((a.quizzes && a.quizzes.pass_percent) || 50);
             return '<div class="card row"><div class="ic">' + (ok ? '🏅' : '📉') + '</div><div class="grow"><b>' + esc(a.quizzes && a.quizzes.title) + '</b><small>' + fdate(a.created_at) + ' • ' + a.score + ' / ' + a.total + '</small><div class="bar" style="margin-top:8px"><i style="width:0" data-w="' + p + '"></i></div></div><span class="badge ' + (ok ? 'p' : 'f') + '">' + p + '%</span></div>';
@@ -445,7 +447,7 @@
             supabaseClient.from('enrollments').select('course_id'),
             supabaseClient.from('lesson_progress').select('lesson_id,completed_at,lessons(course_id)'),
             supabaseClient.from('quiz_attempts').select('id,quiz_id,score,total,created_at,quizzes(title,pass_percent)').order('created_at', { ascending: false }),
-            supabaseClient.from('quizzes').select('id,title,courses(title)').order('created_at', { ascending: false }),
+            supabaseClient.from('quizzes').select('id,title,kind,courses(title)').order('created_at', { ascending: false }),
             supabaseClient.from('announcements').select('title,body').eq('is_active', true).order('created_at', { ascending: false }).limit(5)
         ]);
         if (c.error) { $('#mineGrid').innerHTML = empty('⚠️', 'تعذر تحميل البيانات، حدّث الصفحة وحاول مرة أخرى.'); return; }
