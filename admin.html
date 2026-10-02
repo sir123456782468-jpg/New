@@ -159,8 +159,8 @@ VIEWS.lessons = ['دروس الكورس', vLessons];
 const ytNorm = v => { v = (v || '').trim(); if (!v) return null; const m = v.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/) || v.match(/^([\w-]{11})$/); return m ? 'https://www.youtube.com/watch?v=' + m[1] : (/^https:\/\//.test(v) ? v : null); };
 async function vLessons(cid) {
   const c = S.courses.find(x => x.id === cid);
-  const { data, error } = await sb.from('lessons').select('*,lesson_content(video_url,notes,attachment_path)').eq('course_id', cid).order('position'); if (error) throw error;
-  const rows = data.map(l => { const lc = [].concat(l.lesson_content || [])[0] || {}; return '<tr><td>' + l.position + '</td><td>' + esc(l.title) + '<br><small style="color:var(--muted)">' + esc(l.section_title || '') + '</small></td><td>' + (lc.video_url ? '🎬' : '—') + ' ' + (lc.attachment_path ? '📄' : '') + '</td><td>' + (l.is_free ? '<span class="pill ok">مجاني</span>' : '') + '</td><td style="display:flex;gap:6px"><button class="btn s g" data-act="editLesson" data-id="' + l.id + '" data-c="' + cid + '">تعديل</button><button class="btn s r" data-act="delLesson" data-id="' + l.id + '" data-c="' + cid + '">حذف</button></td></tr>'; }).join('');
+  const { data, error } = await sb.from('lessons').select('*,lesson_content(notes),lesson_items(count)').eq('course_id', cid).order('position'); if (error) throw error;
+  const rows = data.map(l => { const lc = [].concat(l.lesson_content || [])[0] || {}; return '<tr><td>' + l.position + '</td><td>' + esc(l.title) + '<br><small style="color:var(--muted)">' + esc(l.section_title || '') + '</small></td><td>' + '<button class="btn s" data-act="items" data-id="' + l.id + '">المحتوى (' + ((((l.lesson_items || [])[0]) || {}).count || 0) + ')</button>' + '</td><td>' + (l.is_free ? '<span class="pill ok">مجاني</span>' : '') + '</td><td style="display:flex;gap:6px"><button class="btn s g" data-act="editLesson" data-id="' + l.id + '" data-c="' + cid + '">تعديل</button><button class="btn s r" data-act="delLesson" data-id="' + l.id + '" data-c="' + cid + '">حذف</button></td></tr>'; }).join('');
   window.__cid = cid; window.__L = data;
   return '<div class="bar"><button class="btn g" data-go="courses">← الكورسات</button><b>' + esc(c && c.title) + '</b><button class="btn" data-act="newLesson" data-id="' + cid + '" style="margin-right:auto">+ درس جديد</button></div>'
     + '<div class="tw"><table><tr><th>#</th><th>الدرس</th><th>المحتوى</th><th></th><th></th></tr>' + (rows || '<tr><td colspan="5" class="empty">لا توجد دروس بعد</td></tr>') + '</table></div>';
@@ -169,18 +169,30 @@ async function lessonForm(cid, l) {
   const lc = l ? ([].concat(l.lesson_content || [])[0] || {}) : {}; let next = 1;
   if (!l) { const { data } = await sb.from('lessons').select('position').eq('course_id', cid).order('position', { ascending: false }).limit(1); next = data && data[0] ? data[0].position + 1 : 1; }
   modal(l ? 'تعديل الدرس' : 'درس جديد', '<form><label>عنوان الدرس</label><input name="title" required value="' + esc(l && l.title) + '"><div class="row2"><div><label>الوحدة / الباب (اختياري)</label><input name="section" value="' + esc(l && l.section_title) + '"></div><div><label>الترتيب</label><input type="number" name="pos" value="' + (l ? l.position : next) + '"></div></div>'
-    + '<label>رابط الفيديو (YouTube غير مدرج)</label><input name="video" dir="ltr" placeholder="https://youtu.be/..." value="' + esc(lc.video_url) + '"><label>ملف PDF ' + (lc.attachment_path ? '(موجود، ارفع ملف جديد لو عايز تستبدله)' : '(اختياري)') + '</label><input type="file" name="pdf" accept="application/pdf"><label>ملاحظات (اختياري)</label><textarea name="notes">' + esc(lc.notes) + '</textarea>'
-    + '<div class="row2"><div><label>المدة بالدقائق</label><input type="number" name="dur" min="0" value="' + esc(l && l.duration_minutes) + '"></div><label class="chk" style="align-self:end"><input type="checkbox" name="free"' + (l && l.is_free ? ' checked' : '') + '> درس مجاني (معاينة)</label></div><button class="btn" style="width:100%;margin-top:16px">حفظ الدرس</button></form>',
+    + '<label>ملاحظات الدرس (اختياري)</label><textarea name="notes">' + esc(lc.notes) + '</textarea><div class="row2"><div><label>المدة بالدقائق</label><input type="number" name="dur" min="0" value="' + esc(l && l.duration_minutes) + '"></div><label class="chk" style="align-self:end"><input type="checkbox" name="free"' + (l && l.is_free ? ' checked' : '') + '> درس مجاني (معاينة)</label></div>'
+    + '<p style="color:var(--muted);font-size:12.5px;margin-top:10px;line-height:1.9">بعد حفظ الدرس اضغط زرار "المحتوى" عشان تضيف فيديو الشرح وفيديو الحل وملفات الـPDF (بروابط درايف).</p><button class="btn" style="width:100%;margin-top:12px">حفظ الدرس</button></form>',
     async f => {
-      const video = ytNorm(f.get('video')); if (f.get('video').trim() && !video) throw new Error('رابط الفيديو غير صالح');
       const row = { course_id: cid, title: f.get('title').trim(), section_title: f.get('section').trim() || null, position: +f.get('pos') || 0, is_free: f.get('free') === 'on', duration_minutes: +f.get('dur') || null };
       let id; if (l) { const { error } = await sb.from('lessons').update(row).eq('id', l.id); if (error) throw error; id = l.id; } else { const { data, error } = await sb.from('lessons').insert(row).select('id').single(); if (error) throw error; id = data.id; }
-      let att = lc.attachment_path || null; const pdf = f.get('pdf');
-      if (pdf && pdf.size) { att = cid + '/' + id + '.pdf'; const up = await sb.storage.from('lesson-files').upload(att, pdf, { upsert: true, contentType: 'application/pdf' }); if (up.error) throw up.error; }
-      const r = await sb.from('lesson_content').upsert({ lesson_id: id, video_url: video, notes: f.get('notes').trim() || null, attachment_path: att }); if (r.error) throw r.error;
+      const r = await sb.from('lesson_content').upsert({ lesson_id: id, notes: f.get('notes').trim() || null }); if (r.error) throw r.error;
       toast('تم حفظ الدرس ✅'); go('lessons', cid);
     });
 }
+const itemKind = { video: '🎬 فيديو', pdf: '📄 PDF', link: '🔗 رابط' };
+const normUrl = v => { v = (v || '').trim(); const m = v.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/); if (m) return 'https://www.youtube.com/watch?v=' + m[1]; return /^https:\/\//.test(v) ? v : null; };
+async function itemsModal(lid) {
+  const { data, error } = await sb.from('lesson_items').select('*').eq('lesson_id', lid).order('position'); if (error) throw error;
+  const l = (window.__L || []).find(x => x.id === lid);
+  modal('محتوى الدرس: ' + (l ? l.title : ''), '<div class="tw" style="margin-bottom:14px"><table>' + (data.map(i => '<tr><td>' + i.position + '</td><td>' + itemKind[i.kind] + ' — ' + esc(i.title) + '<br><small dir="ltr" style="color:var(--muted)">' + esc(i.url.slice(0, 55)) + '</small></td><td><button class="btn s r" data-act="delItem" data-id="' + i.id + '" data-l="' + lid + '">حذف</button></td></tr>').join('') || '<tr><td class="empty">لا يوجد محتوى بعد، أضف أول عنصر 👇</td></tr>') + '</table></div>'
+    + '<form><div class="bar" style="margin-bottom:4px"><button type="button" class="btn s g" data-pre="video|فيديو الشرح">+ فيديو الشرح</button><button type="button" class="btn s g" data-pre="video|فيديو الحل">+ فيديو الحل</button><button type="button" class="btn s g" data-pre="pdf|ملف PDF">+ ملف PDF</button><button type="button" class="btn s g" data-pre="link|رابط">+ رابط</button></div>'
+    + '<div class="row2"><div><label>النوع</label><select name="kind"><option value="video">🎬 فيديو (YouTube / Drive / Vimeo)</option><option value="pdf">📄 PDF (رابط Google Drive)</option><option value="link">🔗 رابط خارجي</option></select></div><div><label>الاسم (يظهر للطالب)</label><input name="title" required></div></div><label>الرابط</label><input name="url" dir="ltr" required placeholder="https://..."><button class="btn" style="width:100%;margin-top:14px">إضافة</button></form>',
+    async f => {
+      const url = normUrl(f.get('url')); if (!url) throw new Error('الرابط لازم يبدأ بـ https://');
+      const { error } = await sb.from('lesson_items').insert({ lesson_id: lid, kind: f.get('kind'), title: f.get('title').trim(), url, position: data.length + 1 }); if (error) throw error;
+      toast('تمت الإضافة ✅'); go('lessons', window.__cid); setTimeout(() => itemsModal(lid), 400);
+    });
+}
+document.addEventListener('click', e => { const p = e.target.closest('[data-pre]'); if (!p) return; const [k, t] = p.dataset.pre.split('|'), f = $('#mb form'); f.elements.kind.value = k; f.elements.title.value = t; f.elements.url.focus(); });
 
 // ===== الطلاب =====
 async function vStudents() {
@@ -222,19 +234,22 @@ const KIND = { lesson: 'كويز درس', course: 'امتحان كورس', compr
 VIEWS.exams = ['الامتحانات', vExams]; VIEWS.questions = ['أسئلة الامتحان', vQuestions]; VIEWS.results = ['نتائج الامتحان', vResults];
 async function vExams() {
   const { data, error } = await sb.from('quizzes').select('*,quiz_questions(count),courses(title)').order('created_at', { ascending: false }); if (error) throw error; S.exams = data;
-  const rows = data.map(q => '<tr><td>' + esc(q.title) + '<br><small style="color:var(--muted)">' + KIND[q.kind] + ' • ' + esc(q.kind === 'comprehensive' ? q.academic_year : (q.courses && q.courses.title)) + (q.time_limit_minutes ? ' • ' + q.time_limit_minutes + ' دقيقة' : '') + '</small></td><td>' + (((q.quiz_questions || [])[0] || {}).count || 0) + '</td><td><span class="pill ' + (q.is_published ? 'ok' : 'no') + '">' + (q.is_published ? 'منشور' : 'مخفي') + '</span></td><td style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn s" data-act="questions" data-id="' + q.id + '">الأسئلة</button><button class="btn s g" data-act="results" data-id="' + q.id + '">النتائج</button><button class="btn s g" data-act="editExam" data-id="' + q.id + '">تعديل</button><button class="btn s g" data-act="togglePubExam" data-id="' + q.id + '" data-p="' + q.is_published + '">' + (q.is_published ? 'إخفاء' : 'نشر') + '</button><button class="btn s r" data-act="delExam" data-id="' + q.id + '">حذف</button></td></tr>').join('');
+  const rows = data.map(q => '<tr><td>' + esc(q.title) + '<br><small style="color:var(--muted)">' + KIND[q.kind] + ' • ' + esc(q.kind === 'comprehensive' ? q.academic_year : (q.courses && q.courses.title)) + (q.time_limit_minutes ? ' • ' + q.time_limit_minutes + ' دقيقة' : '') + (q.opens_at ? ' • يفتح ' + fdt(q.opens_at) : '') + (q.closes_at ? ' • يقفل ' + fdt(q.closes_at) : '') + '</small></td><td>' + (((q.quiz_questions || [])[0] || {}).count || 0) + '</td><td><span class="pill ' + (q.is_published ? 'ok' : 'no') + '">' + (q.is_published ? 'منشور' : 'مخفي') + '</span></td><td style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn s" data-act="questions" data-id="' + q.id + '">الأسئلة</button><button class="btn s g" data-act="results" data-id="' + q.id + '">النتائج</button><button class="btn s g" data-act="editExam" data-id="' + q.id + '">تعديل</button><button class="btn s g" data-act="togglePubExam" data-id="' + q.id + '" data-p="' + q.is_published + '">' + (q.is_published ? 'إخفاء' : 'نشر') + '</button><button class="btn s r" data-act="delExam" data-id="' + q.id + '">حذف</button></td></tr>').join('');
   return '<div class="bar"><button class="btn" data-act="newExam">+ امتحان جديد</button></div><div class="tw"><table><tr><th>الامتحان</th><th>الأسئلة</th><th>الحالة</th><th></th></tr>' + (rows || '<tr><td colspan="4" class="empty">لا توجد امتحانات بعد</td></tr>') + '</table></div>';
 }
+const loc = d => { if (!d) return ''; const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
+const fdt = d => new Date(d).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
 function examForm(q) {
   q = q || {}; const kd = q.kind || 'course', cs = S.courses.map(c => '<option value="' + c.id + '"' + (c.id === q.course_id ? ' selected' : '') + '>' + esc(c.title) + ' — ' + c.academic_year + '</option>').join('');
   modal(q.id ? 'تعديل الامتحان' : 'امتحان جديد', '<form><label>عنوان الامتحان</label><input name="title" required value="' + esc(q.title) + '"><div class="row2"><div><label>النوع</label><select name="kind" onchange="document.getElementById(\'fc\').hidden=this.value===\'comprehensive\';document.getElementById(\'fy\').hidden=this.value!==\'comprehensive\'">'
     + [['lesson', 'كويز درس'], ['course', 'امتحان كورس'], ['comprehensive', 'امتحان شامل (للصف كله)']].map(k => '<option value="' + k[0] + '"' + (k[0] === kd ? ' selected' : '') + '>' + k[1] + '</option>').join('') + '</select></div>'
     + '<div id="fc"' + (kd === 'comprehensive' ? ' hidden' : '') + '><label>الكورس</label><select name="course">' + cs + '</select></div><div id="fy"' + (kd === 'comprehensive' ? '' : ' hidden') + '><label>الصف</label><select name="year">' + yopts(q.academic_year) + '</select></div></div>'
     + '<div class="row2"><div><label>نسبة النجاح %</label><input type="number" name="pass" value="' + (q.pass_percent == null ? 50 : q.pass_percent) + '" min="0" max="100"></div><div><label>الوقت بالدقائق (فاضي = مفتوح)</label><input type="number" name="time" min="1" value="' + esc(q.time_limit_minutes) + '"></div></div>'
-    + '<div class="row2"><div><label>عدد المحاولات</label><input type="number" name="tries" value="' + (q.max_attempts || 1) + '" min="1"></div><div></div></div>'
+    + '<div class="row2"><div><label>عدد المحاولات</label><input type="number" name="tries" value="' + (q.max_attempts || 1) + '" min="1"></div><div></div></div><div class="row2"><div><label>⏰ يفتح في (اختياري)</label><input type="datetime-local" name="opens" value="' + loc(q.opens_at) + '"></div><div><label>🔒 يقفل ويتسلّم تلقائي في (اختياري)</label><input type="datetime-local" name="closes" value="' + loc(q.closes_at) + '"></div></div>'
     + '<label class="chk"><input type="checkbox" name="shuffle"' + (q.shuffle === false ? '' : ' checked') + '> ترتيب عشوائي للأسئلة والاختيارات لكل طالب</label><label class="chk"><input type="checkbox" name="pub"' + (q.is_published ? ' checked' : '') + '> نشر الامتحان</label><button class="btn" style="width:100%;margin-top:16px">' + (q.id ? 'حفظ التعديلات' : 'حفظ وإضافة الأسئلة') + '</button></form>',
     async f => {
-      const kind = f.get('kind'), row = { title: f.get('title').trim(), kind, pass_percent: +f.get('pass') || 0, time_limit_minutes: +f.get('time') || null, max_attempts: +f.get('tries') || 1, shuffle: f.get('shuffle') === 'on', is_published: f.get('pub') === 'on' };
+      const kind = f.get('kind'), row = { title: f.get('title').trim(), kind, pass_percent: +f.get('pass') || 0, time_limit_minutes: +f.get('time') || null, max_attempts: +f.get('tries') || 1, opens_at: f.get('opens') ? new Date(f.get('opens')).toISOString() : null, closes_at: f.get('closes') ? new Date(f.get('closes')).toISOString() : null, shuffle: f.get('shuffle') === 'on', is_published: f.get('pub') === 'on' };
+      if (row.opens_at && row.closes_at && row.closes_at <= row.opens_at) throw new Error('وقت الإغلاق لازم يكون بعد وقت الفتح');
       if (kind === 'comprehensive') { row.academic_year = f.get('year'); row.course_id = null; } else { row.course_id = f.get('course'); row.academic_year = null; if (!row.course_id) throw new Error('أضف كورساً أولاً'); }
       if (q.id) { const { error } = await sb.from('quizzes').update(row).eq('id', q.id); if (error) throw error; toast('تم الحفظ ✅'); go('exams'); return; }
       const { data, error } = await sb.from('quizzes').insert(row).select('id').single(); if (error) throw error;
@@ -245,7 +260,7 @@ async function vQuestions(id) {
   const { data: qz } = await sb.from('quizzes').select('title').eq('id', id).single();
   const { data, error } = await sb.from('quiz_questions').select('*,quiz_answers(correct_index)').eq('quiz_id', id).order('position'); if (error) throw error;
   const rows = data.map((q, i) => { const ca = [].concat(q.quiz_answers || [])[0]; return '<tr><td>' + (i + 1) + '</td><td dir="auto">' + esc(q.question.slice(0, 140)) + (q.image_url ? ' 🖼️' : '') + (q.qtype === 'mcq' ? '<br><small style="color:var(--muted)">' + (q.options || []).map((o, k) => (ca && k === ca.correct_index ? '✅ ' : '') + esc(o)).join(' | ') + '</small>' : '') + '</td><td><span class="pill">' + (q.qtype === 'mcq' ? 'اختيار' : 'مقالي') + '</span></td><td>' + q.points + '</td><td><button class="btn s r" data-act="delQ" data-id="' + q.id + '" data-e="' + id + '">حذف</button></td></tr>'; }).join('');
-  return '<div class="bar"><button class="btn g" data-go="exams">← الامتحانات</button><b>' + esc(qz && qz.title) + '</b><button class="btn" data-act="newQ" data-id="' + id + '" style="margin-right:auto">+ سؤال جديد</button></div><div class="tw"><table><tr><th>#</th><th>السؤال</th><th>النوع</th><th>الدرجة</th><th></th></tr>' + (rows || '<tr><td colspan="5" class="empty">لا توجد أسئلة بعد، اضغط "سؤال جديد"</td></tr>') + '</table></div>';
+  return '<div class="bar"><button class="btn g" data-go="exams">← الامتحانات</button><b>' + esc(qz && qz.title) + '</b><button class="btn g" data-act="editQs" data-id="' + id + '" style="margin-right:auto">✏️ تحرير كل الأسئلة</button><button class="btn" data-act="genQ" data-id="' + id + '">+ توليد أسئلة</button></div><div class="tw"><table><tr><th>#</th><th>السؤال</th><th>النوع</th><th>الدرجة</th><th></th></tr>' + (rows || '<tr><td colspan="5" class="empty">لا توجد أسئلة بعد، اضغط "سؤال جديد"</td></tr>') + '</table></div>';
 }
 function questionForm(eid) {
   modal('سؤال جديد', '<form><div class="row2"><div><label>نوع السؤال</label><select name="type" onchange="document.getElementById(\'mo\').hidden=this.value===\'essay\'"><option value="mcq">اختيار من متعدد</option><option value="essay">مقالي</option></select></div><div><label>الدرجة</label><input type="number" name="pts" value="1" min="1"></div></div>'
@@ -319,6 +334,49 @@ async function vAnn() {
   return '<div class="bar"><button class="btn" data-act="newAnn">+ إعلان جديد</button></div><div class="tw"><table><tr><th>الإعلان</th><th>الحالة</th><th></th></tr>' + (data.map(a => '<tr><td>' + esc(a.title) + '<br><small style="color:var(--muted)">' + esc(a.body || '') + '</small></td><td><span class="pill ' + (a.is_active ? 'ok' : 'no') + '">' + (a.is_active ? 'ظاهر' : 'مخفي') + '</span></td><td style="display:flex;gap:6px"><button class="btn s g" data-act="togAnn" data-id="' + a.id + '" data-p="' + a.is_active + '">' + (a.is_active ? 'إخفاء' : 'إظهار') + '</button><button class="btn s r" data-act="delAnn" data-id="' + a.id + '">حذف</button></td></tr>').join('') || '<tr><td colspan="3" class="empty">لا توجد إعلانات</td></tr>') + '</table></div>';
 }
 
+// ===== توليد وتحرير الأسئلة دفعة واحدة =====
+VIEWS.bulk = ['تحرير الأسئلة', vBulk];
+function bqCard(q, n) {
+  const t = q.qtype, ca = [].concat(q.quiz_answers || [])[0], o = (q.options || []).slice(); while (o.length < 4) o.push('');
+  return '<div class="card bq" data-id="' + (q.id || '') + '" data-t="' + t + '" style="margin-bottom:12px"><div class="bar" style="margin-bottom:6px"><b>سؤال <span class="no">' + n + '</span></b><span class="pill">' + (t === 'mcq' ? 'اختيار من متعدد' : 'مقالي') + '</span><span style="color:var(--muted);font-size:12px">الدرجة</span><input type="number" class="pt" min="1" value="' + (q.points || (t === 'mcq' ? 1 : 5)) + '" style="max-width:80px;flex:none;min-width:0">' + (q.id ? '' : '<button class="btn s r" data-act="rmCard" style="margin-right:auto">إزالة</button>') + '</div>'
+    + '<textarea class="qt" dir="auto" placeholder="نص السؤال..." style="min-height:70px">' + esc(q.question) + '</textarea>'
+    + (t === 'mcq' ? '<div class="row2" style="margin-top:8px">' + o.slice(0, 4).map((x, i) => '<input class="op" dir="auto" placeholder="الاختيار ' + 'ABCD'[i] + '" value="' + esc(x) + '">').join('') + '</div><div class="bar" style="margin:8px 0 0"><span style="color:var(--muted);font-size:12px">الإجابة الصحيحة</span><select class="ok" style="max-width:90px;flex:none;min-width:0">' + ['A', 'B', 'C', 'D'].map((l, i) => '<option value="' + i + '"' + (ca && ca.correct_index === i ? ' selected' : '') + '>' + l + '</option>').join('') + '</select><input type="file" class="im" accept="image/*" style="max-width:230px"></div>' : '<div class="bar" style="margin:8px 0 0"><input type="file" class="im" accept="image/*" style="max-width:230px"></div>') + '</div>';
+}
+async function vBulk(a) {
+  const { data, error } = await sb.from('quiz_questions').select('*,quiz_answers(correct_index)').eq('quiz_id', a.eid).order('position'); if (error) throw error;
+  const { data: qz } = await sb.from('quizzes').select('title').eq('id', a.eid).single(); window.__bulk = a.eid; let n = 0;
+  const cards = data.map(q => bqCard(q, ++n)).join('') + Array.from({ length: a.nm || 0 }, () => bqCard({ qtype: 'mcq', points: a.pm }, ++n)).join('') + Array.from({ length: a.ne || 0 }, () => bqCard({ qtype: 'essay', points: a.pe }, ++n)).join('');
+  return '<div class="bar"><button class="btn g" data-act="questions" data-id="' + a.eid + '">← رجوع</button><b>' + esc(qz && qz.title) + '</b><button class="btn" data-act="saveBulk" style="margin-right:auto">💾 حفظ كل الأسئلة</button></div><p style="color:var(--muted);margin-bottom:12px;font-weight:600;line-height:1.9">اكتب الأسئلة اللي عايزها، والأسئلة الفاضية بتتجاهل وقت الحفظ. الصورة اختيارية لكل سؤال.</p>' + (cards || '<div class="empty">لا توجد أسئلة</div>') + '<div class="bar"><button class="btn" data-act="saveBulk">💾 حفظ كل الأسئلة</button></div>';
+}
+function genModal(eid) {
+  modal('توليد أسئلة فاضية', '<form><p style="color:var(--muted);font-size:13px;line-height:1.9;margin-bottom:6px">هنجهّزلك الكروت فاضية وانت بتكتب الأسئلة فيها.</p><div class="row2"><div><label>عدد أسئلة الاختيار من متعدد</label><input type="number" name="nm" value="20" min="0" max="100"></div><div><label>درجة كل سؤال اختيار</label><input type="number" name="pm" value="1" min="1"></div></div><div class="row2"><div><label>عدد الأسئلة المقالية</label><input type="number" name="ne" value="10" min="0" max="100"></div><div><label>درجة كل سؤال مقالي</label><input type="number" name="pe" value="5" min="1"></div></div><button class="btn" style="width:100%;margin-top:16px">توليد وفتح المحرر</button></form>',
+    async f => { go('bulk', { eid, nm: +f.get('nm') || 0, ne: +f.get('ne') || 0, pm: +f.get('pm') || 1, pe: +f.get('pe') || 5 }); });
+}
+async function saveBulk() {
+  const eid = window.__bulk, jobs = []; let pos = 0;
+  for (const c of document.querySelectorAll('.bq')) {
+    const t = c.dataset.t, text = c.querySelector('.qt').value.trim(), no = c.querySelector('.no').textContent;
+    if (!text) continue;
+    let options = null, correct = null;
+    if (t === 'mcq') {
+      const raw = Array.from(c.querySelectorAll('.op')).map(i => i.value.trim()), ok = +c.querySelector('.ok').value;
+      if (!raw[ok]) throw new Error('سؤال ' + no + ': الإجابة الصحيحة لازم تكون اختيار مكتوب');
+      options = raw.filter(Boolean); if (options.length < 2) throw new Error('سؤال ' + no + ': اكتب اختيارين على الأقل');
+      correct = raw.slice(0, ok).filter(Boolean).length;
+    }
+    jobs.push({ c, id: c.dataset.id, t, text, pts: +c.querySelector('.pt').value || 1, options, correct, pos: ++pos });
+  }
+  if (!jobs.length) throw new Error('مفيش أسئلة مكتوبة للحفظ');
+  for (const j of jobs) {
+    const row = { quiz_id: eid, position: j.pos, question: j.text, options: j.options, qtype: j.t, points: j.pts }, f = j.c.querySelector('.im').files[0];
+    if (f) { const path = 'questions/' + crypto.randomUUID() + '.' + f.name.split('.').pop().toLowerCase(), up = await sb.storage.from('course-media').upload(path, f, { contentType: f.type }); if (up.error) throw up.error; row.image_url = sb.storage.from('course-media').getPublicUrl(path).data.publicUrl; }
+    let id = j.id;
+    if (id) { const { error } = await sb.from('quiz_questions').update(row).eq('id', id); if (error) throw error; } else { const { data, error } = await sb.from('quiz_questions').insert(row).select('id').single(); if (error) throw error; id = data.id; }
+    if (j.t === 'mcq') { const { error } = await sb.from('quiz_answers').upsert({ question_id: id, correct_index: j.correct }); if (error) throw error; }
+  }
+  toast('تم حفظ ' + jobs.length + ' سؤال ✅'); go('questions', eid);
+}
+
 // ===== العمليات =====
 const ACT = {
   newCourse: () => courseForm(),
@@ -352,6 +410,12 @@ Object.assign(ACT, {
   delExam: async id => { if (!confirm('حذف الامتحان بكل أسئلته ونتائج الطلاب؟')) return; const { error } = await sb.from('quizzes').delete().eq('id', id); if (error) throw error; toast('تم الحذف'); go('exams'); },
   delQ: async (id, el) => { if (!confirm('حذف السؤال؟')) return; const { error } = await sb.from('quiz_questions').delete().eq('id', id); if (error) throw error; go('questions', el.dataset.e); },
   gradeEssay: async (id, el) => { const v = $('#es' + el.dataset.i).value; if (v === '') throw new Error('اكتب الدرجة'); const { error } = await sb.rpc('grade_essay', { p_attempt: id, p_question: el.dataset.q, p_score: +v }); if (error) throw error; toast('تم حفظ الدرجة ✅'); }
+});
+Object.assign(ACT, {
+  items: id => itemsModal(id),
+  delItem: async (id, el) => { const { error } = await sb.from('lesson_items').delete().eq('id', id); if (error) throw error; go('lessons', window.__cid); itemsModal(el.dataset.l); },
+  genQ: id => genModal(id), editQs: id => go('bulk', { eid: id, nm: 0, ne: 0 }), saveBulk: () => saveBulk(),
+  rmCard: (id, el) => el.closest('.bq').remove()
 });
 gate();
 </script>
