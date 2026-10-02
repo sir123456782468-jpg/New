@@ -395,8 +395,9 @@
     }
 
     // ===== الاختبارات والأخطاء =====
+    function qbtn(q) { const n = Date.now(), o = q.opens_at && new Date(q.opens_at) > n, c = q.closes_at && new Date(q.closes_at) < n; return o ? '<span class="badge" style="background:var(--muted)">يفتح ' + new Date(q.opens_at).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }) + '</span>' : c ? '<span class="badge f">انتهى</span>' : '<a class="btn main sm" href="quiz.html?id=' + esc(q.id) + '">ابدأ الاختبار</a>'; }
     function renderExams() {
-        $('#quizList').innerHTML = S.quizzes.length ? S.quizzes.map(q => '<div class="card row"><div class="ic">📝</div><div class="grow"><b>' + esc(q.title) + '</b><small>' + esc((q.courses && q.courses.title) || 'امتحان شامل') + '</small></div><a class="btn main sm" href="quiz.html?id=' + esc(q.id) + '">ابدأ الاختبار</a></div>').join('') : empty('📝', 'لا توجد اختبارات متاحة حالياً');
+        $('#quizList').innerHTML = S.quizzes.length ? S.quizzes.map(q => '<div class="card row"><div class="ic">📝</div><div class="grow"><b>' + esc(q.title) + '</b><small>' + esc((q.courses && q.courses.title) || 'امتحان شامل') + '</small></div>' + qbtn(q) + '</div>').join('') : empty('📝', 'لا توجد اختبارات متاحة حالياً');
         $('#attemptList').innerHTML = S.attempts.length ? S.attempts.map(a => {
             const p = a.total ? Math.round(a.score / a.total * 100) : 0, ok = p >= ((a.quizzes && a.quizzes.pass_percent) || 50);
             return '<div class="card row"><div class="ic">' + (ok ? '🏅' : '📉') + '</div><div class="grow"><b>' + esc(a.quizzes && a.quizzes.title) + '</b><small>' + fdate(a.created_at) + ' • ' + a.score + ' / ' + a.total + '</small><div class="bar" style="margin-top:8px"><i style="width:0" data-w="' + p + '"></i></div></div><span class="badge ' + (ok ? 'p' : 'f') + '">' + p + '%</span></div>';
@@ -447,7 +448,7 @@
             supabaseClient.from('enrollments').select('course_id'),
             supabaseClient.from('lesson_progress').select('lesson_id,completed_at,lessons(course_id)'),
             supabaseClient.from('quiz_attempts').select('id,quiz_id,score,total,created_at,quizzes(title,pass_percent)').order('created_at', { ascending: false }),
-            supabaseClient.from('quizzes').select('id,title,kind,courses(title)').order('created_at', { ascending: false }),
+            supabaseClient.from('quizzes').select('id,title,kind,opens_at,closes_at,courses(title)').order('created_at', { ascending: false }),
             supabaseClient.from('announcements').select('title,body').eq('is_active', true).order('created_at', { ascending: false }).limit(5)
         ]);
         if (c.error) { $('#mineGrid').innerHTML = empty('⚠️', 'تعذر تحميل البيانات، حدّث الصفحة وحاول مرة أخرى.'); return; }
