@@ -33,7 +33,18 @@ body{background:var(--bg);color:var(--ink);min-height:100vh}
 .ex{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;margin-top:8px;font-weight:700;font-size:14px}
 .join{padding:18px;text-align:center}.join p{color:var(--muted);font-weight:600;margin-bottom:10px;line-height:1.9}.join input{width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:15px;font-weight:800;letter-spacing:2px;text-align:center;text-transform:uppercase;margin-bottom:8px;outline:none}
 #toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99}.toast{background:#1e293b;color:#fff;padding:12px 22px;border-radius:14px;font-weight:700;font-size:14px}
-@media(max-width:900px){.grid{grid-template-columns:1fr}.brand div{display:none}.ls{max-height:none}}
+/* ===== كابشنات المحاضرات وصفحة المحاضرة ===== */
+.lec{display:flex;align-items:center;gap:14px;padding:16px 18px;margin-bottom:10px;border:1px solid var(--line);border-radius:16px;background:var(--card);cursor:pointer;font-weight:800;transition:.2s}
+.lec:hover{border-color:var(--brand);transform:translateY(-2px)}
+.lec .n{flex:none;width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--grad);color:#fff;font-size:17px}
+.lec.dn .n{background:var(--ok)}.lec .g{flex:1}.lec small{display:block;color:var(--muted);font-weight:600;font-size:12.5px}.lec .ar{color:var(--muted);font-size:22px}
+.grid.lg{grid-template-columns:340px 1fr}
+.ci{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px;margin-bottom:10px;border:1px solid var(--line);border-radius:16px;cursor:pointer;font-weight:800;font-size:14px}
+.ci.on{border-color:var(--brand);background:rgba(239,68,68,.08)}
+.ci .ck{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:#fff;font-size:15px}
+.ci.seen .ck{border-color:var(--ok);background:var(--ok)}
+.pn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.brand div{display:none}.ls{max-height:none}.grid.lg{grid-template-columns:1fr}.grid.lg aside{order:2}}
 </style>
 </head>
 <body>
@@ -130,13 +141,15 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
 </script>
 <script>
 const CID = new URLSearchParams(location.search).get('id');
+const LID = new URLSearchParams(location.search).get('l');
 const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 document.body.setAttribute('data-theme', localStorage.getItem('platform_theme') || 'light');
 const C = { course: null, lessons: [], on: false, done: new Set(), exams: [], cur: null };
-let wmTimer = null;
+let wmTimer = null, ITEMS = [], SEEN = new Set(), FILE = null;
 const toast = m => { const e = document.createElement('div'); e.className = 'toast'; e.textContent = m; $('#toasts').appendChild(e); setTimeout(() => e.remove(), 3000); };
 const canOpen = l => C.on || l.is_free;
+const lecUrl = id => 'course.html?id=' + encodeURIComponent(CID) + '&l=' + encodeURIComponent(id);
 
 async function init() {
   if (!CID) return fail('رابط الكورس غير صحيح');
@@ -150,28 +163,34 @@ async function init() {
   if (!c.data) return fail('الكورس غير موجود أو غير متاح لك.');
   C.course = c.data; C.lessons = l.data || []; C.on = !!(e.data && e.data.length); C.exams = q.data || [];
   const ids = new Set(C.lessons.map(x => x.id)); (p.data || []).forEach(x => { if (ids.has(x.lesson_id)) C.done.add(x.lesson_id); });
-  draw();
-  const first = C.lessons.find(canOpen); if (first) open(first.id);
+  if (LID) open(LID); else draw();
 }
 function fail(t) { $('#root').innerHTML = '<div class="empty"><div><i>🔒</i>' + t + '<br><br><a class="btn" href="home.html">الرئيسية</a></div></div>'; }
 function pct() { return C.lessons.length ? Math.round(C.done.size / C.lessons.length * 100) : 0; }
 
+/* ===== صفحة الكورس: كابشنات المحاضرات ===== */
 function draw() {
+  clearInterval(wmTimer);
   const c = C.course; let sec = null, html = '';
   C.lessons.forEach((l, i) => {
     if (l.section_title && l.section_title !== sec) { sec = l.section_title; html += '<div class="sec">' + esc(sec) + '</div>'; }
-    html += '<div class="li' + (C.done.has(l.id) ? ' dn' : '') + (C.cur === l.id ? ' on' : '') + '" data-l="' + l.id + '"><span class="n">' + (C.done.has(l.id) ? '✓' : i + 1) + '</span><span class="g">' + esc(l.title) + '<small>' + (l.duration_minutes ? l.duration_minutes + ' دقيقة' : '') + (l.is_free && !C.on ? ' • مجاني' : '') + '</small></span>' + (canOpen(l) ? '' : '🔒') + '</div>';
+    const dn = C.done.has(l.id);
+    html += '<div class="lec' + (dn ? ' dn' : '') + '" data-l="' + l.id + '"><span class="n">' + (dn ? '✓' : i + 1) + '</span><span class="g">' + esc(l.title) + '<small>' + (l.duration_minutes ? l.duration_minutes + ' دقيقة' : '') + (l.is_free && !C.on ? ' • مجاني' : '') + '</small></span>' + (canOpen(l) ? '<span class="ar">‹</span>' : '<span>🔒</span>') + '</div>';
   });
-  const join = C.on ? '' : '<div class="card join"><p>🔒 لازم تشترك في الكورس عشان تفتح كل الدروس.</p>' + (Number(c.price) === 0 ? '<button class="btn" id="jf">اشترك مجاناً</button>' : '<input id="jc" dir="ltr" placeholder="XXXX-XXXX-XXXX" maxlength="14"><button class="btn" id="jb" style="width:100%">تفعيل بالكود</button>') + '</div>';
+  const join = C.on ? '' : '<div class="card join" style="margin-bottom:14px"><p>🔒 لازم تشترك في الكورس عشان تفتح كل المحاضرات.</p>' + (Number(c.price) === 0 ? '<button class="btn" id="jf">اشترك مجاناً</button>' : '<input id="jc" dir="ltr" placeholder="XXXX-XXXX-XXXX" maxlength="14"><button class="btn" id="jb" style="width:100%">تفعيل بالكود</button>') + '</div>';
   const ex = C.on && C.exams.length ? '<div class="card" style="margin-top:14px"><b>📝 امتحانات الكورس</b>' + C.exams.map(x => { const n = Date.now(), o = x.opens_at && new Date(x.opens_at) > n, cl = x.closes_at && new Date(x.closes_at) < n, f = d => new Date(d).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }); return '<div class="ex"><span>' + esc(x.title) + (o ? '<br><small style="color:var(--muted)">يفتح ' + f(x.opens_at) + '</small>' : x.closes_at && !cl ? '<br><small style="color:var(--muted)">يقفل ' + f(x.closes_at) + '</small>' : '') + '</span>' + (o ? '<b style="color:var(--muted)">قريباً</b>' : cl ? '<b style="color:#dc2626">انتهى</b>' : '<a class="btn" href="quiz.html?id=' + x.id + '">ابدأ</a>') + '</div>'; }).join('') + '</div>' : '';
   $('#root').innerHTML = '<div class="top"><div><h1>' + esc(c.title) + '</h1><p>' + esc(c.description) + '</p></div><div><b id="pc">' + pct() + '% مكتمل</b><div class="bar"><i id="pb" style="width:' + pct() + '%"></i></div></div></div>'
-    + '<div class="grid"><div><div id="itemTabs" class="tabs"></div><div id="player"><div class="empty"><div><i>🎬</i>اختار درس من القائمة</div></div></div><div id="info"></div>' + ex + '</div><aside>' + join + '<div class="card ls" style="margin-top:' + (C.on ? 0 : 14) + 'px">' + (html || '<div class="empty" style="aspect-ratio:auto;border:0">لا توجد دروس بعد</div>') + '</div></aside></div>';
-  $$('.li').forEach(el => el.onclick = () => open(el.dataset.l));
+    + join + (html || '<div class="empty" style="aspect-ratio:auto">لا توجد محاضرات بعد</div>') + ex;
+  $$('.lec').forEach(el => el.onclick = () => {
+    const l = C.lessons.find(x => x.id === el.dataset.l);
+    if (!canOpen(l)) return toast('🔒 اشترك في الكورس الأول عشان تفتح المحاضرة');
+    location.href = lecUrl(l.id);
+  });
   const jf = $('#jf'); if (jf) jf.onclick = async () => { jf.disabled = true; const { error } = await supabaseClient.from('enrollments').insert({ student_id: currentUser.id, course_id: CID }); if (error && error.code !== '23505') { toast('تعذر الاشتراك'); jf.disabled = false; return; } location.reload(); };
   const jb = $('#jb'); if (jb) jb.onclick = async () => { jb.disabled = true; const { data, error } = await supabaseClient.rpc('redeem_code', { p_code: $('#jc').value.trim() }); if (error) { const m = error.message || ''; toast(m.includes('invalid_code') ? 'الكود غير صحيح' : m.includes('code_used') ? 'الكود ده اتستخدم قبل كده' : 'تعذر التفعيل'); jb.disabled = false; return; } if (data !== CID) { toast('الكود ده لكورس تاني، اتفعّل في حسابك ✅'); jb.disabled = false; return; } location.reload(); };
 }
 
-let ITEMS = [];
+/* ===== صفحة المحاضرة ===== */
 function embedOf(u) {
   let m;
   if (/youtu/.test(u) && (m = u.match(/(?:v=|youtu\.be\/|embed\/|shorts\/)([\w-]{11})/))) return { src: 'https://www.youtube-nocookie.com/embed/' + m[1] + '?rel=0&modestbranding=1&iv_load_policy=3&playsinline=1&disablekb=1&origin=' + encodeURIComponent(location.origin), yt: 1 };
@@ -179,36 +198,53 @@ function embedOf(u) {
   if ((m = u.match(/vimeo\.com\/(\d+)/))) return { src: 'https://player.vimeo.com/video/' + m[1] };
   return /^https:\/\//.test(u) ? { src: u } : null;
 }
+const seenKey = () => 'seen_' + currentUser.id + '_' + C.cur;
+function markSeen(k) { SEEN.add(k); try { localStorage.setItem(seenKey(), JSON.stringify(Array.from(SEEN))); } catch (e) {} }
+
 function showItem(i) {
   const x = ITEMS[i], p = currentProfile, wm = [p.first_name, p.last_name].join(' ') + ' • ' + p.phone_number;
-  $$('#itemTabs .tab').forEach(b => b.classList.toggle('on', +b.dataset.i === i));
+  $$('#itemList .ci[data-i]').forEach(b => { b.classList.toggle('on', +b.dataset.i === i); });
   clearInterval(wmTimer);
+  markSeen(x.key); const row = $('#itemList .ci[data-i="' + i + '"]'); if (row) row.classList.add('seen');
   if (x.kind === 'link') { $('#player').innerHTML = '<div class="empty"><div><i>🔗</i>' + esc(x.title) + '<br><br><a class="btn" href="' + esc(x.url) + '" target="_blank" rel="noopener">فتح الرابط</a></div></div>'; return; }
   const e = embedOf(x.url);
   if (!e) { $('#player').innerHTML = '<div class="empty"><div><i>⚠️</i>الرابط غير صالح</div></div>'; return; }
   $('#player').innerHTML = '<div class="vwrap' + (x.kind === 'pdf' ? ' pdf' : '') + '" id="vw"><iframe src="' + esc(e.src) + '" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>' + (e.yt ? '<div class="sh t"></div><div class="sh b"></div>' : '') + (e.dr ? '<div class="sh dr"></div>' : '') + '<div class="wm" id="wm">' + esc(wm) + '</div></div>';
   startWm();
 }
+
 async function open(id) {
-  const l = C.lessons.find(x => x.id === id); if (!l) return;
-  if (!canOpen(l)) return toast('🔒 اشترك في الكورس الأول عشان تفتح الدرس');
-  C.cur = id; $$('.li').forEach(el => el.classList.toggle('on', el.dataset.l === id));
+  const l = C.lessons.find(x => x.id === id); if (!l) return fail('المحاضرة غير موجودة');
+  if (!canOpen(l)) { toast('🔒 اشترك في الكورس الأول عشان تفتح المحاضرة'); setTimeout(() => location.replace('course.html?id=' + encodeURIComponent(CID)), 900); return; }
+  C.cur = id;
   const [it, ct] = await Promise.all([
     supabaseClient.from('lesson_items').select('id,kind,title,url,position').eq('lesson_id', id).order('position'),
     supabaseClient.from('lesson_content').select('video_url,notes,attachment_path').eq('lesson_id', id).maybeSingle()
   ]);
-  ITEMS = (it.data || []).slice(); const d = ct.data || {};
-  if (d.video_url) ITEMS.unshift({ kind: 'video', title: 'فيديو الدرس', url: d.video_url });
-  $('#itemTabs').innerHTML = ITEMS.map((x, i) => '<button class="tab" data-i="' + i + '">' + (x.kind === 'video' ? '🎬 ' : x.kind === 'pdf' ? '📄 ' : '🔗 ') + esc(x.title) + '</button>').join('') + (d.attachment_path ? '<button class="tab" data-pdf="1">📄 ملف الدرس</button>' : '');
-  $$('#itemTabs .tab').forEach(b => b.onclick = async () => {
-    if (b.dataset.pdf) { const { data: s, error } = await supabaseClient.storage.from('lesson-files').createSignedUrl(d.attachment_path, 3600); if (error) return toast('تعذر فتح الملف'); window.open(s.signedUrl, '_blank', 'noopener'); return; }
+  ITEMS = (it.data || []).map(x => Object.assign({ key: x.id }, x)); const d = ct.data || {};
+  if (d.video_url) ITEMS.unshift({ kind: 'video', title: 'فيديو المحاضرة', url: d.video_url, key: 'v' });
+  FILE = d.attachment_path || null;
+  try { SEEN = new Set(JSON.parse(localStorage.getItem(seenKey()) || '[]')); } catch (e) { SEEN = new Set(); }
+
+  const idx = C.lessons.findIndex(x => x.id === id), dn = C.done.has(id);
+  const nx = C.lessons.slice(idx + 1).find(canOpen), pv = C.lessons.slice(0, idx).reverse().find(canOpen);
+  const ico = k => k === 'video' ? '🎬 ' : k === 'pdf' ? '📄 ' : '🔗 ';
+  const list = ITEMS.map((x, i) => '<div class="ci' + (SEEN.has(x.key) ? ' seen' : '') + '" data-i="' + i + '"><span>' + ico(x.kind) + esc(x.title) + '</span><span class="ck">✓</span></div>').join('')
+    + (FILE ? '<div class="ci" data-f="1"><span>📄 ملف المحاضرة</span><span class="ck"></span></div>' : '');
+
+  $('#root').innerHTML = '<div class="top"><div><p>' + esc(C.course.title) + '</p><h1>' + esc(l.title) + '</h1></div><a class="btn g" href="course.html?id=' + encodeURIComponent(CID) + '">← كل المحاضرات</a></div>'
+    + '<div class="grid lg"><aside><div class="card"><b style="display:block;margin-bottom:12px;font-size:17px">محتوى المحاضرة</b><div id="itemList">' + (list || '<div class="empty" style="aspect-ratio:auto;border:0">لا يوجد محتوى بعد</div>') + '</div></div></aside>'
+    + '<div><div id="player"></div>'
+    + '<div class="acts"><button class="btn' + (dn ? ' g' : '') + '" id="dn">' + (dn ? '✓ تم الإنجاز (إلغاء)' : 'إنهاء المحاضرة ✅') + '</button></div>'
+    + (d.notes ? '<div class="note">' + esc(d.notes) + '</div>' : '')
+    + '<div class="pn">' + (pv ? '<a class="btn g" href="' + lecUrl(pv.id) + '">→ المحاضرة السابقة</a>' : '<span></span>') + (nx ? '<a class="btn g" href="' + lecUrl(nx.id) + '">المحاضرة التالية ←</a>' : '') + '</div></div></div>';
+
+  $$('#itemList .ci').forEach(b => b.onclick = async () => {
+    if (b.dataset.f) { const { data: s, error } = await supabaseClient.storage.from('lesson-files').createSignedUrl(FILE, 3600); if (error) return toast('تعذر فتح الملف'); window.open(s.signedUrl, '_blank', 'noopener'); return; }
     showItem(+b.dataset.i);
   });
-  if (ITEMS.length) showItem(0); else { clearInterval(wmTimer); $('#player').innerHTML = '<div class="empty"><div><i>📭</i>لا يوجد محتوى لهذا الدرس بعد</div></div>'; }
-  const idx = C.lessons.findIndex(x => x.id === id), nx = C.lessons.slice(idx + 1).find(canOpen), dn = C.done.has(id);
-  $('#info').innerHTML = '<div class="lt"><h2>' + esc(l.title) + '</h2></div><div class="acts"><button class="btn' + (dn ? ' g' : '') + '" id="dn">' + (dn ? '✓ تم الإنجاز (إلغاء)' : 'تم إنجاز الدرس ✅') + '</button>' + (nx ? '<button class="btn g" id="nx">الدرس التالي ←</button>' : '') + '</div>' + (d.notes ? '<div class="note">' + esc(d.notes) + '</div>' : '');
   $('#dn').onclick = () => toggleDone(id);
-  if ($('#nx')) $('#nx').onclick = () => open(nx.id);
+  if (ITEMS.length) showItem(0); else $('#player').innerHTML = '<div class="empty"><div><i>📭</i>لا يوجد محتوى لهذه المحاضرة بعد</div></div>';
 }
 function startWm() {
   clearInterval(wmTimer); const w = $('#wm'), box = $('#vw'); if (!w || !box) return;
@@ -220,9 +256,7 @@ async function toggleDone(id) {
   const q = C.done.has(id) ? supabaseClient.from('lesson_progress').delete().eq('student_id', currentUser.id).eq('lesson_id', id) : supabaseClient.from('lesson_progress').insert({ student_id: currentUser.id, lesson_id: id });
   const { error } = await q; if (error && error.code !== '23505') { toast('تعذر الحفظ'); b.disabled = false; return; }
   if (C.done.has(id)) C.done.delete(id); else { C.done.add(id); toast('أحسنت! ✅'); }
-  $('#pc').textContent = pct() + '% مكتمل'; $('#pb').style.width = pct() + '%';
-  $$('.li').forEach(el => { const d = C.done.has(el.dataset.l); el.classList.toggle('dn', d); el.querySelector('.n').textContent = d ? '✓' : C.lessons.findIndex(x => x.id === el.dataset.l) + 1; });
-  open(id);
+  const dn = C.done.has(id); b.disabled = false; b.className = 'btn' + (dn ? ' g' : ''); b.textContent = dn ? '✓ تم الإنجاز (إلغاء)' : 'إنهاء المحاضرة ✅';
 }
 // منع كليك يمين على المشغّل
 document.addEventListener('contextmenu', e => { if (e.target.closest('.vwrap')) e.preventDefault(); });
