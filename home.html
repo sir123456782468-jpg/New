@@ -445,9 +445,10 @@
         let last = null, html = '';
         groups.forEach((g, gi) => {
             if (g.course !== last) { last = g.course; html += '<div class="rs-cs">📚 ' + esc(g.course) + '</div>'; }
-            const avg = Math.round(g.items.reduce((s, r) => s + pc(r), 0) / g.items.length);
-            html += '<div class="card rs-card' + (gi === 0 ? ' open' : '') + '"><div class="rs-h"><span class="n">' + esc(g.num) + '</span><span class="g"><b>' + esc(g.lesson) + '</b><small>' + g.items.length + ' اختبار • المتوسط <bdi>' + avg + '%</bdi></small></span><span class="ar">‹</span></div><div class="rs-b">'
+            const vis = g.items.filter(r => !r.hidden), avg = vis.length ? Math.round(vis.reduce((s, r) => s + pc(r), 0) / vis.length) : null;
+            html += '<div class="card rs-card' + (gi === 0 ? ' open' : '') + '"><div class="rs-h"><span class="n">' + esc(g.num) + '</span><span class="g"><b>' + esc(g.lesson) + '</b><small>' + g.items.length + ' اختبار' + (avg == null ? '' : ' • المتوسط <bdi>' + avg + '%</bdi>') + '</small></span><span class="ar">‹</span></div><div class="rs-b">'
                 + g.items.map(r => {
+                    if (r.hidden) return '<div class="rs-q"><h5>' + esc(r.quiz_title) + '</h5><small>' + fdate(r.created_at) + '</small><p style="margin:10px 0;font-weight:700;line-height:1.9">✅ تم التسليم. ' + (r.hidden_reason === 'grading' ? 'النتيجة هتظهر بعد تصحيح الأسئلة المقالية.' : 'النتيجة هتظهر بعد انتهاء وقت الامتحان.') + '</p></div>';
                     const p = pc(r), pend = (r.n_essay_pending || 0) > 0, ok = p >= (r.pass_percent == null ? 50 : r.pass_percent), left = Math.max((r.max_attempts || 1) - (r.attempts_used || 1), 0);
                     return '<div class="rs-q"><h5>' + esc(r.quiz_title) + '</h5><small>' + fdate(r.created_at) + '</small>'
                         + '<div class="rs-g"><div><small>عدد الأسئلة</small><b>' + (r.n_questions == null ? '—' : r.n_questions) + '</b></div><div class="ok"><small>صحيحة</small><b>' + (r.n_correct == null ? '—' : r.n_correct) + '</b></div><div class="no"><small>خاطئة</small><b>' + (r.n_wrong == null ? '—' : r.n_wrong) + '</b></div><div><small>بدون إجابة</small><b>' + (r.n_unanswered == null ? '—' : r.n_unanswered) + '</b></div>'
@@ -499,18 +500,20 @@
         $('#greet').textContent = (h < 12 ? 'صباح الخير ☀️ ' : h < 18 ? 'نهارك سعيد 🌤️ ' : 'مساء الخير 🌙 ') + first;
         renderAccount(p); renderFooter(); rotate(); route();
 
+        try { await supabaseClient.rpc('finalize_expired', { p_mine: true }); } catch (e) {}   // تسليم أي امتحان انتهى وقته
         const [c, e, pr, at, qz, an] = await Promise.all([
             supabaseClient.from('courses').select('id,title,description,thumbnail_url,price,academic_year,lessons(count)').order('sort_order'),
             supabaseClient.from('enrollments').select('course_id'),
             supabaseClient.from('lesson_progress').select('lesson_id,completed_at,lessons(course_id)'),
             supabaseClient.from('quiz_attempts').select('id,quiz_id,score,total,created_at,quizzes(title,pass_percent)').order('created_at', { ascending: false }),
             supabaseClient.from('quizzes').select('id,title,kind,opens_at,closes_at,courses(title)').order('created_at', { ascending: false }),
-            supabaseClient.from('announcements').select('title,body').eq('is_active', true).order('created_at', { ascending: false }).limit(5)
+            (async () => { let q = await supabaseClient.from('announcements').select('title,body,academic_year').eq('is_active', true).order('created_at', { ascending: false }).limit(30); if (q.error) q = await supabaseClient.from('announcements').select('title,body').eq('is_active', true).order('created_at', { ascending: false }).limit(5); return q; })()
         ]);
         if (c.error) { $('#mineGrid').innerHTML = empty('⚠️', 'تعذر تحميل البيانات، حدّث الصفحة وحاول مرة أخرى.'); return; }
         S.all = c.data || []; S.enrolled = new Set((e.data || []).map(r => r.course_id));
         S.prog = pr.data || []; S.prog.forEach(r => { const id = r.lessons && r.lessons.course_id; if (id) S.done[id] = (S.done[id] || 0) + 1; });
         S.attempts = at.data || []; S.quizzes = qz.data || [];
+        if (an.data) an.data = an.data.filter(a => !a.academic_year || a.academic_year === YEAR).slice(0, 8);   // إعلانات صفّه + الإعلانات العامة فقط
         if (an.data && an.data.length) {
             $('#ann').innerHTML = an.data.slice(0, 2).map(a => '<div class="ann"><span>📢</span><div>' + esc(a.title) + (a.body ? '<small>' + esc(a.body) + '</small>' : '') + '</div></div>').join('');
             $('#bellList').innerHTML = an.data.map(a => '<div class="nt">' + esc(a.title) + (a.body ? '<small>' + esc(a.body) + '</small>' : '') + '</div>').join(''); $('#bellDot').style.display = 'block';
