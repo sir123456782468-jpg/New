@@ -62,6 +62,20 @@ table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{padding:10px 12
 <div class="modal" id="modal" hidden><div class="mbox"><h3 id="mt"></h3><div id="mb"></div></div></div>
 <div id="toasts"></div>
 
+<script>
+/* تشخيص: لو الصفحة ما فتحتش يظهر سبب الخطأ بدل الشاشة الفاضية */
+window.__errs = [];
+window.addEventListener('error', function (e) { window.__errs.push((e.message || 'error') + (e.lineno ? ' (سطر ' + e.lineno + ')' : '')); });
+window.addEventListener('unhandledrejection', function (e) { window.__errs.push('promise: ' + ((e.reason && e.reason.message) || e.reason)); });
+setTimeout(function () {
+  var a = document.getElementById('app'), l = document.getElementById('login');
+  if ((a && a.hidden) && (l && l.hidden)) {
+    var d = document.createElement('div'); d.style.cssText = 'max-width:520px;margin:10vh auto;padding:24px;border:2px solid #ef4444;border-radius:18px;font-family:Cairo,sans-serif;direction:rtl;text-align:center;line-height:2;color:#f1f5f9';
+    d.innerHTML = '<div style="font-size:40px">⚠️</div><b>لوحة التحكم لم تُحمَّل</b><p style="color:#94a3b8;font-size:14px">' + (typeof supabase === "undefined" ? 'تعذر تحميل مكتبة Supabase (تأكد من الإنترنت).' : 'لو افتحت اللوحة في أكتر من تبويب اقفل الباقي وحدّث الصفحة.') + '</p><p dir="ltr" style="font-size:12.5px;color:#fca5a5">' + (window.__errs.join('<br>') || 'no script error') + '</p><button onclick="location.reload()" style="padding:10px 22px;border:0;border-radius:12px;background:#ef4444;color:#fff;font-weight:800;cursor:pointer">تحديث</button>';
+    document.body.appendChild(d);
+  }
+}, 9000);
+</script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
 const sb = supabase.createClient('https://cxtmvsoxgfsormhcklfx.supabase.co','eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4dG12c294Z2Zzb3JtaGNrbGZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNzI4MjQsImV4cCI6MjEwNTg0ODgyNH0.9zsPxYkMvHuRoe1R-XW8xOEUsE3IvoPP_r-iYXU_5s8');
@@ -756,11 +770,4 @@ VIEWS.ann = ['الإعلانات', vAnn];
 async function attemptModal(aid) {
   const sel = 'question_id,chosen_index,is_correct,essay_text,essay_score,';
   let r = await sb.from('quiz_attempt_answers').select(sel + 'feedback,quiz_questions(question,options,qtype,points,position,note)').eq('attempt_id', aid);
-  if (r.error) r = await sb.from('quiz_attempt_answers').select(sel + 'quiz_questions(question,options,qtype,points,position)').eq('attempt_id', aid);
-  if (r.error) throw r.error; const data = r.data;
-  const { data: ca } = await sb.from('quiz_answers').select('question_id,correct_index').in('question_id', data.map(x => x.question_id));
-  const cm = {}; (ca || []).forEach(x => cm[x.question_id] = x.correct_index);
-  data.sort((a, b) => (a.quiz_questions.position || 0) - (b.quiz_questions.position || 0));
-  const fb = (x, i) => '<div class="bar" style="margin:8px 0 0"><input id="fb' + i + '" dir="auto" placeholder="💬 تعليقك للطالب على إجابته (يظهر له بعد التسليم)" value="' + esc(x.feedback || '') + '"><button class="btn s g" data-act="saveFb" data-id="' + aid + '" data-q="' + x.question_id + '" data-i="' + i + '">حفظ التعليق</button></div>';
-  modal('تفاصيل المحاولة', data.map((x, i) => { const q = x.quiz_questions;
-    if (q.qtype === 'mcq') return '<div class="card" style="margin-bottom:8px"><b dir="auto">' + (i + 1) + '. ' + esc(q.question) + '</b>' + (q.options || []).map((o, k) => '<div dir="auto" style="padding:6px 10px;margin-top:4px;border-radius:8px;border:1px solid var(--line);' + (k === cm[x.question_id] ? 'background:rgba(34,197,94,.18);' : k === x.chosen_index ? 'background:rgba(220,38,38,.22);' : '') + '">' + esc(o) + (k === x.chosen_index ? ' ← إجابة الطالب' : '') + '</div>').join('') + (q.note ? '<p class="nt" style="
+  if (r.error) r = await sb.from('quiz_attempt_answers').select
