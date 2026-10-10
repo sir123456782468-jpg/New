@@ -40,6 +40,9 @@ table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{padding:10px 12
 .chips{display:flex;gap:6px;flex-wrap:wrap;margin:8px 0}.chips span{background:var(--bg);border:1px solid var(--line);border-radius:50px;padding:4px 12px;font-size:12.5px;font-weight:700}.chips b{cursor:pointer;color:#f87171;margin-right:6px}
 .empty{text-align:center;color:var(--muted);padding:40px;font-weight:700}
 #toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99;display:grid;gap:8px}.toast{background:#1e293b;border:1px solid var(--line);padding:11px 20px;border-radius:12px;font-weight:700;font-size:14px}.toast.bad{background:#7f1d1d}
+.yt{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 16px;border-radius:50px;font-weight:800;font-size:13px;cursor:pointer}.yt.on{background:var(--grad);color:#fff;border-color:transparent}
+.ytabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}.cnt{display:inline-block;min-width:20px;padding:0 6px;margin-right:6px;border-radius:50px;background:#dc2626;color:#fff;font-size:11px;line-height:20px;text-align:center}
+.nt{color:var(--muted);font-size:13px;line-height:1.9;margin-bottom:12px;font-weight:600}
 @media(max-width:800px){.side{position:fixed;bottom:0;top:auto;height:auto;width:100%;display:flex;overflow-x:auto;z-index:40;border:0;border-top:1px solid var(--line);padding:6px}.side .logo,.side a.off{display:none}.side a{flex:none;margin:0 2px}.main{padding:16px 12px 80px}.row2{grid-template-columns:1fr}}
 </style>
 </head>
@@ -64,8 +67,8 @@ const sb = supabase.createClient('https://cxtmvsoxgfsormhcklfx.supabase.co','eyJ
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const YEARS = ['أولى إعدادي','ثانية إعدادي','ثالثة إعدادي','أولى ثانوي','ثانية ثانوي','ثالثة ثانوي'];
-const S = { courses: [], students: null, enr: null };
-const NAV = [['overview','📊','نظرة عامة'],['courses','📚','الكورسات'],['students','👥','الطلاب'],['codes','🎟️','الأكواد'],['exams','📝','الامتحانات'],['ann','📢','الإعلانات'],['devices','💻','الأجهزة'],['admins','🛡️','المسؤولون']];
+const S = { courses: [], students: null, enr: null, lessons: null, y: '', sub: 'res', atc: null };
+const NAV = [['overview','📊','نظرة عامة'],['courses','📚','الكورسات'],['students','👥','الطلاب'],['codes','🎟️','الأكواد'],['exams','📝','الامتحانات'],['essay','✍️','تصحيح المقالي'],['sres','🎓','نتائج الطلاب والأخطاء'],['ann','📢','الإعلانات'],['devices','💻','الأجهزة'],['admins','🛡️','المسؤولون']];
 
 function toast(m, bad) { const e = document.createElement('div'); e.className = 'toast' + (bad ? ' bad' : ''); e.textContent = m; $('#toasts').appendChild(e); setTimeout(() => e.remove(), 3500); }
 function fail(e) { console.error(e); toast('حدث خطأ: ' + (e.message || e), true); }
@@ -108,6 +111,7 @@ async function loadStudents() {
 // ===== التنقل =====
 const VIEWS = { overview: ['نظرة عامة', vOverview], courses: ['الكورسات', vCourses], students: ['الطلاب', vStudents], codes: ['أكواد التفعيل', vCodes] };
 async function go(v, arg) {
+  window.__cur = v;
   document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.dataset.go === v));
   $('#title').textContent = VIEWS[v][0]; $('#view').innerHTML = '<div class="empty">جاري التحميل...</div>';
   try { $('#view').innerHTML = await VIEWS[v][1](arg); } catch (e) { fail(e); $('#view').innerHTML = '<div class="empty">تعذر التحميل</div>'; }
@@ -233,17 +237,22 @@ async function drawCodes() {
 const KIND = { lesson: 'كويز درس', course: 'امتحان كورس', comprehensive: 'امتحان شامل' };
 VIEWS.exams = ['الامتحانات', vExams]; VIEWS.questions = ['أسئلة الامتحان', vQuestions]; VIEWS.results = ['نتائج الامتحان', vResults];
 async function vExams() {
+  await loadLessons();
   const { data, error } = await sb.from('quizzes').select('*,quiz_questions(count),courses(title)').order('created_at', { ascending: false }); if (error) throw error; S.exams = data;
-  const rows = data.map(q => '<tr><td>' + esc(q.title) + '<br><small style="color:var(--muted)">' + KIND[q.kind] + ' • ' + esc(q.kind === 'comprehensive' ? q.academic_year : (q.courses && q.courses.title)) + (q.time_limit_minutes ? ' • ' + q.time_limit_minutes + ' دقيقة' : '') + (q.opens_at ? ' • يفتح ' + fdt(q.opens_at) : '') + (q.closes_at ? ' • يقفل ' + fdt(q.closes_at) : '') + '</small></td><td>' + (((q.quiz_questions || [])[0] || {}).count || 0) + '</td><td><span class="pill ' + (q.is_published ? 'ok' : 'no') + '">' + (q.is_published ? 'منشور' : 'مخفي') + '</span></td><td style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn s" data-act="questions" data-id="' + q.id + '">الأسئلة</button><button class="btn s g" data-act="results" data-id="' + q.id + '">النتائج</button><button class="btn s g" data-act="editExam" data-id="' + q.id + '">تعديل</button><button class="btn s g" data-act="togglePubExam" data-id="' + q.id + '" data-p="' + q.is_published + '">' + (q.is_published ? 'إخفاء' : 'نشر') + '</button><button class="btn s r" data-act="delExam" data-id="' + q.id + '">حذف</button></td></tr>').join('');
+  const rows = data.map(q => '<tr><td>' + esc(q.title) + '<br><small style="color:var(--muted)">' + KIND[q.kind] + ' • ' + esc(q.kind === 'comprehensive' ? q.academic_year : (q.courses && q.courses.title)) + (q.lesson_id ? ' • 📖 ' + esc(((S.lessons || []).find(l => l.id === q.lesson_id) || {}).title || '') : '') + (q.time_limit_minutes ? ' • ' + q.time_limit_minutes + ' دقيقة' : '') + (q.opens_at ? ' • يفتح ' + fdt(q.opens_at) : '') + (q.closes_at ? ' • يقفل ' + fdt(q.closes_at) : '') + '</small></td><td>' + (((q.quiz_questions || [])[0] || {}).count || 0) + '</td><td><span class="pill ' + (q.is_published ? 'ok' : 'no') + '">' + (q.is_published ? 'منشور' : 'مخفي') + '</span></td><td style="display:flex;gap:6px;flex-wrap:wrap"><button class="btn s" data-act="questions" data-id="' + q.id + '">الأسئلة</button><button class="btn s g" data-act="results" data-id="' + q.id + '">النتائج</button><button class="btn s g" data-act="editExam" data-id="' + q.id + '">تعديل</button><button class="btn s g" data-act="togglePubExam" data-id="' + q.id + '" data-p="' + q.is_published + '">' + (q.is_published ? 'إخفاء' : 'نشر') + '</button><button class="btn s r" data-act="delExam" data-id="' + q.id + '">حذف</button></td></tr>').join('');
   return '<div class="bar"><button class="btn" data-act="newExam">+ امتحان جديد</button></div><div class="tw"><table><tr><th>الامتحان</th><th>الأسئلة</th><th>الحالة</th><th></th></tr>' + (rows || '<tr><td colspan="4" class="empty">لا توجد امتحانات بعد</td></tr>') + '</table></div>';
 }
 const loc = d => { if (!d) return ''; const x = new Date(d); x.setMinutes(x.getMinutes() - x.getTimezoneOffset()); return x.toISOString().slice(0, 16); };
 const fdt = d => new Date(d).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
-function examForm(q) {
-  q = q || {}; const kd = q.kind || 'course', cs = S.courses.map(c => '<option value="' + c.id + '"' + (c.id === q.course_id ? ' selected' : '') + '>' + esc(c.title) + ' — ' + c.academic_year + '</option>').join('');
-  modal(q.id ? 'تعديل الامتحان' : 'امتحان جديد', '<form><label>عنوان الامتحان</label><input name="title" required value="' + esc(q.title) + '"><div class="row2"><div><label>النوع</label><select name="kind" onchange="document.getElementById(\'fc\').hidden=this.value===\'comprehensive\';document.getElementById(\'fy\').hidden=this.value!==\'comprehensive\'">'
+async function loadLessons() { const { data } = await sb.from('lessons').select('id,title,course_id,position').order('position'); S.lessons = data || []; }
+function exUI() { const f = $('#mb form'), k = f.elements.kind.value; $('#fc').hidden = k === 'comprehensive'; $('#fy').hidden = k !== 'comprehensive'; $('#fle').hidden = k !== 'lesson'; fillLessons(); }
+function fillLessons(sel) { const f = $('#mb form'); if (!f || !f.elements.lesson) return; const cid = f.elements.course ? f.elements.course.value : '', cur = sel === undefined ? f.elements.lesson.value : sel; f.elements.lesson.innerHTML = '<option value="">— بدون ربط بمحاضرة —</option>' + (S.lessons || []).filter(l => l.course_id === cid).map(l => '<option value="' + l.id + '"' + (l.id === cur ? ' selected' : '') + '>' + l.position + '. ' + esc(l.title) + '</option>').join(''); }
+async function examForm(q) {
+  q = q || {}; await loadLessons(); const kd = q.kind || 'course', cs = S.courses.map(c => '<option value="' + c.id + '"' + (c.id === q.course_id ? ' selected' : '') + '>' + esc(c.title) + ' — ' + c.academic_year + '</option>').join('');
+  modal(q.id ? 'تعديل الامتحان' : 'امتحان جديد', '<form><label>عنوان الامتحان</label><input name="title" required value="' + esc(q.title) + '"><div class="row2"><div><label>النوع</label><select name="kind" onchange="exUI()">'
     + [['lesson', 'كويز درس'], ['course', 'امتحان كورس'], ['comprehensive', 'امتحان شامل (للصف كله)']].map(k => '<option value="' + k[0] + '"' + (k[0] === kd ? ' selected' : '') + '>' + k[1] + '</option>').join('') + '</select></div>'
-    + '<div id="fc"' + (kd === 'comprehensive' ? ' hidden' : '') + '><label>الكورس</label><select name="course">' + cs + '</select></div><div id="fy"' + (kd === 'comprehensive' ? '' : ' hidden') + '><label>الصف</label><select name="year">' + yopts(q.academic_year) + '</select></div></div>'
+    + '<div id="fc"' + (kd === 'comprehensive' ? ' hidden' : '') + '><label>الكورس</label><select name="course" onchange="fillLessons(\'\')">' + cs + '</select></div><div id="fy"' + (kd === 'comprehensive' ? '' : ' hidden') + '><label>الصف</label><select name="year">' + yopts(q.academic_year) + '</select></div></div>'
+    + '<div id="fle"' + (kd === 'lesson' ? '' : ' hidden') + '><label>المحاضرة (اختياري: الكويز يظهر جوه المحاضرة وفي "نتائجي")</label><select name="lesson"></select></div>'
     + '<div class="row2"><div><label>نسبة النجاح %</label><input type="number" name="pass" value="' + (q.pass_percent == null ? 50 : q.pass_percent) + '" min="0" max="100"></div><div><label>الوقت بالدقائق (فاضي = مفتوح)</label><input type="number" name="time" min="1" value="' + esc(q.time_limit_minutes) + '"></div></div>'
     + '<div class="row2"><div><label>عدد المحاولات</label><input type="number" name="tries" value="' + (q.max_attempts || 1) + '" min="1"></div><div></div></div><div class="row2"><div><label>⏰ يفتح في (اختياري)</label><input type="datetime-local" name="opens" value="' + loc(q.opens_at) + '"></div><div><label>🔒 يقفل ويتسلّم تلقائي في (اختياري)</label><input type="datetime-local" name="closes" value="' + loc(q.closes_at) + '"></div></div>'
     + '<label class="chk"><input type="checkbox" name="shuffle"' + (q.shuffle === false ? '' : ' checked') + '> ترتيب عشوائي للأسئلة والاختيارات لكل طالب</label><label class="chk"><input type="checkbox" name="pub"' + (q.is_published ? ' checked' : '') + '> نشر الامتحان</label><button class="btn" style="width:100%;margin-top:16px">' + (q.id ? 'حفظ التعديلات' : 'حفظ وإضافة الأسئلة') + '</button></form>',
@@ -251,10 +260,12 @@ function examForm(q) {
       const kind = f.get('kind'), row = { title: f.get('title').trim(), kind, pass_percent: +f.get('pass') || 0, time_limit_minutes: +f.get('time') || null, max_attempts: +f.get('tries') || 1, opens_at: f.get('opens') ? new Date(f.get('opens')).toISOString() : null, closes_at: f.get('closes') ? new Date(f.get('closes')).toISOString() : null, shuffle: f.get('shuffle') === 'on', is_published: f.get('pub') === 'on' };
       if (row.opens_at && row.closes_at && row.closes_at <= row.opens_at) throw new Error('وقت الإغلاق لازم يكون بعد وقت الفتح');
       if (kind === 'comprehensive') { row.academic_year = f.get('year'); row.course_id = null; } else { row.course_id = f.get('course'); row.academic_year = null; if (!row.course_id) throw new Error('أضف كورساً أولاً'); }
+      if (kind === 'lesson') row.lesson_id = f.get('lesson') || null; else if (q.lesson_id) row.lesson_id = null;
       if (q.id) { const { error } = await sb.from('quizzes').update(row).eq('id', q.id); if (error) throw error; toast('تم الحفظ ✅'); go('exams'); return; }
       const { data, error } = await sb.from('quizzes').insert(row).select('id').single(); if (error) throw error;
       toast('تم إنشاء الامتحان ✅'); go('questions', data.id);
     });
+  fillLessons(q.lesson_id || '');
 }
 async function vQuestions(id) {
   const { data: qz } = await sb.from('quizzes').select('title').eq('id', id).single();
@@ -377,6 +388,75 @@ async function saveBulk() {
   toast('تم حفظ ' + jobs.length + ' سؤال ✅'); go('questions', eid);
 }
 
+// ===== تصحيح المقالي + نتائج الطلاب والأخطاء (كل صف لوحده) =====
+VIEWS.essay = ['تصحيح المقالي', vEssay]; VIEWS.sres = ['نتائج الطلاب والأخطاء', vSres];
+const pcent = a => a.total ? Math.round(a.score / a.total * 100) : 0;
+const chunk = (a, n) => { const r = []; for (let i = 0; i < a.length; i += n) r.push(a.slice(i, i + n)); return r; };
+const stuMap = () => { const m = {}; S.students.forEach(s => m[s.id] = s); return m; };
+function yearTabs(view, counts) { counts = counts || {}; return '<div class="ytabs">' + YEARS.map(y => '<button class="yt' + (y === S.y ? ' on' : '') + '" data-act="setY" data-id="' + y + '" data-v="' + view + '">' + y + (counts[y] ? '<span class="cnt">' + counts[y] + '</span>' : '') + '</button>').join('') + '</div>'; }
+
+async function vEssay() {
+  await loadStudents(); if (!S.y) S.y = YEARS[0];
+  const { data, error } = await sb.from('quiz_attempts').select('id,quiz_id,student_id,score,total,status,created_at,quizzes(title,courses(title))').eq('status', 'pending').order('created_at', { ascending: false }).limit(1000); if (error) throw error;
+  const sm = stuMap(), cnt = {};
+  data.forEach(a => { const s = sm[a.student_id]; if (s) cnt[s.academic_year] = (cnt[s.academic_year] || 0) + 1; });
+  const list = data.filter(a => sm[a.student_id] && sm[a.student_id].academic_year === S.y);
+  const rows = list.map(a => { const s = sm[a.student_id], q = a.quizzes || {};
+    return '<tr><td>' + esc(fname(s)) + '<br><small style="color:var(--muted)" dir="ltr">' + esc(s.phone_number) + '</small></td><td>' + esc(q.title) + '<br><small style="color:var(--muted)">' + esc(q.courses ? q.courses.title : 'امتحان شامل') + '</small></td><td>' + fdate(a.created_at) + '</td><td>' + a.score + '/' + a.total + '</td><td><button class="btn s" data-act="attempt" data-id="' + a.id + '">✍️ تصحيح</button></td></tr>'; }).join('');
+  return '<p class="nt">المحاولات اللي فيها أسئلة مقالية مستنية تصحيحك، مقسّمة حسب الصف. افتح "تصحيح"، اكتب درجة كل سؤال مقالي واضغط "حفظ الدرجة". أول ما تخلّص كل المقالي بتتحدّث درجة الطالب ونتيجته تلقائياً. الرقم الأحمر جنب كل صف هو عدد المحاولات المعلّقة.</p>'
+    + yearTabs('essay', cnt) + '<div class="bar"><span class="pill ' + (list.length ? 'no' : 'ok') + '">' + (list.length ? list.length + ' محاولة تنتظر التصحيح' : 'مفيش حاجة معلّقة في الصف ده ✅') + '</span><button class="btn s g" data-go="essay" style="margin-right:auto">🔄 تحديث</button></div>'
+    + '<div class="tw"><table><tr><th>الطالب</th><th>الامتحان</th><th>تاريخ التسليم</th><th>الدرجة الحالية</th><th></th></tr>' + (rows || '<tr><td colspan="5" class="empty">لا توجد مقالي معلّقة</td></tr>') + '</table></div>';
+}
+
+async function vSres() {
+  await loadStudents(); if (!S.y) S.y = YEARS[0];
+  if (!S.atc || Date.now() - S.atc.t > 60000) {
+    const { data, error } = await sb.from('quiz_attempts').select('id,quiz_id,student_id,score,total,status,violations,seconds_spent,created_at,quizzes(title,pass_percent)').order('created_at', { ascending: false }).limit(3000); if (error) throw error;
+    S.atc = { t: Date.now(), data };
+  }
+  const sm = stuMap(), yStu = S.students.filter(s => s.academic_year === S.y);
+  const at = S.atc.data.filter(a => sm[a.student_id] && sm[a.student_id].academic_year === S.y);
+  window.__sat = at; window.__sm = sm;
+  const ps = a => a.quizzes && a.quizzes.pass_percent != null ? a.quizzes.pass_percent : 50, done = at.filter(a => a.status !== 'pending');
+  const avg = done.length ? Math.round(done.reduce((t, a) => t + pcent(a), 0) / done.length) : 0, pass = done.length ? Math.round(done.filter(a => pcent(a) >= ps(a)).length / done.length * 100) : 0;
+  const stats = '<div class="grid" style="margin-bottom:16px">' + [[yStu.length, 'طلاب الصف'], [new Set(at.map(a => a.student_id)).size, 'طلاب امتحنوا'], [at.length, 'محاولات'], [avg + '%', 'متوسط الدرجات'], [pass + '%', 'نسبة النجاح']].map(x => '<div class="card stat"><b>' + x[0] + '</b><span>' + x[1] + '</span></div>').join('') + '</div>';
+  const head = '<p class="nt">كل صف لوحده. اختار الصف من فوق، وبعدين تبدّل بين نتائج الطلاب وتحليل الأخطاء. البيانات محدّثة لحد آخر دقيقة (اضغط تحديث لو عايز أحدث نتيجة).</p>' + yearTabs('sres')
+    + '<div class="ytabs"><button class="yt' + (S.sub === 'res' ? ' on' : '') + '" data-act="setSub" data-id="res">📊 نتائج الطلاب</button><button class="yt' + (S.sub === 'mis' ? ' on' : '') + '" data-act="setSub" data-id="mis">🧠 الأخطاء</button><button class="btn s g" data-act="refSres" style="margin-right:auto">🔄 تحديث البيانات</button></div>' + stats;
+  if (S.sub === 'mis') return head + await misHTML(at);
+
+  const qz = {}; at.forEach(a => { if (a.quizzes) qz[a.quiz_id] = a.quizzes.title; });
+  setTimeout(() => { ['srq', 'srz', 'srs'].forEach(id => $('#' + id).addEventListener('input', drawSres)); drawSres(); });
+  return head + '<div class="bar"><input id="srq" placeholder="🔍 بحث بالاسم أو الهاتف"><select id="srz"><option value="">كل الامتحانات</option>' + Object.keys(qz).map(k => '<option value="' + k + '">' + esc(qz[k]) + '</option>').join('') + '</select><select id="srs"><option value="">كل الحالات</option><option value="ok">ناجح</option><option value="no">راسب</option><option value="p">تصحيح معلّق</option></select><span id="src" style="color:var(--muted);font-weight:700"></span></div><div class="tw"><table id="srt"></table></div>';
+}
+function drawSres() {
+  const q = $('#srq').value.trim().toLowerCase(), z = $('#srz').value, st = $('#srs').value, sm = window.__sm;
+  const ps = a => a.quizzes && a.quizzes.pass_percent != null ? a.quizzes.pass_percent : 50;
+  const l = window.__sat.filter(a => { const s = sm[a.student_id], state = a.status === 'pending' ? 'p' : pcent(a) >= ps(a) ? 'ok' : 'no'; return (!z || a.quiz_id === z) && (!st || st === state) && (!q || (fname(s) + s.phone_number + s.email).toLowerCase().includes(q)); });
+  $('#src').textContent = l.length + ' محاولة';
+  $('#srt').innerHTML = '<tr><th>الطالب</th><th>الامتحان</th><th>الدرجة</th><th>الحالة</th><th>مخالفات</th><th>الوقت</th><th>التاريخ</th><th></th></tr>' + (l.slice(0, 300).map(a => { const s = sm[a.student_id], p = pcent(a), pend = a.status === 'pending';
+    return '<tr><td>' + esc(fname(s)) + '<br><small style="color:var(--muted)" dir="ltr">' + esc(s.phone_number) + '</small></td><td>' + esc(a.quizzes && a.quizzes.title) + '</td><td>' + a.score + '/' + a.total + ' <b>(' + p + '%)</b></td><td><span class="pill ' + (pend ? 'no' : p >= ps(a) ? 'ok' : 'no') + '">' + (pend ? 'تصحيح معلّق' : p >= ps(a) ? 'ناجح' : 'راسب') + '</span></td><td style="color:' + (a.violations ? '#f87171' : 'inherit') + '">' + (a.violations || 0) + '</td><td>' + (a.seconds_spent != null ? Math.floor(a.seconds_spent / 60) + ':' + String(a.seconds_spent % 60).padStart(2, '0') : '—') + '</td><td>' + fdate(a.created_at) + '</td><td><button class="btn s" data-act="attempt" data-id="' + a.id + '">تفاصيل</button></td></tr>'; }).join('') || '<tr><td colspan="8" class="empty">لا نتائج</td></tr>');
+}
+async function misHTML(at) {
+  const sample = at.slice(0, 250), am = {}, qn = {}; sample.forEach(a => { am[a.id] = a; qn[a.quiz_id] = (qn[a.quiz_id] || 0) + 1; });
+  if (!sample.length) return '<div class="empty">مفيش محاولات للصف ده لسه</div>';
+  let wr = [];
+  for (const c of chunk(sample.map(a => a.id), 60)) { const { data, error } = await sb.from('quiz_attempt_answers').select('attempt_id,question_id,quiz_questions(question,qtype)').in('attempt_id', c).eq('is_correct', false); if (error) throw error; wr = wr.concat(data || []); }
+  wr = wr.filter(x => x.quiz_questions && x.quiz_questions.qtype === 'mcq' && am[x.attempt_id]);
+  window.__wa = {}; sample.forEach(a => window.__wa[a.id] = 0); wr.forEach(x => window.__wa[x.attempt_id]++);
+  const byQ = {}, byS = {};
+  wr.forEach(x => { const a = am[x.attempt_id]; (byQ[x.question_id] = byQ[x.question_id] || { n: 0, t: x.quiz_questions.question, z: a.quizzes ? a.quizzes.title : '', tot: qn[a.quiz_id] }).n++; (byS[a.student_id] = byS[a.student_id] || { n: 0, att: 0, sum: 0 }).n++; });
+  sample.forEach(a => { const o = (byS[a.student_id] = byS[a.student_id] || { n: 0, att: 0, sum: 0 }); o.att++; o.sum += pcent(a); });
+  const top = Object.values(byQ).sort((a, b) => b.n - a.n).slice(0, 20), sm = window.__sm;
+  const stu = Object.keys(byS).sort((a, b) => byS[b].n - byS[a].n);
+  return '<p class="nt">محسوبة على آخر ' + sample.length + ' محاولة في الصف ده. الأسئلة الاختيارية بس (المقالي بيتصحح يدوي).</p>'
+    + '<h3 style="margin:6px 0 10px">أكتر الأسئلة غلطاً</h3><div class="tw"><table><tr><th>السؤال</th><th>الامتحان</th><th>عدد الغلطات</th><th>نسبة الغلط</th></tr>' + (top.map(t => '<tr><td dir="auto">' + esc(t.t.slice(0, 140)) + '</td><td>' + esc(t.z) + '</td><td><b>' + t.n + '</b></td><td><span class="pill ' + (t.n / t.tot >= .5 ? 'no' : '') + '">' + Math.round(t.n / t.tot * 100) + '%</span></td></tr>').join('') || '<tr><td colspan="4" class="empty">مفيش أخطاء مسجّلة 🎉</td></tr>') + '</table></div>'
+    + '<h3 style="margin:22px 0 10px">الطلاب حسب عدد الأخطاء</h3><div class="tw"><table><tr><th>الطالب</th><th>محاولات</th><th>متوسط الدرجة</th><th>عدد الأخطاء</th><th></th></tr>' + (stu.map(id => { const o = byS[id], s = sm[id]; return '<tr><td>' + esc(fname(s)) + '<br><small style="color:var(--muted)" dir="ltr">' + esc(s.phone_number) + '</small></td><td>' + o.att + '</td><td>' + Math.round(o.sum / o.att) + '%</td><td><span class="pill ' + (o.n ? 'no' : 'ok') + '">' + o.n + '</span></td><td><button class="btn s" data-act="stuAtt" data-id="' + id + '">محاولاته</button></td></tr>'; }).join('')) + '</table></div>';
+}
+function stuAttModal(id) {
+  const s = S.students.find(x => x.id === id), wa = window.__wa || {}, l = (window.__sat || []).filter(a => a.student_id === id);
+  modal('أخطاء: ' + fname(s), '<div class="tw"><table><tr><th>الامتحان</th><th>الدرجة</th><th>غلطات</th><th></th></tr>' + l.map(a => '<tr><td>' + esc(a.quizzes && a.quizzes.title) + '<br><small style="color:var(--muted)">' + fdate(a.created_at) + '</small></td><td>' + a.score + '/' + a.total + ' (' + pcent(a) + '%)</td><td>' + (a.id in wa ? wa[a.id] : '—') + '</td><td><button class="btn s" data-act="attempt" data-id="' + a.id + '">تفاصيل</button></td></tr>').join('') + '</table></div>');
+}
+
 // ===== العمليات =====
 const ACT = {
   newCourse: () => courseForm(),
@@ -409,13 +489,19 @@ Object.assign(ACT, {
   togglePubExam: async (id, el) => { const { error } = await sb.from('quizzes').update({ is_published: el.dataset.p !== 'true' }).eq('id', id); if (error) throw error; go('exams'); },
   delExam: async id => { if (!confirm('حذف الامتحان بكل أسئلته ونتائج الطلاب؟')) return; const { error } = await sb.from('quizzes').delete().eq('id', id); if (error) throw error; toast('تم الحذف'); go('exams'); },
   delQ: async (id, el) => { if (!confirm('حذف السؤال؟')) return; const { error } = await sb.from('quiz_questions').delete().eq('id', id); if (error) throw error; go('questions', el.dataset.e); },
-  gradeEssay: async (id, el) => { const v = $('#es' + el.dataset.i).value; if (v === '') throw new Error('اكتب الدرجة'); const { error } = await sb.rpc('grade_essay', { p_attempt: id, p_question: el.dataset.q, p_score: +v }); if (error) throw error; toast('تم حفظ الدرجة ✅'); }
+  gradeEssay: async (id, el) => { const v = $('#es' + el.dataset.i).value; if (v === '') throw new Error('اكتب الدرجة'); const { error } = await sb.rpc('grade_essay', { p_attempt: id, p_question: el.dataset.q, p_score: +v }); if (error) throw error; toast('تم حفظ الدرجة ✅'); S.atc = null; if (window.__cur === 'essay') go('essay'); }
 });
 Object.assign(ACT, {
   items: id => itemsModal(id),
   delItem: async (id, el) => { const { error } = await sb.from('lesson_items').delete().eq('id', id); if (error) throw error; go('lessons', window.__cid); itemsModal(el.dataset.l); },
   genQ: id => genModal(id), editQs: id => go('bulk', { eid: id, nm: 0, ne: 0 }), saveBulk: () => saveBulk(),
   rmCard: (id, el) => el.closest('.bq').remove()
+});
+Object.assign(ACT, {
+  setY: (id, el) => { S.y = id; go(el.dataset.v); },
+  setSub: id => { S.sub = id; go('sres'); },
+  refSres: () => { S.atc = null; go('sres'); },
+  stuAtt: id => stuAttModal(id)
 });
 gate();
 </script>
