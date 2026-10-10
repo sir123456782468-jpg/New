@@ -77,8 +77,20 @@
         .foot { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 26px; padding: 34px 28px 18px; background: var(--card); border-top: 1px solid var(--line); } .foot h4 { font-size: 15px; color: var(--brand); margin-bottom: 12px; } .foot a { display: block; font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 8px; } .foot a:hover { color: var(--brand); } .foot .cp2 { grid-column: 1/-1; text-align: center; font-size: 12px; color: var(--muted); padding-top: 14px; border-top: 1px solid var(--line); }
         .modal { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(2,6,23,.65); backdrop-filter: blur(6px); } .modal.on { display: flex; animation: up .25s ease; }
         .box { width: 100%; max-width: 380px; padding: 30px 24px; text-align: center; background: var(--card); border-radius: 24px; border: 1px solid var(--line); } .box i { font-size: 46px; font-style: normal; } .box h3 { margin: 8px 0 6px; font-size: 21px; } .box p { color: var(--muted); font-weight: 600; margin-bottom: 20px; } .box .acts { flex-direction: column; } .box .out { background: #dc2626; border-color: #dc2626; color: #fff; }
-        .bottom { display: none; position: fixed; bottom: 0; right: 0; left: 0; z-index: 60; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid var(--line); } .bottom a { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; border-radius: 12px; font-size: 11px; font-weight: 800; color: var(--muted); } .bottom a span { font-size: 20px; } .bottom a.on { color: var(--brand); background: rgba(239,68,68,.1); }
+        .bottom { display: none; position: fixed; bottom: 0; right: 0; left: 0; z-index: 60; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid var(--line); } .bottom a { flex: 1 0 62px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; border-radius: 12px; font-size: 11px; font-weight: 800; color: var(--muted); } .bottom a span { font-size: 20px; } .bottom a.on { color: var(--brand); background: rgba(239,68,68,.1); }
         #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 300; } #toasts { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 310; display: grid; gap: 8px; } .toast { background: #1e293b; color: #fff; padding: 12px 22px; border-radius: 14px; font-weight: 700; font-size: 14px; animation: up .3s ease; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
+        .rs-card { margin-bottom: 14px; overflow: hidden; }
+        .rs-h { display: flex; align-items: center; gap: 14px; padding: 16px 18px; cursor: pointer; }
+        .rs-h .n { flex: none; width: 46px; height: 46px; border-radius: 14px; display: grid; place-items: center; background: var(--grad); color: #fff; font-weight: 900; font-size: 18px; }
+        .rs-h .g { flex: 1; min-width: 0; } .rs-h .g b { display: block; font-size: 16.5px; } .rs-h .g small { color: var(--muted); font-weight: 700; font-size: 12.5px; }
+        .rs-h .ar { font-size: 24px; color: var(--muted); transition: transform .2s; } .rs-card.open .ar { transform: rotate(-90deg); }
+        .rs-b { display: none; padding: 0 16px 16px; } .rs-card.open .rs-b { display: block; }
+        .rs-cs { font-size: 13px; font-weight: 900; color: var(--brand); margin: 22px 4px 10px; }
+        .rs-q { padding: 14px; border-radius: 16px; background: var(--bg); margin-top: 12px; } .rs-q h5 { font-size: 15.5px; font-weight: 800; margin-bottom: 4px; } .rs-q small { color: var(--muted); font-weight: 700; }
+        .rs-g { display: grid; grid-template-columns: repeat(4,1fr); gap: 8px; margin: 12px 0; } .rs-g div { padding: 10px 4px; border-radius: 12px; background: var(--card); border: 1px solid var(--line); text-align: center; } .rs-g small { display: block; font-size: 11.5px; color: var(--muted); font-weight: 800; } .rs-g b { font-size: 20px; font-weight: 900; } .rs-g .ok b { color: var(--ok); } .rs-g .no b { color: var(--bad); }
+        .rs-a { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+        .bottom { overflow-x: auto; } .bottom a { min-width: 62px; }
+        @media (max-width: 600px) { .rs-g { grid-template-columns: repeat(2,1fr); } }
         @media (max-width: 900px) { .side { display: none; } .bottom { display: flex; } .main { padding: 16px 14px 90px; } .stats { grid-template-columns: repeat(2,1fr); } .g2, .g3 { grid-template-columns: 1fr; } .info { grid-template-columns: 1fr; } .foot { grid-template-columns: 1fr 1fr; padding-bottom: 90px; } .brand div { display: none; } .hdr { padding: 8px 14px; } }
         @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
     </style>
@@ -107,7 +119,8 @@
         <nav class="nav">
             <a href="#home" data-v="home"><b class="ic">🏠</b><span class="lbl">الرئيسية</span></a>
             <a href="#courses" data-v="courses"><b class="ic">📚</b><span class="lbl">الكورسات</span></a>
-            <a href="#exams" data-v="exams"><b class="ic">📝</b><span class="lbl">الاختبارات ونتائجي</span></a>
+            <a href="#exams" data-v="exams"><b class="ic">📝</b><span class="lbl">الاختبارات</span></a>
+            <a href="#results" data-v="results"><b class="ic">🏅</b><span class="lbl">نتائجي</span></a>
             <a href="#mistakes" data-v="mistakes"><b class="ic">🧠</b><span class="lbl">أخطائي</span></a>
             <a href="quiz.html?mode=mistakes"><b class="ic">🎯</b><span class="lbl">امتحان من أخطائي</span></a>
             <a href="#account" data-v="account"><b class="ic">👤</b><span class="lbl">حسابي</span></a>
@@ -151,6 +164,12 @@
             <div class="sec"><h3>نتائج اختباراتي</h3></div><div id="attemptList"></div>
         </section>
 
+        <section class="view" id="v-results">
+            <div class="sec" style="margin-top:0"><h3>نتائجي</h3></div>
+            <div class="note" style="margin:0 0 16px">🏅 هنا نتايجك في كل محاضرة: كام صح وكام غلط والنسبة، ومن «تفاصيل الإجابات» تشوف كل سؤال والإجابة الصحيحة.</div>
+            <div id="resultsList"></div>
+        </section>
+
         <section class="view" id="v-mistakes">
             <div class="note" style="margin:0 0 16px">🧠 هنا كل الأسئلة اللي غلطت فيها في الاختبارات مع الإجابة الصحيحة، راجعها كويس عشان متكررش الغلطة.</div>
             <a class="btn main" href="quiz.html?mode=mistakes" style="margin-bottom:16px">🎯 ابدأ امتحان من أخطائي</a>
@@ -175,7 +194,7 @@
 </footer>
 
 <nav class="bottom">
-    <a href="#home" data-v="home"><span>🏠</span>الرئيسية</a><a href="#courses" data-v="courses"><span>📚</span>كورسات</a><a href="#exams" data-v="exams"><span>📝</span>اختبارات</a><a href="#mistakes" data-v="mistakes"><span>🧠</span>أخطائي</a><a href="quiz.html?mode=mistakes"><span>🎯</span>تدريب</a><a href="#account" data-v="account"><span>👤</span>حسابي</a>
+    <a href="#home" data-v="home"><span>🏠</span>الرئيسية</a><a href="#courses" data-v="courses"><span>📚</span>كورسات</a><a href="#exams" data-v="exams"><span>📝</span>اختبارات</a><a href="#results" data-v="results"><span>🏅</span>نتائجي</a><a href="#mistakes" data-v="mistakes"><span>🧠</span>أخطائي</a><a href="quiz.html?mode=mistakes"><span>🎯</span>تدريب</a><a href="#account" data-v="account"><span>👤</span>حسابي</a>
 </nav>
 
 <div class="modal" id="logoutModal"><div class="box"><i>🚪</i><h3>تسجيل الخروج</h3><p>هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟</p>
@@ -282,7 +301,7 @@
     const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const S = { all: [], enrolled: new Set(), done: {}, prog: [], attempts: [], quizzes: [], mistakes: null, filter: 'all' };
-    const TITLES = { home: 1, courses: 1, exams: 1, mistakes: 1, account: 1 };
+    const TITLES = { home: 1, courses: 1, exams: 1, results: 1, mistakes: 1, account: 1 };
     const empty = (i, t) => '<div class="empty"><i>' + i + '</i>' + t + '</div>';
     const fdate = d => new Date(d).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
     const lessonsOf = c => (c.lessons && c.lessons[0] && c.lessons[0].count) || 0;
@@ -313,6 +332,7 @@
         $$('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + n));
         $$('[data-v]').forEach(a => a.classList.toggle('on', a.dataset.v === n));
         if (n === 'mistakes') loadMistakes();
+        if (n === 'results') loadResults();
         if (n === 'home') requestAnimationFrame(fillBars);
         scrollTo(0, 0);
     }
@@ -400,9 +420,45 @@
         $('#quizList').innerHTML = S.quizzes.length ? S.quizzes.map(q => '<div class="card row"><div class="ic">📝</div><div class="grow"><b>' + esc(q.title) + '</b><small>' + esc((q.courses && q.courses.title) || 'امتحان شامل') + '</small></div>' + qbtn(q) + '</div>').join('') : empty('📝', 'لا توجد اختبارات متاحة حالياً');
         $('#attemptList').innerHTML = S.attempts.length ? S.attempts.map(a => {
             const p = a.total ? Math.round(a.score / a.total * 100) : 0, ok = p >= ((a.quizzes && a.quizzes.pass_percent) || 50);
-            return '<div class="card row"><div class="ic">' + (ok ? '🏅' : '📉') + '</div><div class="grow"><b>' + esc(a.quizzes && a.quizzes.title) + '</b><small>' + fdate(a.created_at) + ' • ' + a.score + ' / ' + a.total + '</small><div class="bar" style="margin-top:8px"><i style="width:0" data-w="' + p + '"></i></div></div><span class="badge ' + (ok ? 'p' : 'f') + '">' + p + '%</span></div>';
+            return '<div class="card row"><div class="ic">' + (ok ? '🏅' : '📉') + '</div><div class="grow"><b>' + esc(a.quizzes && a.quizzes.title) + '</b><small>' + fdate(a.created_at) + ' • ' + a.score + ' / ' + a.total + '</small><div class="bar" style="margin-top:8px"><i style="width:0" data-w="' + p + '"></i></div></div><a class="btn sm" href="quiz.html?review=' + esc(a.id) + '">التفاصيل</a><span class="badge ' + (ok ? 'p' : 'f') + '">' + p + '%</span></div>';
         }).join('') : empty('📊', 'لسه ما أجريتش أي اختبار.');
     }
+    // ===== نتائجي: كابشن لكل محاضرة =====
+    async function loadResults() {
+        const box = $('#resultsList'); if (!S.results) box.innerHTML = '<div class="skel"></div>';
+        const { data, error } = await supabaseClient.rpc('my_results');
+        if (error) { box.innerHTML = empty('⚠️', 'تعذر تحميل النتائج، حدّث الصفحة وحاول مرة أخرى.'); return; }
+        S.results = data || []; renderResults();
+    }
+    function renderResults() {
+        const box = $('#resultsList'), rs = S.results;
+        if (!rs.length) { box.innerHTML = empty('🏅', 'لسه ما أجريتش أي اختبار.<br>أول ما تخلّص امتحان هتلاقي نتيجته هنا.'); return; }
+        const byQ = {}; rs.forEach(r => { (byQ[r.quiz_id] = byQ[r.quiz_id] || []).push(r); });
+        const items = Object.values(byQ).map(a => a.slice().sort((x, y) => new Date(y.created_at) - new Date(x.created_at))[0]);
+        const G = {};
+        items.forEach(r => {
+            const key = r.lesson_id || (r.course_id ? 'c:' + r.course_id : 'comp');
+            (G[key] = G[key] || { course: r.course_title || 'امتحانات شاملة', lesson: r.lesson_id ? r.lesson_title : (r.course_id ? 'امتحانات الكورس' : 'الامتحانات الشاملة'), pos: r.lesson_id ? (r.lesson_position || 0) : 9999, num: r.lesson_id ? r.lesson_position : '📝', items: [] }).items.push(r);
+        });
+        const isC = g => g.course === 'امتحانات شاملة' ? 1 : 0, groups = Object.values(G).sort((a, b) => isC(a) - isC(b) || a.course.localeCompare(b.course, 'ar') || a.pos - b.pos);
+        const pc = r => r.total ? Math.round(r.score / r.total * 100) : 0;
+        let last = null, html = '';
+        groups.forEach((g, gi) => {
+            if (g.course !== last) { last = g.course; html += '<div class="rs-cs">📚 ' + esc(g.course) + '</div>'; }
+            const avg = Math.round(g.items.reduce((s, r) => s + pc(r), 0) / g.items.length);
+            html += '<div class="card rs-card' + (gi === 0 ? ' open' : '') + '"><div class="rs-h"><span class="n">' + esc(g.num) + '</span><span class="g"><b>' + esc(g.lesson) + '</b><small>' + g.items.length + ' اختبار • المتوسط <bdi>' + avg + '%</bdi></small></span><span class="ar">‹</span></div><div class="rs-b">'
+                + g.items.map(r => {
+                    const p = pc(r), pend = (r.n_essay_pending || 0) > 0, ok = p >= (r.pass_percent == null ? 50 : r.pass_percent), left = Math.max((r.max_attempts || 1) - (r.attempts_used || 1), 0);
+                    return '<div class="rs-q"><h5>' + esc(r.quiz_title) + '</h5><small>' + fdate(r.created_at) + '</small>'
+                        + '<div class="rs-g"><div><small>عدد الأسئلة</small><b>' + (r.n_questions == null ? '—' : r.n_questions) + '</b></div><div class="ok"><small>صحيحة</small><b>' + (r.n_correct == null ? '—' : r.n_correct) + '</b></div><div class="no"><small>خاطئة</small><b>' + (r.n_wrong == null ? '—' : r.n_wrong) + '</b></div><div><small>بدون إجابة</small><b>' + (r.n_unanswered == null ? '—' : r.n_unanswered) + '</b></div>'
+                        + '<div><small>الدرجة</small><b>' + r.score + '/' + r.total + '</b></div><div><small>النسبة</small><b>' + p + '%</b></div><div><small>النتيجة</small><b style="font-size:15px;color:' + (pend ? '#6366f1' : ok ? 'var(--ok)' : 'var(--bad)') + '">' + (pend ? 'قيد التصحيح' : ok ? 'ناجح' : 'راسب') + '</b></div><div><small>المحاولات</small><b>' + r.attempts_used + '/' + r.max_attempts + '</b></div></div>'
+                        + '<div class="rs-a"><a class="btn main sm" href="quiz.html?review=' + esc(r.attempt_id) + '">👁 تفاصيل الإجابات</a>' + (left > 0 ? '<a class="btn sm" href="quiz.html?id=' + esc(r.quiz_id) + '">🔁 محاولة جديدة</a>' : '') + '</div></div>';
+                }).join('') + '</div></div>';
+        });
+        box.innerHTML = html;
+    }
+    document.addEventListener('click', e => { const h = e.target.closest('.rs-h'); if (h) h.parentElement.classList.toggle('open'); });
+
     async function loadMistakes() {
         if (S.mistakes) return;
         const { data, error } = await supabaseClient.rpc('my_mistakes');
