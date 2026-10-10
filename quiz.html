@@ -118,6 +118,9 @@ textarea{width:100%;min-height:170px;padding:14px;border-radius:16px;border:2px 
 
 @media(max-width:700px){.url{order:3;flex-basis:100%;justify-content:center;padding:4px 12px}.pill{max-width:120px}.hdr{padding:8px 12px}}
 @media(max-width:600px){.kp{grid-template-columns:repeat(2,1fr)}.card{padding:16px}.stats{gap:6px}.sb b{font-size:22px}.qb{width:40px;height:38px}.qt1 h3{font-size:19px}.op{font-size:15px;padding:10px 12px}.ring{width:130px;height:130px}.ring b{font-size:30px}.kc b{font-size:26px}}
+.nb{margin-top:10px;padding:11px 14px;border-radius:12px;background:rgba(245,158,11,.12);border:1px dashed rgba(245,158,11,.5);font-weight:600;line-height:1.9;white-space:pre-wrap}.nb.fb{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.45)}
+#shd{position:fixed;inset:0;z-index:2147483000;background:#0b1020;color:#e2e8f0;display:none;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:18px;padding:20px}#shd.on{display:flex}
+#lw{position:fixed;z-index:2147482000;pointer-events:none;user-select:none;font:700 13px Cairo,sans-serif;color:rgba(100,100,100,.32);transform:rotate(-12deg);white-space:nowrap;text-shadow:0 0 2px rgba(255,255,255,.4);transition:top 1s,left 1s}
 </style>
 </head>
 <body>
@@ -235,7 +238,14 @@ $('#th').addEventListener('click', () => {
 function rng(seed) { let a = 0; for (let i = 0; i < seed.length; i++) a = (a * 31 + seed.charCodeAt(i)) | 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function shuffle(arr, r) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
 function msg(icon, title, text, btn) { $('#stage').innerHTML = '<div class="card c"><div class="big">' + icon + '</div><h2>' + title + '</h2><p>' + (text || '') + '</p>' + (btn || '<a class="btn" href="home.html">الرئيسية</a>') + '</div>'; }
-function save() { try { if (E && !E.practice) sessionStorage.setItem(KEY, JSON.stringify({ ans: E.ans, idx: E.idx, viol: E.viol, seen: Array.from(E.seen), flag: Array.from(E.flag) })); } catch (e) {} }
+function answersMap() { const m = {}; E.qs.forEach(q => { if (E.ans[q.id] != null && !(q.type === 'essay' && String(E.ans[q.id]).trim() === '')) m[q.id] = q.type === 'essay' ? String(E.ans[q.id]) : E.ans[q.id]; }); return m; }
+let svT = null;
+function srvSave(now) {
+  if (!E || E.practice || !QID || !E.stAt || finished) return; clearTimeout(svT);
+  const f = () => supabaseClient.rpc('draft_save', { p_quiz: QID, p_answers: answersMap(), p_state: { idx: E.idx, seen: Array.from(E.seen), flag: Array.from(E.flag) }, p_violations: E.viol, p_started: new Date(E.stAt).toISOString(), p_ends: E.endAt != null ? new Date(E.endAt).toISOString() : null }).then(() => {}, () => {});
+  if (now) f(); else svT = setTimeout(f, 1200);
+}
+function save() { try { if (E && !E.practice) { localStorage.setItem(KEY, JSON.stringify({ st: E.stAt, ans: E.ans, idx: E.idx, viol: E.viol, seen: Array.from(E.seen), flag: Array.from(E.flag) })); srvSave(); } } catch (e) {} }
 async function latestAttempt() { const { data } = await supabaseClient.from('quiz_attempts').select('id').eq('quiz_id', QID).eq('student_id', currentUser.id).order('created_at', { ascending: false }).limit(1); return data && data[0] && data[0].id; }
 
 // ===== تحميل الامتحان =====
@@ -251,8 +261,9 @@ async function init() {
 }
 async function loadExam() {
   if (!QID) return msg('⚠️', 'رابط غير صحيح');
+  try { await supabaseClient.rpc('finalize_expired', { p_mine: true }); } catch (e) {}      // لو في امتحان سابق انتهى وقته يتسلّم الأول
   const [a, m, c] = await Promise.all([
-    supabaseClient.from('quizzes').select('id,title,kind,pass_percent,time_limit_minutes,max_attempts,shuffle,opens_at,closes_at').eq('id', QID).maybeSingle(),
+    supabaseClient.from('quizzes').select('id,title,kind,pass_percent,time_limit_minutes,max_attempts,shuffle,opens_at,closes_at,result_mode,instructions').eq('id', QID).maybeSingle(),
     supabaseClient.rpc('quiz_meta', { p_quiz: QID }),
     supabaseClient.from('quiz_attempts').select('id', { count: 'exact', head: true }).eq('quiz_id', QID)
   ]);
@@ -281,9 +292,10 @@ function intro() {
   $('#stage').innerHTML = '<div class="card c"><div class="big">' + (E.practice ? '🎯' : '📝') + '</div><h2>' + esc(q.title) + '</h2><p class="sub" style="margin-bottom:4px">تفاصيل الامتحان</p>'
     + '<div class="kp">' + k('عدد الأسئلة', n, 'سؤال') + k('الدرجة النهائية', pts, 'درجة') + (q.time_limit_minutes ? k('مدة الامتحان', q.time_limit_minutes, 'دقيقة') : k('مدة الامتحان', '∞', 'مفتوح')) + (left != null ? k('المحاولات المتاحة', left, 'محاولة') : '') + '</div>'
     + (!E.practice && q.opens_at ? '<p style="margin:0">⏰ يفتح: ' + fd(q.opens_at) + '</p>' : '') + (!E.practice && q.closes_at ? '<p>🔒 يقفل ويتسلّم تلقائياً: ' + fd(q.closes_at) + '</p>' : '')
+    + (!E.practice && q.instructions ? '<div class="nb" style="text-align:start">📌 ' + esc(q.instructions) + '</div>' : '')
     + '<ul class="rules">' + (E.practice
       ? '<li>🔒 تدريب خاص بك: نتيجته لا تُسجَّل ولا تظهر لأي حد، ولا تأثير لها على درجاتك.</li><li>🎯 الأسئلة من الأخطاء اللي غلطت فيها قبل كده.</li>'
-      : '<li>🖥️ الامتحان بيتفتح بملء الشاشة، والأسئلة بتظهر بعد ما تبدأ.</li><li>⏰ لما الوقت يخلص الامتحان بيتسلّم تلقائياً بإجاباتك الحالية.</li><li>🚫 ممنوع الخروج من الصفحة أو فتح تبويب آخر: تحذيرين، وفي الثالثة بيتسلّم الامتحان تلقائياً.</li><li>🚫 النسخ واللصق والطباعة والتصوير مقفولة، واسمك ورقمك ظاهرين على الصفحة.</li><li>↔️ تقدر تتنقل بين الأسئلة وتعدّل إجاباتك قبل التسليم، وإجاباتك بتتحفظ لو الصفحة اتعمل لها ريفريش.</li><li>📊 بعد التسليم بتظهر لك نتيجتك: كام صح وكام غلط والنسبة، مع تفاصيل كل إجابة.</li>')
+      : '<li>🖥️ الامتحان بيتفتح بملء الشاشة، والأسئلة بتظهر بعد ما تبدأ.</li><li>⏰ لما الوقت يخلص الامتحان بيتسلّم تلقائياً بإجاباتك الحالية.</li><li>🚫 ممنوع الخروج من الصفحة أو فتح تبويب آخر: تحذيرين، وفي الثالثة بيتسلّم الامتحان تلقائياً.</li><li>🚫 النسخ واللصق والطباعة والتصوير مقفولة، واسمك ورقمك ظاهرين على الصفحة.</li><li>↔️ تقدر تتنقل بين الأسئلة وتعدّل إجاباتك قبل التسليم، وإجاباتك بتتحفظ لو الصفحة اتعمل لها ريفريش.</li><li>💾 إجاباتك بتتحفظ أوتوماتيك على السيرفر: لو قفلت الصفحة ترجع تكمل من نفس المكان، ولو الوقت خلص الامتحان بيتسلّم لوحده.</li><li>' + ({ after_grading: '📊 نتيجتك بتظهر بعد ما المدرس يخلّص تصحيح الأسئلة المقالية.', after_close: '📊 نتيجتك بتظهر بعد انتهاء وقت الامتحان.' }[q.result_mode] || '📊 بعد التسليم بتظهر لك نتيجتك: كام صح وكام غلط والنسبة، مع تفاصيل كل إجابة.') + '</li>')
     + '</ul>' + (notYet ? '<p>الامتحان لسه ما فتحش.</p>' : over ? '<p>انتهى وقت الامتحان.</p>' : '<button class="btn" id="go">' + (E.practice ? 'ابدأ التدريب' : 'ابدأ الامتحان') + '</button> ') + '<a class="btn g" href="home.html">رجوع</a></div>';
   if ($('#go')) $('#go').onclick = start;
 }
@@ -297,7 +309,7 @@ async function start() {
     const { data, error } = await supabaseClient.rpc('start_quiz', { p_quiz: QID });
     if (error) { const t = error.message || ''; if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); return msg('⚠️', 'تعذر بدء الامتحان', t.includes('not_open') ? 'الامتحان لسه ما فتحش.' : t.includes('closed') ? 'انتهى وقت الامتحان.' : t.includes('max_attempts') ? 'استنفدت عدد المحاولات المسموحة.' : 'تأكد من الاتصال وحاول مرة أخرى.'); }
     E.off = new Date(data.now).getTime() - Date.now();
-    const ends = [], st = new Date(data.started_at).getTime();
+    const ends = [], st = new Date(data.started_at).getTime(); E.stAt = st;
     if (E.qz.time_limit_minutes) ends.push(st + E.qz.time_limit_minutes * 60000);
     if (data.closes_at) ends.push(new Date(data.closes_at).getTime());
     E.endAt = ends.length ? Math.min(...ends) : null;      // الأقرب: وقت الامتحان أو موعد الإغلاق
@@ -305,9 +317,21 @@ async function start() {
     let list = (data.questions || []).map(x => ({ id: x.id, type: x.qtype, text: x.question, img: x.image_url, pts: x.points, opts: x.options ? x.options.map((t, i) => ({ t, i })) : [] }));
     if (E.qz.shuffle) { list = shuffle(list, r); list.forEach(x => x.opts = shuffle(x.opts, r)); }
     E.qs = list;
-    try { const s = JSON.parse(sessionStorage.getItem(KEY)); if (s) { E.ans = s.ans || {}; E.idx = Math.min(s.idx || 0, list.length - 1); E.viol = s.viol || 0; E.seen = new Set(s.seen || []); E.flag = new Set(s.flag || []); } } catch (e) {}
+    if (!list.some(x => x.img)) {                       // لو دالة البدء مرجّعتش الصور نجيبها مباشرة
+      try { const ir = await supabaseClient.from('quiz_questions').select('id,image_url').eq('quiz_id', QID); const im = {}; (ir.data || []).forEach(x => { if (x.image_url) im[x.id] = x.image_url; }); list.forEach(x => { if (im[x.id]) x.img = im[x.id]; }); } catch (e) {}
+    }
+    let s = null, d = null;
+    try { s = JSON.parse(localStorage.getItem(KEY)); } catch (e) {}
+    try { const dr = await supabaseClient.rpc('draft_get', { p_quiz: QID }); if (!dr.error && dr.data) d = dr.data; } catch (e) {}
+    if (s && s.st !== st && d) s = null;                 // محلي قديم: نفضّل المحفوظ على السيرفر
+    let src = s;
+    if (!src && d) src = { ans: d.answers || {}, idx: (d.state || {}).idx, viol: d.violations, seen: (d.state || {}).seen, flag: (d.state || {}).flag };
+    else if (src && d && (d.violations || 0) > (src.viol || 0)) src.viol = d.violations;
+    if (src) { E.ans = src.ans || {}; E.idx = Math.min(src.idx || 0, list.length - 1); E.viol = src.viol || 0; E.seen = new Set(src.seen || []); E.flag = new Set(src.flag || []); }
+    if (E.endAt != null && E.endAt <= Date.now() + (E.off || 0)) { running = true; E.qs = list; return submit(true); }
+    srvSave(true);
   }
-  running = true; if (!E.practice) arm();
+  running = true; if (!E.practice) { arm(); liveWM(); }
   $('#stage').innerHTML = ''; $('#wmo').style.display = E.practice ? 'none' : 'block';
   render(); if (E.endAt != null) timer = setInterval(tick, 1000);
 }
@@ -320,11 +344,30 @@ function tabGuard() {
     bc.postMessage('ping'); setTimeout(() => res(!busy), 400);
   });
 }
+function liveWM() {
+  let el = $('#lw'); if (!el) { el = document.createElement('div'); el.id = 'lw'; document.body.appendChild(el); }
+  const p = currentProfile, nm = [p.first_name, p.last_name].join(' ') + ' • ' + p.phone_number;
+  const mv = () => { if (!running) return; const t = new Date(); el.textContent = nm + ' • ' + t.toLocaleTimeString('en-GB'); el.style.top = (8 + Math.random() * 78) + '%'; el.style.left = (2 + Math.random() * 45) + '%'; };
+  mv(); setInterval(mv, 3000);
+}
+function shield(on) { let d = $('#shd'); if (!d) { d = document.createElement('div'); d.id = 'shd'; d.innerHTML = '<div>🔒 محتوى الامتحان محمي<br><small style="font-weight:600;opacity:.8">ارجع لصفحة الامتحان</small></div>'; document.body.appendChild(d); } d.classList.toggle('on', !!on); }
+function antiShot() {
+  let hold = 0;
+  const cover = ms => { if (!running || !E || E.practice) return; shield(true); clearTimeout(hold); if (ms) hold = setTimeout(() => { if (document.hasFocus() && !document.hidden) shield(false); }, ms); };
+  window.addEventListener('blur', () => cover(0));
+  window.addEventListener('focus', () => { clearTimeout(hold); hold = setTimeout(() => shield(false), 350); });
+  document.addEventListener('visibilitychange', () => { if (document.hidden) cover(0); else { clearTimeout(hold); hold = setTimeout(() => shield(false), 350); } });
+  document.addEventListener('keydown', e => { const k = (e.key || '').toLowerCase(); if (e.key === 'PrintScreen' || e.key === 'Snapshot' || (e.metaKey && e.shiftKey) || (e.shiftKey && e.ctrlKey && k === 's') || (e.ctrlKey && k === 'p')) cover(1800); }, true);
+  document.addEventListener('keyup', e => { if (e.key === 'PrintScreen' || e.key === 'Snapshot') { cover(1800); try { navigator.clipboard.writeText(' ').catch(() => {}); } catch (x) {} } }, true);
+  try { if (navigator.mediaDevices) navigator.mediaDevices.getDisplayMedia = () => Promise.reject(new DOMException('blocked', 'NotAllowedError')); } catch (e) {}
+  window.addEventListener('pagehide', () => { srvSave(true); });
+}
 function lockCopy() {
   ['contextmenu', 'copy', 'cut', 'paste', 'dragstart'].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
   document.addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (e.key === 'F12' || e.key === 'PrintScreen' || ((e.ctrlKey || e.metaKey) && ['c', 'x', 'v', 'a', 'u', 's', 'p', 'i', 'j'].includes(k))) { e.preventDefault(); if (e.key === 'PrintScreen') navigator.clipboard && navigator.clipboard.writeText(' ').catch(() => {}); } });
 }
 function arm() {
+  antiShot();
   const v = why => { if (!running || Date.now() - lastV < 1500) return; lastV = Date.now(); violation(why); };
   document.addEventListener('visibilitychange', () => { if (document.hidden) v('غادرت صفحة الامتحان'); });
   window.addEventListener('blur', () => v('خرجت من نافذة الامتحان'));
@@ -441,10 +484,11 @@ async function submit(auto) {
   if (document.fullscreenElement) document.exitFullscreen().catch(() => {});
   if (E.practice) return practiceResult();
   msg('⏳', auto ? 'تم تسليم الامتحان تلقائياً' : 'جاري التسليم...', 'من فضلك لا تغلق الصفحة.');
-  const m = {}; E.qs.forEach(q => { if (E.ans[q.id] != null) m[q.id] = q.type === 'essay' ? String(E.ans[q.id]) : E.ans[q.id]; });
+  clearTimeout(svT); const m = answersMap(); const lw = $('#lw'); if (lw) lw.remove();
   const { data, error } = await supabaseClient.rpc('submit_quiz', { p_quiz: QID, p_answers: m, p_violations: E.viol });
   if (error) { finished = false; const t = error.message || ''; return msg('⚠️', 'تعذر التسليم', t.includes('max_attempts') ? 'تم تسليم الامتحان قبل كده.' : 'تأكد من الاتصال بالإنترنت وحاول مرة أخرى (إجاباتك محفوظة).', t.includes('max_attempts') ? '' : '<button class="btn" onclick="submit(false)">إعادة المحاولة</button>'); }
-  try { sessionStorage.removeItem(KEY); } catch (e) {}
+  try { localStorage.removeItem(KEY); } catch (e) {}
+  try { await supabaseClient.rpc('draft_done', { p_quiz: QID }); } catch (e) {}
   // نجيب التفاصيل الكاملة (صح / غلط / إجابات) من الدالة الجديدة، ولو مش متاحة نعرض النتيجة الأساسية
   let R = null;
   try {
@@ -471,6 +515,12 @@ function practiceResult() {
 
 function renderResult(R, o) {
   o = o || {}; finished = true; running = false;
+  if (R.hidden) {
+    const why = R.hidden_reason === 'grading' ? 'نتيجتك هتظهر بعد ما المدرس يخلّص تصحيح الأسئلة المقالية.' : 'نتيجتك هتظهر بعد انتهاء وقت الامتحان.';
+    $('#wmo').style.display = 'block';
+    $('#stage').innerHTML = '<div class="card c"><div class="big">✅</div><h2>تم تسليم إجاباتك بنجاح</h2><p>' + esc(R.title || '') + '</p><p class="nt">🕒 ' + why + '</p><div class="ra"><a class="btn" href="home.html#results">نتائجي</a><a class="btn g" href="home.html">الرئيسية</a></div></div>';
+    return;
+  }
   const total = +R.total || 0, score = +R.score || 0, pct = total ? Math.round(score / total * 100) : 0, pending = !!R.pending;
   const passed = !pending && (R.passed != null ? !!R.passed : pct >= (R.pass_percent == null ? 50 : R.pass_percent));
   const col = pending ? '#6366f1' : passed ? '#16a34a' : '#dc2626';
@@ -485,6 +535,7 @@ function renderResult(R, o) {
     + (R.n_correct != null ? '<p>أجبت صح على <b>' + R.n_correct + '</b> من <b>' + nv(R.n_questions) + '</b> سؤال</p>' : '') + '</div></div>'
     + '<div class="kp">' + k('', 'درجة الامتحان', score + '/' + total, 'درجة') + k('', 'النسبة المئوية', pct + '%', '') + k(pending ? 'pd' : passed ? 'ok' : 'no', 'النتيجة', pending ? 'قيد التصحيح' : passed ? 'ناجح' : 'راسب', pending ? 'بانتظار المقالي' : 'بالتوفيق')
     + k('', 'عدد الأسئلة', nv(R.n_questions), 'سؤال') + k('ok', 'إجابات صحيحة', nv(R.n_correct), 'سؤال') + k('no', 'إجابات خاطئة', nv(R.n_wrong), 'سؤال') + k('wt', 'بدون إجابة', nv(R.n_unanswered), 'سؤال') + (left != null ? k('', 'المحاولات المتاحة', left, 'محاولة') : '') + '</div>'
+    + (R.result_note ? '<div class="nb">📌 ' + esc(R.result_note) + '</div>' : '')
     + (pending ? '<p class="nt">✍️ فيه أسئلة مقالية هتتصحح يدوياً، وهتتحدّث درجتك بعد التصحيح (هتلاقيها في «نتائجي»).</p>' : '')
     + (R.violations ? '<p class="nt wn">⚠️ مرات الخروج من الامتحان: ' + R.violations + '</p>' : '') + (secs ? '<p class="nt" style="background:var(--soft)">⏱ الوقت المستغرق: ' + secs + '</p>' : '')
     + (!canDet && !R.practice && !R.fallback ? '<p class="nt" style="background:var(--soft)">🔒 تفاصيل الإجابات بتظهر بعد ما تخلّص كل محاولاتك' + (left ? ' (باقي ' + left + ')' : '') + '.</p>' : '')
@@ -509,7 +560,7 @@ function detailsHTML(R) {
     const body = q.qtype === 'essay'
       ? '<div class="eb" dir="auto">' + (esc(q.essay_text || '').trim() || 'لم تكتب إجابة') + '</div>'
       : (q.options || []).map((t, j) => { const right = j === q.correct_index, mine = j === q.chosen_index; return '<div class="do ' + (right ? 'right' : mine ? 'wrong' : '') + '" dir="' + (AR.test(t) ? 'rtl' : 'ltr') + '"><b>' + LET[j] + '</b><span>' + esc(t) + '</span>' + (right ? '<i>' + (mine ? 'إجابتك ✓ صحيحة' : 'الإجابة الصحيحة') + '</i>' : mine ? '<i>إجابتك ✗</i>' : '') + '</div>'; }).join('');
-    return '<div class="dq ' + s + '" data-s="' + s + '"><div class="dh"><b>السؤال ' + (i + 1) + '</b><span class="st ' + s + '">' + lab + '</span><span class="pp">' + earned + ' / ' + q.points + ' درجة</span></div><div class="dt" dir="auto">' + esc(q.question) + '</div>' + (q.image_url ? '<img class="qi" draggable="false" src="' + esc(q.image_url) + '">' : '') + body + '</div>';
+    return '<div class="dq ' + s + '" data-s="' + s + '"><div class="dh"><b>السؤال ' + (i + 1) + '</b><span class="st ' + s + '">' + lab + '</span><span class="pp">' + earned + ' / ' + q.points + ' درجة</span></div><div class="dt" dir="auto">' + esc(q.question) + '</div>' + (q.image_url ? '<img class="qi" draggable="false" src="' + esc(q.image_url) + '">' : '') + body + (q.note ? '<div class="nb">💡 ملاحظة: ' + esc(q.note) + '</div>' : '') + (q.feedback ? '<div class="nb fb">👨‍🏫 تعليق المدرس: ' + esc(q.feedback) + '</div>' : '') + '</div>';
   }).join('');
   return '<div class="card"><h2 class="rt0" style="font-size:22px">تفاصيل الإجابات</h2><div class="flt" style="justify-content:center;margin-top:12px">' + chips + '</div>' + cards + '</div>';
 }
