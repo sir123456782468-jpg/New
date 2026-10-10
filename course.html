@@ -43,6 +43,7 @@ body{background:var(--bg);color:var(--ink);min-height:100vh}
 .ci.on{border-color:var(--brand);background:rgba(239,68,68,.08)}
 .ci .ck{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:#fff;font-size:15px}
 .ci.seen .ck{border-color:var(--ok);background:var(--ok)}
+.ci small{display:block;color:var(--muted);font-weight:600;font-size:12px}
 .pn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px}
 @media(max-width:900px){.grid{grid-template-columns:1fr}.brand div{display:none}.ls{max-height:none}.grid.lg{grid-template-columns:1fr}.grid.lg aside{order:2}}
 </style>
@@ -149,19 +150,21 @@ const C = { course: null, lessons: [], on: false, done: new Set(), exams: [], cu
 let wmTimer = null, ITEMS = [], SEEN = new Set(), FILE = null;
 const toast = m => { const e = document.createElement('div'); e.className = 'toast'; e.textContent = m; $('#toasts').appendChild(e); setTimeout(() => e.remove(), 3000); };
 const canOpen = l => C.on || l.is_free;
+const quizQ = async () => { const c = 'id,title,kind,time_limit_minutes,opens_at,closes_at'; let r = await supabaseClient.from('quizzes').select(c + ',lesson_id').eq('course_id', CID); if (r.error) r = await supabaseClient.from('quizzes').select(c).eq('course_id', CID); return r; };
 const lecUrl = id => 'course.html?id=' + encodeURIComponent(CID) + '&l=' + encodeURIComponent(id);
 
 async function init() {
   if (!CID) return fail('رابط الكورس غير صحيح');
-  const [c, l, e, p, q] = await Promise.all([
+  const [c, l, e, p, q, at] = await Promise.all([
     supabaseClient.from('courses').select('id,title,description,price,academic_year').eq('id', CID).maybeSingle(),
     supabaseClient.from('lessons').select('id,title,section_title,position,is_free,duration_minutes').eq('course_id', CID).order('position'),
     supabaseClient.from('enrollments').select('course_id').eq('course_id', CID),
     supabaseClient.from('lesson_progress').select('lesson_id'),
-    supabaseClient.from('quizzes').select('id,title,kind,time_limit_minutes,opens_at,closes_at').eq('course_id', CID)
+    quizQ(),
+    supabaseClient.from('quiz_attempts').select('quiz_id')
   ]);
   if (!c.data) return fail('الكورس غير موجود أو غير متاح لك.');
-  C.course = c.data; C.lessons = l.data || []; C.on = !!(e.data && e.data.length); C.exams = q.data || [];
+  C.course = c.data; C.lessons = l.data || []; C.on = !!(e.data && e.data.length); C.exams = q.data || []; C.tried = new Set((at.data || []).map(x => x.quiz_id));
   const ids = new Set(C.lessons.map(x => x.id)); (p.data || []).forEach(x => { if (ids.has(x.lesson_id)) C.done.add(x.lesson_id); });
   if (LID) open(LID); else draw();
 }
@@ -178,7 +181,7 @@ function draw() {
     html += '<div class="lec' + (dn ? ' dn' : '') + '" data-l="' + l.id + '"><span class="n">' + (dn ? '✓' : i + 1) + '</span><span class="g">' + esc(l.title) + '<small>' + (l.duration_minutes ? l.duration_minutes + ' دقيقة' : '') + (l.is_free && !C.on ? ' • مجاني' : '') + '</small></span>' + (canOpen(l) ? '<span class="ar">‹</span>' : '<span>🔒</span>') + '</div>';
   });
   const join = C.on ? '' : '<div class="card join" style="margin-bottom:14px"><p>🔒 لازم تشترك في الكورس عشان تفتح كل المحاضرات.</p>' + (Number(c.price) === 0 ? '<button class="btn" id="jf">اشترك مجاناً</button>' : '<input id="jc" dir="ltr" placeholder="XXXX-XXXX-XXXX" maxlength="14"><button class="btn" id="jb" style="width:100%">تفعيل بالكود</button>') + '</div>';
-  const ex = C.on && C.exams.length ? '<div class="card" style="margin-top:14px"><b>📝 امتحانات الكورس</b>' + C.exams.map(x => { const n = Date.now(), o = x.opens_at && new Date(x.opens_at) > n, cl = x.closes_at && new Date(x.closes_at) < n, f = d => new Date(d).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }); return '<div class="ex"><span>' + esc(x.title) + (o ? '<br><small style="color:var(--muted)">يفتح ' + f(x.opens_at) + '</small>' : x.closes_at && !cl ? '<br><small style="color:var(--muted)">يقفل ' + f(x.closes_at) + '</small>' : '') + '</span>' + (o ? '<b style="color:var(--muted)">قريباً</b>' : cl ? '<b style="color:#dc2626">انتهى</b>' : '<a class="btn" href="quiz.html?id=' + x.id + '">ابدأ</a>') + '</div>'; }).join('') + '</div>' : '';
+  const gx = C.exams.filter(x => !x.lesson_id), ex = C.on && gx.length ? '<div class="card" style="margin-top:14px"><b>📝 امتحانات الكورس</b>' + gx.map(x => { const n = Date.now(), o = x.opens_at && new Date(x.opens_at) > n, cl = x.closes_at && new Date(x.closes_at) < n, f = d => new Date(d).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }); return '<div class="ex"><span>' + esc(x.title) + (o ? '<br><small style="color:var(--muted)">يفتح ' + f(x.opens_at) + '</small>' : x.closes_at && !cl ? '<br><small style="color:var(--muted)">يقفل ' + f(x.closes_at) + '</small>' : '') + '</span>' + (o ? '<b style="color:var(--muted)">قريباً</b>' : cl ? '<b style="color:#dc2626">انتهى</b>' : '<a class="btn" href="quiz.html?id=' + x.id + '">ابدأ</a>') + '</div>'; }).join('') + '</div>' : '';
   $('#root').innerHTML = '<div class="top"><div><h1>' + esc(c.title) + '</h1><p>' + esc(c.description) + '</p></div><div><b id="pc">' + pct() + '% مكتمل</b><div class="bar"><i id="pb" style="width:' + pct() + '%"></i></div></div></div>'
     + join + (html || '<div class="empty" style="aspect-ratio:auto">لا توجد محاضرات بعد</div>') + ex;
   $$('.lec').forEach(el => el.onclick = () => {
@@ -228,8 +231,10 @@ async function open(id) {
 
   const idx = C.lessons.findIndex(x => x.id === id), dn = C.done.has(id);
   const nx = C.lessons.slice(idx + 1).find(canOpen), pv = C.lessons.slice(0, idx).reverse().find(canOpen);
+  const lq = C.on ? C.exams.filter(x => x.lesson_id === id) : [];
   const ico = k => k === 'video' ? '🎬 ' : k === 'pdf' ? '📄 ' : '🔗 ';
   const list = ITEMS.map((x, i) => '<div class="ci' + (SEEN.has(x.key) ? ' seen' : '') + '" data-i="' + i + '"><span>' + ico(x.kind) + esc(x.title) + '</span><span class="ck">✓</span></div>').join('')
+    + lq.map(x => { const n = Date.now(), o = x.opens_at && new Date(x.opens_at) > n, cl = x.closes_at && new Date(x.closes_at) < n; return '<div class="ci' + (C.tried.has(x.id) ? ' seen' : '') + '" data-q="' + x.id + '" data-s="' + (o ? 'o' : cl ? 'c' : '') + '"><span>📝 ' + esc(x.title) + (o ? '<small>لم يفتح بعد</small>' : cl && !C.tried.has(x.id) ? '<small>انتهى</small>' : '') + '</span><span class="ck">✓</span></div>'; }).join('')
     + (FILE ? '<div class="ci" data-f="1"><span>📄 ملف المحاضرة</span><span class="ck"></span></div>' : '');
 
   $('#root').innerHTML = '<div class="top"><div><p>' + esc(C.course.title) + '</p><h1>' + esc(l.title) + '</h1></div><a class="btn g" href="course.html?id=' + encodeURIComponent(CID) + '">← كل المحاضرات</a></div>'
@@ -240,6 +245,7 @@ async function open(id) {
     + '<div class="pn">' + (pv ? '<a class="btn g" href="' + lecUrl(pv.id) + '">→ المحاضرة السابقة</a>' : '<span></span>') + (nx ? '<a class="btn g" href="' + lecUrl(nx.id) + '">المحاضرة التالية ←</a>' : '') + '</div></div></div>';
 
   $$('#itemList .ci').forEach(b => b.onclick = async () => {
+    if (b.dataset.q) { if (b.dataset.s === 'o') return toast('الامتحان لسه ما فتحش'); if (b.dataset.s === 'c' && !C.tried.has(b.dataset.q)) return toast('انتهى وقت الامتحان'); location.href = 'quiz.html?id=' + encodeURIComponent(b.dataset.q); return; }
     if (b.dataset.f) { const { data: s, error } = await supabaseClient.storage.from('lesson-files').createSignedUrl(FILE, 3600); if (error) return toast('تعذر فتح الملف'); window.open(s.signedUrl, '_blank', 'noopener'); return; }
     showItem(+b.dataset.i);
   });
