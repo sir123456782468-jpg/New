@@ -349,7 +349,7 @@
     }
     function bestByQuiz() {
         const m = {};
-        S.attempts.forEach(a => { const p = a.total ? a.score / a.total * 100 : 0; if (!m[a.quiz_id] || p > m[a.quiz_id].p) m[a.quiz_id] = { p: Math.round(p), t: a.quizzes && a.quizzes.title || '' }; });
+        S.attempts.forEach(a => { if (a.hidden) return; const p = a.total ? a.score / a.total * 100 : 0; if (!m[a.quiz_id] || p > m[a.quiz_id].p) m[a.quiz_id] = { p: Math.round(p), t: a.quizzes && a.quizzes.title || '' }; });
         return Object.values(m);
     }
     function weekSeries() {
@@ -419,12 +419,13 @@
 
     // ===== الاختبارات والأخطاء =====
     const slug = t => String(t || '').trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60);
-    const courseHref = c => c.num ? '/course/' + c.num + (slug(c.title) ? '-' + encodeURIComponent(slug(c.title)) : '') : '/course?id=' + encodeURIComponent(c.id);
-    const quizHref = q => q.num ? '/exam/' + q.num + (slug(q.title) ? '-' + encodeURIComponent(slug(q.title)) : '') : '/quiz?id=' + encodeURIComponent(q.id);
+    const courseHref = c => '/course.html?id=' + encodeURIComponent(c.id);
+    const quizHref = q => '/quiz.html?id=' + encodeURIComponent(q.id);
     function qbtn(q) { const n = Date.now(), o = q.opens_at && new Date(q.opens_at) > n, c = q.closes_at && new Date(q.closes_at) < n; return o ? '<span class="badge" style="background:var(--muted)">يفتح ' + new Date(q.opens_at).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }) + '</span>' : c ? '<span class="badge f">انتهى</span>' : '<a class="btn main sm" href="' + quizHref(q) + '">ابدأ الاختبار</a>'; }
     function renderExams() {
         $('#quizList').innerHTML = S.quizzes.length ? S.quizzes.map(q => '<div class="card row"><div class="ic">📝</div><div class="grow"><b>' + esc(q.title) + '</b><small>' + esc((q.courses && q.courses.title) || 'امتحان شامل') + '</small></div>' + qbtn(q) + '</div>').join('') : empty('📝', 'لا توجد اختبارات متاحة حالياً');
         $('#attemptList').innerHTML = S.attempts.length ? S.attempts.map(a => {
+            if (a.hidden) return '<div class="card row"><div class="ic">🕒</div><div class="grow"><b>' + esc(a.quizzes && a.quizzes.title) + '</b><small>' + fdate(a.created_at) + ' • تم التسليم — النتيجة لسه ما ظهرتش</small></div></div>';
             const p = a.total ? Math.round(a.score / a.total * 100) : 0, ok = p >= ((a.quizzes && a.quizzes.pass_percent) || 50);
             return '<div class="card row"><div class="ic">' + (ok ? '🏅' : '📉') + '</div><div class="grow"><b>' + esc(a.quizzes && a.quizzes.title) + '</b><small>' + fdate(a.created_at) + ' • ' + a.score + ' / ' + a.total + '</small><div class="bar" style="margin-top:8px"><i style="width:0" data-w="' + p + '"></i></div></div><a class="btn sm" href="/quiz?review=' + esc(a.id) + '">التفاصيل</a><span class="badge ' + (ok ? 'p' : 'f') + '">' + p + '%</span></div>';
         }).join('') : empty('📊', 'لسه ما أجريتش أي اختبار.');
@@ -454,7 +455,7 @@
             const vis = g.items.filter(r => !r.hidden), avg = vis.length ? Math.round(vis.reduce((s, r) => s + pc(r), 0) / vis.length) : null;
             html += '<div class="card rs-card' + (gi === 0 ? ' open' : '') + '"><div class="rs-h"><span class="n">' + esc(g.num) + '</span><span class="g"><b>' + esc(g.lesson) + '</b><small>' + g.items.length + ' اختبار' + (avg == null ? '' : ' • المتوسط <bdi>' + avg + '%</bdi>') + '</small></span><span class="ar">‹</span></div><div class="rs-b">'
                 + g.items.map(r => {
-                    if (r.hidden) return '<div class="rs-q"><h5>' + esc(r.quiz_title) + '</h5><small>' + fdate(r.created_at) + '</small><p style="margin:10px 0;font-weight:700;line-height:1.9">✅ تم التسليم. ' + (r.hidden_reason === 'grading' ? 'النتيجة هتظهر بعد تصحيح الأسئلة المقالية.' : 'النتيجة هتظهر بعد انتهاء وقت الامتحان.') + '</p></div>';
+                    if (r.hidden) return '<div class="rs-q"><h5>' + esc(r.quiz_title) + '</h5><small>' + fdate(r.created_at) + '</small><p style="margin:10px 0;font-weight:700;line-height:1.9">✅ تم التسليم. ' + (r.hidden_reason === 'grading' ? 'النتيجة هتظهر بعد تصحيح الأسئلة المقالية.' : r.hidden_reason === 'manual' ? 'النتيجة هتظهر لما المدرس يعتمدها.' : 'النتيجة هتظهر بعد انتهاء وقت الامتحان.') + '</p></div>';
                     const p = pc(r), pend = (r.n_essay_pending || 0) > 0, ok = p >= (r.pass_percent == null ? 50 : r.pass_percent), left = Math.max((r.max_attempts || 1) - (r.attempts_used || 1), 0);
                     return '<div class="rs-q"><h5>' + esc(r.quiz_title) + '</h5><small>' + fdate(r.created_at) + '</small>'
                         + '<div class="rs-g"><div><small>عدد الأسئلة</small><b>' + (r.n_questions == null ? '—' : r.n_questions) + '</b></div><div class="ok"><small>صحيحة</small><b>' + (r.n_correct == null ? '—' : r.n_correct) + '</b></div><div class="no"><small>خاطئة</small><b>' + (r.n_wrong == null ? '—' : r.n_wrong) + '</b></div><div><small>بدون إجابة</small><b>' + (r.n_unanswered == null ? '—' : r.n_unanswered) + '</b></div>'
@@ -511,7 +512,7 @@
             (async () => { let r = await supabaseClient.from('courses').select('id,num,title,description,thumbnail_url,price,academic_year,lessons(count)').order('sort_order'); if (r.error) r = await supabaseClient.from('courses').select('id,title,description,thumbnail_url,price,academic_year,lessons(count)').order('sort_order'); return r; })(),
             supabaseClient.from('enrollments').select('course_id'),
             supabaseClient.from('lesson_progress').select('lesson_id,completed_at,lessons(course_id)'),
-            supabaseClient.from('quiz_attempts').select('id,quiz_id,score,total,created_at,quizzes(title,pass_percent)').order('created_at', { ascending: false }),
+            (async () => { const r = await supabaseClient.rpc('my_attempts_basic'); if (!r.error && Array.isArray(r.data)) return { data: r.data.map(a => ({ id: a.id, quiz_id: a.quiz_id, score: a.score, total: a.total, created_at: a.created_at, hidden: !a.visible, quizzes: { title: a.title, pass_percent: a.pass_percent } })) }; return supabaseClient.from('quiz_attempts').select('id,quiz_id,score,total,created_at,quizzes(title,pass_percent)').order('created_at', { ascending: false }); })(),
             (async () => { let r = await supabaseClient.from('quizzes').select('id,num,title,kind,opens_at,closes_at,courses(title)').order('created_at', { ascending: false }); if (r.error) r = await supabaseClient.from('quizzes').select('id,title,kind,opens_at,closes_at,courses(title)').order('created_at', { ascending: false }); return r; })(),
             (async () => { let q = await supabaseClient.from('announcements').select('title,body,academic_year').eq('is_active', true).order('created_at', { ascending: false }).limit(30); if (q.error) q = await supabaseClient.from('announcements').select('title,body').eq('is_active', true).order('created_at', { ascending: false }).limit(5); return q; })()
         ]);
