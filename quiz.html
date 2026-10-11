@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
 <meta name="robots" content="noindex,nofollow">
 <title>الامتحان - The Leader In English</title>
-<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@700;800&display=swap" rel="stylesheet">
 <style>
 html{visibility:hidden}
@@ -118,14 +118,15 @@ textarea{width:100%;min-height:170px;padding:14px;border-radius:16px;border:2px 
 
 @media(max-width:700px){.url{order:3;flex-basis:100%;justify-content:center;padding:4px 12px}.pill{max-width:120px}.hdr{padding:8px 12px}}
 @media(max-width:600px){.kp{grid-template-columns:repeat(2,1fr)}.card{padding:16px}.stats{gap:6px}.sb b{font-size:22px}.qb{width:40px;height:38px}.qt1 h3{font-size:19px}.op{font-size:15px;padding:10px 12px}.ring{width:130px;height:130px}.ring b{font-size:30px}.kc b{font-size:26px}}
+.st.pt{background:rgba(245,158,11,.18);color:#d97706}.pk{margin:0 0 10px;padding:9px 13px;border-radius:12px;background:rgba(99,102,241,.1);font-weight:700;font-size:14px}
 .nb{margin-top:10px;padding:11px 14px;border-radius:12px;background:rgba(245,158,11,.12);border:1px dashed rgba(245,158,11,.5);font-weight:600;line-height:1.9;white-space:pre-wrap}.nb.fb{background:rgba(99,102,241,.1);border-color:rgba(99,102,241,.45)}
-#shd{position:fixed;inset:0;z-index:2147483000;background:#0b1020;color:#e2e8f0;display:none;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:18px;padding:20px}#shd.on{display:flex}
-#lw{position:fixed;z-index:2147482000;pointer-events:none;user-select:none;font:700 13px Cairo,sans-serif;color:rgba(100,100,100,.32);transform:rotate(-12deg);white-space:nowrap;text-shadow:0 0 2px rgba(255,255,255,.4);transition:top 1s,left 1s}
+#shd{position:fixed;inset:0;z-index:2147483000;background:#000;color:#e2e8f0;display:none;align-items:center;justify-content:center;text-align:center;font-weight:800;font-size:18px;padding:20px}#shd.on{display:flex}
+#lw{position:fixed;z-index:2147482000;pointer-events:none;user-select:none;font:700 11px Cairo,sans-serif;color:rgba(99,102,241,.42);background:rgba(99,102,241,.07);padding:2px 10px;border-radius:999px;white-space:nowrap;transition:top 24s linear,left 24s linear}
+@media print{body>*{display:none!important}}
 </style>
 </head>
 <body>
 <svg width="0" height="0" style="position:absolute"><defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ef4444"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs><symbol id="logo" viewBox="0 0 64 64"><path d="M14 4h36a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H32L20 61V50h-6A10 10 0 0 1 4 40V14A10 10 0 0 1 14 4z" fill="url(#rg)"/><path d="M21 21h8v19h14v8H21z" fill="#fff"/><path d="M18 19V11l5 4 4-7 4 7 5-4v8z" fill="#fbbf24"/></symbol></svg>
-<div class="wmo" id="wmo"></div>
 <header class="hdr">
   <div class="brand"><svg><use href="#logo"/></svg><div><b>The Leader In English</b><small>Mr. Sherif Khafagy</small></div></div>
   <span class="url" id="url">🌐</span>
@@ -135,7 +136,7 @@ textarea{width:100%;min-height:170px;padding:14px;border-radius:16px;border:2px 
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <script>
-window.guardFail = function (m) { document.documentElement.style.visibility = 'visible'; document.body.innerHTML = '<div style="max-width:460px;margin:12vh auto;padding:28px;font-family:Cairo,sans-serif;text-align:center;direction:rtl;border:2px solid #ef4444;border-radius:20px;line-height:2"><div style="font-size:46px">🔒</div><b>تعذر فتح الصفحة</b><p style="color:#64748b">' + m + '</p><a href="signin.html" style="color:#ef4444;font-weight:800">تسجيل الدخول</a></div>'; };
+window.guardFail = function (m) { document.documentElement.style.visibility = 'visible'; document.body.innerHTML = '<div style="max-width:460px;margin:12vh auto;padding:28px;font-family:Cairo,sans-serif;text-align:center;direction:rtl;border:2px solid #ef4444;border-radius:20px;line-height:2"><div style="font-size:46px">🔒</div><b>تعذر فتح الصفحة</b><p style="color:#64748b">' + m + '</p><a href="/signin.html" style="color:#ef4444;font-weight:800">تسجيل الدخول</a></div>'; };
 setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق من حسابك. حدّث الصفحة.'); }, 15000);
 </script>
 <script>
@@ -149,7 +150,7 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
     (async () => { try {
         const { data } = await supabaseClient.auth.getSession();
         const session = data && data.session;
-        if (!session) { location.replace('signin.html'); return; }
+        if (!session) { location.replace('/signin.html'); return; }
 
         const { data: profile } = await supabaseClient
             .from('profiles')
@@ -159,13 +160,13 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
 
         if (!profile) {
             await supabaseClient.auth.signOut({ scope: 'local' });
-            location.replace('signup.html');
+            location.replace('/signup.html');
             return;
         }
 
         if (profile.is_blocked === true) {
             await supabaseClient.auth.signOut({ scope: 'local' });
-            location.replace('signin.html?blocked=1');
+            location.replace('/signin.html?blocked=1');
             return;
         }
 
@@ -178,7 +179,7 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
                 }
                 if (!error && ok === false) {
                     await supabaseClient.auth.signOut({ scope: 'local' });   // local: مايطلّعش الجهاز الجديد
-                    location.replace('signin.html?kicked=1');
+                    location.replace('/signin.html?kicked=1');
                     return true;
                 }
             } catch (e) {}
@@ -204,23 +205,24 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
     } catch (e) {
         console.error('auth-guard error:', e);
         if (window.guardFail) window.guardFail('حدث خطأ أثناء التحقق من حسابك: ' + (e && e.message ? e.message : e));
-        else location.replace('signin.html');
+        else location.replace('/signin.html');
     } })();
 
     window.requireAdmin = function () {
-        if (!window.isAdmin) { location.replace('home.html'); return false; }
+        if (!window.isAdmin) { location.replace('/home.html'); return false; }
         return true;
     };
 
     window.logout = async function () {
         await supabaseClient.auth.signOut({ scope: 'local' });
-        location.replace('signin.html');
+        location.replace('/signin.html');
     };
 })();
 
 </script>
 <script>
-const P = new URLSearchParams(location.search), RID = P.get('review'), MODE = P.get('mode') === 'mistakes' ? 'mistakes' : RID ? 'review' : 'exam', QID = P.get('id'), MAXV = 2;
+const P = new URLSearchParams(location.search), RID = P.get('review'), MODE = P.get('mode') === 'mistakes' ? 'mistakes' : RID ? 'review' : 'exam', MAXV = 2, QNUM = (decodeURIComponent(location.pathname).match(/^\/exam\/(\d+)/) || [])[1];
+let QID = P.get('id');
 const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 const AR = /[؀-ۿ]/, LET = 'ABCDEF', pad = n => String(n).padStart(2, '0');
@@ -237,8 +239,8 @@ $('#th').addEventListener('click', () => {
 
 function rng(seed) { let a = 0; for (let i = 0; i < seed.length; i++) a = (a * 31 + seed.charCodeAt(i)) | 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function shuffle(arr, r) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
-function msg(icon, title, text, btn) { $('#stage').innerHTML = '<div class="card c"><div class="big">' + icon + '</div><h2>' + title + '</h2><p>' + (text || '') + '</p>' + (btn || '<a class="btn" href="home.html">الرئيسية</a>') + '</div>'; }
-function answersMap() { const m = {}; E.qs.forEach(q => { if (E.ans[q.id] != null && !(q.type === 'essay' && String(E.ans[q.id]).trim() === '')) m[q.id] = q.type === 'essay' ? String(E.ans[q.id]) : E.ans[q.id]; }); return m; }
+function msg(icon, title, text, btn) { $('#stage').innerHTML = '<div class="card c"><div class="big">' + icon + '</div><h2>' + title + '</h2><p>' + (text || '') + '</p>' + (btn || '<a class="btn" href="/home.html">الرئيسية</a>') + '</div>'; }
+function answersMap() { const m = {}; E.qs.forEach(q => { if (E.ans[q.id] != null && !(q.type === 'essay' && String(E.ans[q.id]).trim() === '') && !(Array.isArray(E.ans[q.id]) && !E.ans[q.id].length)) m[q.id] = q.type === 'essay' ? String(E.ans[q.id]) : E.ans[q.id]; }); return m; }
 let svT = null;
 function srvSave(now) {
   if (!E || E.practice || !QID || !E.stAt || finished) return; clearTimeout(svT);
@@ -250,6 +252,7 @@ async function latestAttempt() { const { data } = await supabaseClient.from('qui
 
 // ===== تحميل الامتحان =====
 async function init() {
+  if (!QID && QNUM) { try { const r = await supabaseClient.from('quizzes').select('id').eq('num', +QNUM).maybeSingle(); if (r.data) QID = r.data.id; } catch (e) {} }
   const p = currentProfile, name = [p.first_name, p.last_name].join(' ');
   $('#who').textContent = name; $('#url').textContent = '🌐 ' + location.host;
   const svg = '<svg xmlns="http://www.w3.org/2000/svg" width="360" height="200"><text x="20" y="110" font-size="17" font-family="Cairo,sans-serif" font-weight="700" fill="rgba(120,120,120,0.16)" transform="rotate(-24 180 100)">' + esc(name + ' • ' + p.phone_number) + '</text></svg>';
@@ -295,8 +298,8 @@ function intro() {
     + (!E.practice && q.instructions ? '<div class="nb" style="text-align:start">📌 ' + esc(q.instructions) + '</div>' : '')
     + '<ul class="rules">' + (E.practice
       ? '<li>🔒 تدريب خاص بك: نتيجته لا تُسجَّل ولا تظهر لأي حد، ولا تأثير لها على درجاتك.</li><li>🎯 الأسئلة من الأخطاء اللي غلطت فيها قبل كده.</li>'
-      : '<li>🖥️ الامتحان بيتفتح بملء الشاشة، والأسئلة بتظهر بعد ما تبدأ.</li><li>⏰ لما الوقت يخلص الامتحان بيتسلّم تلقائياً بإجاباتك الحالية.</li><li>🚫 ممنوع الخروج من الصفحة أو فتح تبويب آخر: تحذيرين، وفي الثالثة بيتسلّم الامتحان تلقائياً.</li><li>🚫 النسخ واللصق والطباعة والتصوير مقفولة، واسمك ورقمك ظاهرين على الصفحة.</li><li>↔️ تقدر تتنقل بين الأسئلة وتعدّل إجاباتك قبل التسليم، وإجاباتك بتتحفظ لو الصفحة اتعمل لها ريفريش.</li><li>💾 إجاباتك بتتحفظ أوتوماتيك على السيرفر: لو قفلت الصفحة ترجع تكمل من نفس المكان، ولو الوقت خلص الامتحان بيتسلّم لوحده.</li><li>' + ({ after_grading: '📊 نتيجتك بتظهر بعد ما المدرس يخلّص تصحيح الأسئلة المقالية.', after_close: '📊 نتيجتك بتظهر بعد انتهاء وقت الامتحان.' }[q.result_mode] || '📊 بعد التسليم بتظهر لك نتيجتك: كام صح وكام غلط والنسبة، مع تفاصيل كل إجابة.') + '</li>')
-    + '</ul>' + (notYet ? '<p>الامتحان لسه ما فتحش.</p>' : over ? '<p>انتهى وقت الامتحان.</p>' : '<button class="btn" id="go">' + (E.practice ? 'ابدأ التدريب' : 'ابدأ الامتحان') + '</button> ') + '<a class="btn g" href="home.html">رجوع</a></div>';
+      : '<li>🖥️ الامتحان بيتفتح بملء الشاشة، والأسئلة بتظهر بعد ما تبدأ.</li><li>⏰ لما الوقت يخلص الامتحان بيتسلّم تلقائياً بإجاباتك الحالية.</li><li>🚫 ممنوع الخروج من الصفحة أو فتح تبويب آخر: تحذيرين، وفي الثالثة بيتسلّم الامتحان تلقائياً.</li><li>' + ({ after_grading: '📊 نتيجتك بتظهر بعد ما المدرس يخلّص تصحيح الأسئلة المقالية.', after_close: '📊 نتيجتك بتظهر بعد انتهاء وقت الامتحان.' }[q.result_mode] || '📊 بعد التسليم بتظهر لك نتيجتك: كام صح وكام غلط والنسبة، مع تفاصيل كل إجابة.') + '</li>')
+    + '</ul>' + (notYet ? '<p>الامتحان لسه ما فتحش.</p>' : over ? '<p>انتهى وقت الامتحان.</p>' : '<button class="btn" id="go">' + (E.practice ? 'ابدأ التدريب' : 'ابدأ الامتحان') + '</button> ') + '<a class="btn g" href="/home.html">رجوع</a></div>';
   if ($('#go')) $('#go').onclick = start;
 }
 
@@ -315,6 +318,7 @@ async function start() {
     E.endAt = ends.length ? Math.min(...ends) : null;      // الأقرب: وقت الامتحان أو موعد الإغلاق
     const r = rng(currentUser.id + QID);
     let list = (data.questions || []).map(x => ({ id: x.id, type: x.qtype, text: x.question, img: x.image_url, pts: x.points, opts: x.options ? x.options.map((t, i) => ({ t, i })) : [] }));
+    try { const pk = await supabaseClient.rpc('quiz_pick_info', { p_quiz: QID }); if (!pk.error && pk.data) list.forEach(x => { if (+pk.data[x.id] > 1) x.pick = +pk.data[x.id]; }); } catch (e) {}   // أسئلة "اختار N"
     if (E.qz.shuffle) { list = shuffle(list, r); list.forEach(x => x.opts = shuffle(x.opts, r)); }
     E.qs = list;
     if (!list.some(x => x.img)) {                       // لو دالة البدء مرجّعتش الصور نجيبها مباشرة
@@ -332,7 +336,7 @@ async function start() {
     srvSave(true);
   }
   running = true; if (!E.practice) { arm(); liveWM(); }
-  $('#stage').innerHTML = ''; $('#wmo').style.display = E.practice ? 'none' : 'block';
+  $('#stage').innerHTML = ''; 
   render(); if (E.endAt != null) timer = setInterval(tick, 1000);
 }
 function tabGuard() {
@@ -346,14 +350,14 @@ function tabGuard() {
 }
 function liveWM() {
   let el = $('#lw'); if (!el) { el = document.createElement('div'); el.id = 'lw'; document.body.appendChild(el); }
-  const p = currentProfile, nm = [p.first_name, p.last_name].join(' ') + ' • ' + p.phone_number;
-  const mv = () => { if (!running) return; const t = new Date(); el.textContent = nm + ' • ' + t.toLocaleTimeString('en-GB'); el.style.top = (8 + Math.random() * 78) + '%'; el.style.left = (2 + Math.random() * 45) + '%'; };
-  mv(); setInterval(mv, 3000);
+  const p = currentProfile; el.textContent = [p.first_name, p.last_name].join(' ') + ' • ' + p.phone_number;
+  const mv = () => { if (!running) return; el.style.top = (12 + Math.random() * 74) + '%'; el.style.left = (4 + Math.random() * 50) + '%'; };
+  el.style.top = '40%'; el.style.left = '10%'; setTimeout(mv, 50); setInterval(mv, 24000);
 }
 function shield(on) { let d = $('#shd'); if (!d) { d = document.createElement('div'); d.id = 'shd'; d.innerHTML = '<div>🔒 محتوى الامتحان محمي<br><small style="font-weight:600;opacity:.8">ارجع لصفحة الامتحان</small></div>'; document.body.appendChild(d); } d.classList.toggle('on', !!on); }
-function antiShot() {
-  let hold = 0;
-  const cover = ms => { if (!running || !E || E.practice) return; shield(true); clearTimeout(hold); if (ms) hold = setTimeout(() => { if (document.hasFocus() && !document.hidden) shield(false); }, ms); };
+function antiShot(v) {
+  let hold = 0, holdUntil = 0, sm = 0;
+  const cover = ms => { if (!running || !E || E.practice) return; shield(true); holdUntil = Date.now() + (ms || 0); clearTimeout(hold); if (ms) hold = setTimeout(() => { if (document.hasFocus() && !document.hidden) shield(false); }, ms); };
   window.addEventListener('blur', () => cover(0));
   window.addEventListener('focus', () => { clearTimeout(hold); hold = setTimeout(() => shield(false), 350); });
   document.addEventListener('visibilitychange', () => { if (document.hidden) cover(0); else { clearTimeout(hold); hold = setTimeout(() => shield(false), 350); } });
@@ -361,26 +365,31 @@ function antiShot() {
   document.addEventListener('keyup', e => { if (e.key === 'PrintScreen' || e.key === 'Snapshot') { cover(1800); try { navigator.clipboard.writeText(' ').catch(() => {}); } catch (x) {} } }, true);
   try { if (navigator.mediaDevices) navigator.mediaDevices.getDisplayMedia = () => Promise.reject(new DOMException('blocked', 'NotAllowedError')); } catch (e) {}
   window.addEventListener('pagehide', () => { srvSave(true); });
+  // فحص دوري: لو النافذة فقدت التركيز (تطبيق تاني فوقها / مساعد ذكي) أو اتقسمت الشاشة
+  setInterval(() => {
+    if (!running || !E || E.practice) return;
+    const bad = document.hidden || !document.hasFocus();
+    if (bad) shield(true); else if (Date.now() > holdUntil && $('#shd') && $('#shd').classList.contains('on')) shield(false);
+    const split = navigator.maxTouchPoints > 0 && window.innerWidth < screen.width * 0.85 && window.innerHeight < screen.height * 0.95 && screen.width > 600 && document.fullscreenElement == null;
+    sm = split ? sm + 1 : 0; if (sm >= 3) { sm = 0; v('تم تصغير نافذة الامتحان أو تقسيم الشاشة'); }
+  }, 500);
 }
 function lockCopy() {
   ['contextmenu', 'copy', 'cut', 'paste', 'dragstart'].forEach(ev => document.addEventListener(ev, e => e.preventDefault()));
   document.addEventListener('keydown', e => { const k = e.key.toLowerCase(); if (e.key === 'F12' || e.key === 'PrintScreen' || ((e.ctrlKey || e.metaKey) && ['c', 'x', 'v', 'a', 'u', 's', 'p', 'i', 'j'].includes(k))) { e.preventDefault(); if (e.key === 'PrintScreen') navigator.clipboard && navigator.clipboard.writeText(' ').catch(() => {}); } });
 }
 function arm() {
-  antiShot();
   const v = why => { if (!running || Date.now() - lastV < 1500) return; lastV = Date.now(); violation(why); };
+  antiShot(v);
   document.addEventListener('visibilitychange', () => { if (document.hidden) v('غادرت صفحة الامتحان'); });
   window.addEventListener('blur', () => v('خرجت من نافذة الامتحان'));
   document.addEventListener('fullscreenchange', () => { if (!document.fullscreenElement) v('خرجت من وضع ملء الشاشة'); });
   window.addEventListener('beforeunload', e => { if (running) { e.preventDefault(); e.returnValue = ''; } });
-  const w = $('#wmo');
   new MutationObserver(() => {
     if (!running || !E || E.practice) return;
-    const cs = document.body.contains(w) ? getComputedStyle(w) : null;
-    if (cs && cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity >= .5 && cs.backgroundImage !== 'none') return;
-    if (!document.body.contains(w)) document.body.insertBefore(w, document.body.firstChild);
-    w.removeAttribute('style'); w.style.display = 'block'; document.documentElement.style.setProperty('--wm', WMV);
-    v('تم العبث بعلامة الحماية');
+    const w = $('#lw'), cs = w ? getComputedStyle(w) : null;
+    if (cs && cs.display !== 'none' && cs.visibility !== 'hidden' && +cs.opacity >= .2 && w.textContent) return;
+    if (w) w.remove(); liveWM(); v('تم العبث بعلامة الحماية');
   }).observe(document.documentElement, { childList: true, subtree: true, attributes: true, attributeFilter: ['style', 'class', 'hidden'] });
   let dt = 0;                                                                              // أدوات المطوّر على الكمبيوتر فقط (مش على التابلت/الموبايل)
   setInterval(() => {
@@ -407,7 +416,7 @@ function tick() {
 }
 
 // ===== عرض السؤال =====
-const isAns = q => { const v = E.ans[q.id]; return q.type === 'essay' ? (typeof v === 'string' && v.trim() !== '') : v != null; };
+const isAns = q => { const v = E.ans[q.id]; return q.type === 'essay' ? (typeof v === 'string' && v.trim() !== '') : q.pick > 1 ? (Array.isArray(v) && v.length > 0) : v != null; };
 const sbx = (l, v, c) => '<div class="sb ' + c + '"><small>' + l + '</small><b>' + v + '</b></div>';
 function statsInner() { const n = E.qs.length, a = E.qs.filter(isAns).length, pts = E.qs.reduce((s, x) => s + (+x.pts || 0), 0); return sbx('الأسئلة', n, '') + sbx('الدرجات', pts, '') + sbx('محلول', a, 'g') + sbx('غير محلول', n - a, 'r'); }
 function gridHTML() { return E.qs.map((q, k) => '<button type="button" class="qb' + (isAns(q) ? ' done' : E.seen.has(q.id) ? ' seen' : '') + (k === E.idx ? ' cur' : '') + (E.flag.has(q.id) ? ' flag' : '') + '" data-k="' + k + '">' + (k + 1) + '</button>').join(''); }
@@ -426,14 +435,16 @@ function render() {
     + '<div class="acts"><button type="button" class="btn red" id="fin">إنهاء ' + (E.practice ? 'التدريب' : 'الاختبار') + '</button><button type="button" class="btn grn" id="rev">مراجعة الإجابات</button></div>'
     + '<div class="qh"><span>الأسئلة</span><span>' + (E.idx + 1) + ' / ' + n + '</span></div><div class="qn" id="qn">' + gridHTML() + '</div>'
     + '<div class="lgd"><span><i style="background:var(--ok)"></i>محلول</span><span><i style="background:#ef4444"></i>مفتوح</span><span><i style="background:var(--warn)"></i>معلّم للمراجعة</span><span><i style="background:#cbd5e1"></i>لم يُفتح</span></div></div>'
-    + '<div class="card qc"><div class="qt1"><h3>السؤال رقم: ' + (E.idx + 1) + '</h3><span class="tg t">' + (essay ? 'مقالي' : 'اختيار من متعدد') + '</span><span class="tg p">درجة السؤال: (' + q.pts + ')</span><button type="button" class="bk' + (E.flag.has(q.id) ? ' on' : '') + '" id="bm" title="علّم للمراجعة">' + BM + '</button></div>'
+    + '<div class="card qc"><div class="qt1"><h3>السؤال رقم: ' + (E.idx + 1) + '</h3><span class="tg t">' + (essay ? 'مقالي' : q.pick > 1 ? 'اختار ' + q.pick : 'اختيار من متعدد') + '</span><span class="tg p">درجة السؤال: (' + q.pts + ')</span><button type="button" class="bk' + (E.flag.has(q.id) ? ' on' : '') + '" id="bm" title="علّم للمراجعة">' + BM + '</button></div>'
     + '<div class="q"><canvas id="qc"></canvas>' + (q.img ? '<img class="qi" draggable="false" src="' + esc(q.img) + '">' : '')
     + (essay ? '<textarea id="es" placeholder="اكتب إجابتك هنا...">' + esc(E.ans[q.id] || '') + '</textarea>'
-      : '<div class="opts">' + q.opts.map((o, k) => '<button type="button" class="op' + (E.ans[q.id] === o.i ? ' on' : '') + '" data-i="' + o.i + '" dir="' + (AR.test(o.t) ? 'rtl' : 'ltr') + '"><b>' + LET[k] + '</b><span>' + esc(o.t) + '</span></button>').join('') + '</div>') + '</div>'
+      : (q.pick > 1 ? '<p class="pk">☑️ اختار ' + q.pick + ' إجابات (كل إجابة صحيحة بتاخد ' + (+(q.pts / q.pick).toFixed(2)) + ' درجة)</p>' : '') + '<div class="opts">' + q.opts.map((o, k) => '<button type="button" class="op' + ((q.pick > 1 ? (E.ans[q.id] || []).includes(o.i) : E.ans[q.id] === o.i) ? ' on' : '') + '" data-i="' + o.i + '" dir="' + (AR.test(o.t) ? 'rtl' : 'ltr') + '"><b>' + LET[k] + '</b><span>' + esc(o.t) + '</span></button>').join('') + '</div>') + '</div>'
     + '<div class="nv"><button type="button" class="btn g" id="pv"' + (E.idx === 0 ? ' disabled' : '') + '>→ السابق</button>' + (last ? '<button type="button" class="btn grn" id="nx">إنهاء الاختبار ✅</button>' : '<button type="button" class="btn" id="nx">التالي ←</button>') + '</div></div>';
   drawQ(q.text); tick(); bindGrid();
   if (document.fonts && document.fonts.ready) document.fonts.ready.then(() => { if (running && E.qs[E.idx] === q && $('#qc')) drawQ(q.text); });
-  $$('.op').forEach(b => b.onclick = () => { E.ans[q.id] = +b.dataset.i; save(); $$('.op').forEach(x => x.classList.toggle('on', x === b)); refreshTop(); });
+  $$('.op').forEach(b => b.onclick = () => {
+    if (q.pick > 1) { const a = Array.isArray(E.ans[q.id]) ? E.ans[q.id].slice() : [], i = +b.dataset.i, k = a.indexOf(i); if (k >= 0) a.splice(k, 1); else { if (a.length >= q.pick) a.shift(); a.push(i); } E.ans[q.id] = a; save(); $$('.op').forEach(x => x.classList.toggle('on', a.includes(+x.dataset.i))); refreshTop(); return; }
+    E.ans[q.id] = +b.dataset.i; save(); $$('.op').forEach(x => x.classList.toggle('on', x === b)); refreshTop(); });
   const es = $('#es'); if (es) es.oninput = () => { E.ans[q.id] = es.value; save(); refreshTop(); };
   $('#bm').onclick = () => { E.flag.has(q.id) ? E.flag.delete(q.id) : E.flag.add(q.id); save(); $('#bm').classList.toggle('on', E.flag.has(q.id)); refreshTop(); };
   $('#pv').onclick = () => go(E.idx - 1);
@@ -449,7 +460,6 @@ function drawQ(text) {
   const x = c.getContext('2d'); x.scale(dpr, dpr); x.font = '700 21px Cairo, sans-serif'; x.direction = ar ? 'rtl' : 'ltr'; x.textAlign = ar ? 'right' : 'left'; x.textBaseline = 'top';
   x.fillStyle = getComputedStyle(document.body).getPropertyValue('--ink').trim() || '#000';
   lines.forEach((l, i) => x.fillText(l, ar ? w : 0, 8 + i * 36));
-  stamp(x, w, h);
 }
 function stamp(x, w, h) {
   const p = currentProfile, t = [p.first_name, p.last_name].join(' ') + ' • ' + p.phone_number;
@@ -485,7 +495,11 @@ async function submit(auto) {
   if (E.practice) return practiceResult();
   msg('⏳', auto ? 'تم تسليم الامتحان تلقائياً' : 'جاري التسليم...', 'من فضلك لا تغلق الصفحة.');
   clearTimeout(svT); const m = answersMap(); const lw = $('#lw'); if (lw) lw.remove();
-  const { data, error } = await supabaseClient.rpc('submit_quiz', { p_quiz: QID, p_answers: m, p_violations: E.viol });
+  let { data, error } = await supabaseClient.rpc('quiz_submit_full', { p_quiz: QID, p_answers: m, p_violations: E.viol });
+  if (error && /quiz_submit_full|could not find|does not exist/i.test(error.message || '')) {      // لو ملف الـSQL الجديد لسه ما اتشغّلش
+    const m2 = {}; Object.keys(m).forEach(k => m2[k] = Array.isArray(m[k]) ? m[k][0] : m[k]);
+    ({ data, error } = await supabaseClient.rpc('submit_quiz', { p_quiz: QID, p_answers: m2, p_violations: E.viol }));
+  }
   if (error) { finished = false; const t = error.message || ''; return msg('⚠️', 'تعذر التسليم', t.includes('max_attempts') ? 'تم تسليم الامتحان قبل كده.' : 'تأكد من الاتصال بالإنترنت وحاول مرة أخرى (إجاباتك محفوظة).', t.includes('max_attempts') ? '' : '<button class="btn" onclick="submit(false)">إعادة المحاولة</button>'); }
   try { localStorage.removeItem(KEY); } catch (e) {}
   try { await supabaseClient.rpc('draft_done', { p_quiz: QID }); } catch (e) {}
@@ -504,7 +518,7 @@ function fallbackR(d) {
 async function openReview(id, direct) {
   msg('⏳', 'جاري تحميل النتيجة...', '');
   const { data, error } = await supabaseClient.rpc('quiz_review', { p_attempt: id });
-  if (error || !data) return msg('⚠️', 'تعذر تحميل النتيجة', 'حاول مرة أخرى بعد قليل.', '<a class="btn" href="home.html#results">نتائجي</a>');
+  if (error || !data) return msg('⚠️', 'تعذر تحميل النتيجة', 'حاول مرة أخرى بعد قليل.', '<a class="btn" href="/home.html#results">نتائجي</a>');
   renderResult(data, { direct: direct });
 }
 function practiceResult() {
@@ -517,8 +531,7 @@ function renderResult(R, o) {
   o = o || {}; finished = true; running = false;
   if (R.hidden) {
     const why = R.hidden_reason === 'grading' ? 'نتيجتك هتظهر بعد ما المدرس يخلّص تصحيح الأسئلة المقالية.' : 'نتيجتك هتظهر بعد انتهاء وقت الامتحان.';
-    $('#wmo').style.display = 'block';
-    $('#stage').innerHTML = '<div class="card c"><div class="big">✅</div><h2>تم تسليم إجاباتك بنجاح</h2><p>' + esc(R.title || '') + '</p><p class="nt">🕒 ' + why + '</p><div class="ra"><a class="btn" href="home.html#results">نتائجي</a><a class="btn g" href="home.html">الرئيسية</a></div></div>';
+    $('#stage').innerHTML = '<div class="card c"><div class="big">✅</div><h2>تم تسليم إجاباتك بنجاح</h2><p>' + esc(R.title || '') + '</p><p class="nt">🕒 ' + why + '</p><div class="ra"><a class="btn" href="/home.html#results">نتائجي</a><a class="btn g" href="/home.html">الرئيسية</a></div></div>';
     return;
   }
   const total = +R.total || 0, score = +R.score || 0, pct = total ? Math.round(score / total * 100) : 0, pending = !!R.pending;
@@ -528,7 +541,6 @@ function renderResult(R, o) {
   const k = (cls, l, v, s) => '<div class="kc ' + cls + '"><small>' + l + '</small><b>' + v + '</b>' + (s ? '<em>' + s + '</em>' : '') + '</div>';
   const secs = R.seconds_spent != null ? pad(Math.floor(R.seconds_spent / 60)) + ':' + pad(R.seconds_spent % 60) : null;
   const canDet = !!(R.can_review && R.questions && R.questions.length);
-  $('#wmo').style.display = R.practice ? 'none' : 'block';
   $('#stage').innerHTML = '<div class="card"><h2 class="rt0">نتيجة الامتحان</h2><p class="sub" style="text-align:center">' + esc(R.title) + '</p>'
     + '<div class="hero"><div class="ring" style="--p:' + pct + ';--c:' + col + '"><div><b>' + pct + '%</b><small>النسبة المئوية</small></div></div>'
     + '<div class="vd"><div class="vi">' + (pending ? '📨' : passed ? '🏆' : '💪') + '</div><h3 style="color:' + col + '">' + (pending ? 'تم تسليم إجاباتك' : passed ? 'مبروك! عدّيت الامتحان' : 'حاول تاني، إنت قدها!') + '</h3>'
@@ -539,8 +551,8 @@ function renderResult(R, o) {
     + (pending ? '<p class="nt">✍️ فيه أسئلة مقالية هتتصحح يدوياً، وهتتحدّث درجتك بعد التصحيح (هتلاقيها في «نتائجي»).</p>' : '')
     + (R.violations ? '<p class="nt wn">⚠️ مرات الخروج من الامتحان: ' + R.violations + '</p>' : '') + (secs ? '<p class="nt" style="background:var(--soft)">⏱ الوقت المستغرق: ' + secs + '</p>' : '')
     + (!canDet && !R.practice && !R.fallback ? '<p class="nt" style="background:var(--soft)">🔒 تفاصيل الإجابات بتظهر بعد ما تخلّص كل محاولاتك' + (left ? ' (باقي ' + left + ')' : '') + '.</p>' : '')
-    + '<div class="ra">' + (canDet ? '<button type="button" class="btn" id="dt">👁 تفاصيل الإجابات</button>' : '') + (left > 0 && R.quiz_id && !R.practice ? '<a class="btn amb" href="quiz.html?id=' + esc(R.quiz_id) + '">🔁 محاولة جديدة</a>' : '')
-    + (R.practice ? '<button type="button" class="btn" onclick="location.reload()">تدريب جديد 🎯</button>' : '<a class="btn g" href="home.html#results">نتائجي</a>') + '<a class="btn g" href="home.html">الرئيسية</a></div></div>'
+    + '<div class="ra">' + (canDet ? '<button type="button" class="btn" id="dt">👁 تفاصيل الإجابات</button>' : '') + (left > 0 && R.quiz_id && !R.practice ? '<a class="btn amb" href="/quiz.html?id=' + esc(R.quiz_id) + '">🔁 محاولة جديدة</a>' : '')
+    + (R.practice ? '<button type="button" class="btn" onclick="location.reload()">تدريب جديد 🎯</button>' : '<a class="btn g" href="/home.html#results">نتائجي</a>') + '<a class="btn g" href="/home.html">الرئيسية</a></div></div>'
     + (canDet ? '<div id="det" style="display:none;margin-top:16px">' + detailsHTML(R) + '</div>' : '');
   if (canDet) {
     $('#dt').onclick = () => { const d = $('#det'), on = d.style.display === 'none'; d.style.display = on ? 'block' : 'none'; $('#dt').textContent = on ? '🙈 إخفاء التفاصيل' : '👁 تفاصيل الإجابات'; if (on) d.scrollIntoView({ behavior: 'smooth', block: 'start' }); };
@@ -551,15 +563,15 @@ function renderResult(R, o) {
 }
 function detailsHTML(R) {
   const qs = R.questions.slice().sort((a, b) => (a.position || 0) - (b.position || 0));
-  const stt = q => q.qtype === 'essay' ? 'es' : q.chosen_index == null ? 'na' : ((q.is_correct != null ? q.is_correct : q.chosen_index === q.correct_index) ? 'ok' : 'no');
-  const cnt = { all: qs.length, ok: 0, no: 0, na: 0, es: 0 }; qs.forEach(q => cnt[stt(q)]++);
-  const chips = [['all', 'الكل'], ['ok', '✓ صحيحة'], ['no', '✗ خاطئة'], ['na', 'بدون إجابة'], ['es', '✍️ مقالي']].filter(c => c[0] === 'all' || cnt[c[0]]).map((c, i) => '<button type="button" class="fc' + (i ? '' : ' on') + '" data-f="' + c[0] + '">' + c[1] + ' (' + cnt[c[0]] + ')</button>').join('');
+  const stt = q => q.qtype === 'essay' ? 'es' : q.chosen_index == null ? 'na' : ((q.is_correct != null ? q.is_correct : q.chosen_index === q.correct_index) ? 'ok' : (q.pick_n > 1 && +q.multi_score > 0 ? 'pt' : 'no'));
+  const cnt = { all: qs.length, ok: 0, pt: 0, no: 0, na: 0, es: 0 }; qs.forEach(q => cnt[stt(q)]++);
+  const chips = [['all', 'الكل'], ['ok', '✓ صحيحة'], ['pt', '◐ جزئية'], ['no', '✗ خاطئة'], ['na', 'بدون إجابة'], ['es', '✍️ مقالي']].filter(c => c[0] === 'all' || cnt[c[0]]).map((c, i) => '<button type="button" class="fc' + (i ? '' : ' on') + '" data-f="' + c[0] + '">' + c[1] + ' (' + cnt[c[0]] + ')</button>').join('');
   const cards = qs.map((q, i) => {
-    const s = stt(q), lab = { ok: '✓ إجابة صحيحة', no: '✗ إجابة خاطئة', na: 'لم تُجب', es: q.essay_score == null ? '🕒 بانتظار التصحيح' : 'تم التصحيح' }[s];
-    const earned = s === 'ok' ? q.points : s === 'es' ? (q.essay_score == null ? '—' : q.essay_score) : 0;
+    const s = stt(q), lab = { ok: '✓ إجابة صحيحة', pt: '◐ إجابة جزئية', no: '✗ إجابة خاطئة', na: 'لم تُجب', es: q.essay_score == null ? '🕒 بانتظار التصحيح' : 'تم التصحيح' }[s];
+    const earned = s === 'ok' ? q.points : s === 'pt' ? q.multi_score : s === 'es' ? (q.essay_score == null ? '—' : q.essay_score) : 0;
     const body = q.qtype === 'essay'
       ? '<div class="eb" dir="auto">' + (esc(q.essay_text || '').trim() || 'لم تكتب إجابة') + '</div>'
-      : (q.options || []).map((t, j) => { const right = j === q.correct_index, mine = j === q.chosen_index; return '<div class="do ' + (right ? 'right' : mine ? 'wrong' : '') + '" dir="' + (AR.test(t) ? 'rtl' : 'ltr') + '"><b>' + LET[j] + '</b><span>' + esc(t) + '</span>' + (right ? '<i>' + (mine ? 'إجابتك ✓ صحيحة' : 'الإجابة الصحيحة') + '</i>' : mine ? '<i>إجابتك ✗</i>' : '') + '</div>'; }).join('');
+      : (q.options || []).map((t, j) => { const mu = q.pick_n > 1, right = mu ? (q.correct_set || [q.correct_index]).includes(j) : j === q.correct_index, mine = mu ? (q.chosen_multi || []).includes(j) : j === q.chosen_index; return '<div class="do ' + (right ? 'right' : mine ? 'wrong' : '') + '" dir="' + (AR.test(t) ? 'rtl' : 'ltr') + '"><b>' + LET[j] + '</b><span>' + esc(t) + '</span>' + (right ? '<i>' + (mine ? 'إجابتك ✓ صحيحة' : 'الإجابة الصحيحة') + '</i>' : mine ? '<i>إجابتك ✗</i>' : '') + '</div>'; }).join('');
     return '<div class="dq ' + s + '" data-s="' + s + '"><div class="dh"><b>السؤال ' + (i + 1) + '</b><span class="st ' + s + '">' + lab + '</span><span class="pp">' + earned + ' / ' + q.points + ' درجة</span></div><div class="dt" dir="auto">' + esc(q.question) + '</div>' + (q.image_url ? '<img class="qi" draggable="false" src="' + esc(q.image_url) + '">' : '') + body + (q.note ? '<div class="nb">💡 ملاحظة: ' + esc(q.note) + '</div>' : '') + (q.feedback ? '<div class="nb fb">👨‍🏫 تعليق المدرس: ' + esc(q.feedback) + '</div>' : '') + '</div>';
   }).join('');
   return '<div class="card"><h2 class="rt0" style="font-size:22px">تفاصيل الإجابات</h2><div class="flt" style="justify-content:center;margin-top:12px">' + chips + '</div>' + cards + '</div>';
