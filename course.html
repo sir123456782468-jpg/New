@@ -148,7 +148,8 @@ let LID = new URLSearchParams(location.search).get('l');
 const PM = decodeURIComponent(location.pathname).match(/^\/course\/(\d+)(?:-[^\/]*)?(?:\/lesson-(\d+))?\/?$/), CNUM = PM ? +PM[1] : 0, LNUM = PM && PM[2] ? +PM[2] : 0;
 const slug = t => String(t || '').trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60);
 const courseUrl = () => C.course && C.course.num ? '/course/' + C.course.num + (slug(C.course.title) ? '-' + slug(C.course.title) : '') : '/course?id=' + encodeURIComponent(CID);
-const quizUrl = x => x.num ? '/exam/' + x.num + (slug(x.title) ? '-' + slug(x.title) : '') : '/quiz?id=' + encodeURIComponent(x.id);
+const quizUrl = x => '/quiz.html?id=' + encodeURIComponent(x.id);
+const courseReal = () => '/course.html?id=' + encodeURIComponent(CID);
 const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
 document.body.setAttribute('data-theme', localStorage.getItem('platform_theme') || 'light');
@@ -157,7 +158,8 @@ let wmTimer = null, ITEMS = [], SEEN = new Set(), FILE = null;
 const toast = m => { const e = document.createElement('div'); e.className = 'toast'; e.textContent = m; $('#toasts').appendChild(e); setTimeout(() => e.remove(), 3000); };
 const canOpen = l => C.on || l.is_free;
 const quizQ = async () => { const c = 'id,title,kind,time_limit_minutes,opens_at,closes_at'; let r; for (const ex of [',lesson_id,is_homework,num', ',lesson_id,is_homework', ',lesson_id', '']) { r = await supabaseClient.from('quizzes').select(c + ex).eq('course_id', CID); if (!r.error) break; } return r; };
-const lecUrl = id => { const i = C.lessons.findIndex(x => x.id === id); return C.course && C.course.num && i >= 0 ? courseUrl() + '/lesson-' + (i + 1) : '/course?id=' + encodeURIComponent(CID) + '&l=' + encodeURIComponent(id); };
+const lecUrl = id => '/course.html?id=' + encodeURIComponent(CID) + '&l=' + encodeURIComponent(id);
+const lecPretty = id => { const i = C.lessons.findIndex(x => x.id === id); return courseUrl() + (i >= 0 ? '/lesson-' + (i + 1) : ''); };
 
 async function init() {
   if (!CID && CNUM) { const r = await supabaseClient.from('courses').select('id').eq('num', CNUM).maybeSingle(); if (r.data) CID = r.data.id; }
@@ -169,13 +171,13 @@ async function init() {
     supabaseClient.from('enrollments').select('course_id').eq('course_id', CID),
     supabaseClient.from('lesson_progress').select('lesson_id'),
     quizQ(),
-    supabaseClient.from('quiz_attempts').select('quiz_id')
+    (async () => { const r = await supabaseClient.rpc('my_attempts_basic'); if (!r.error && Array.isArray(r.data)) return { data: r.data.map(x => ({ quiz_id: x.quiz_id })) }; return supabaseClient.from('quiz_attempts').select('quiz_id'); })()
   ]);
   if (!c.data) return fail('الكورس غير موجود أو غير متاح لك.');
   C.course = c.data; C.lessons = l.data || []; C.on = !!(e.data && e.data.length); C.exams = q.data || []; C.tried = new Set((at.data || []).map(x => x.quiz_id));
   const ids = new Set(C.lessons.map(x => x.id)); (p.data || []).forEach(x => { if (ids.has(x.lesson_id)) C.done.add(x.lesson_id); });
   if (!LID && LNUM && C.lessons[LNUM - 1]) LID = C.lessons[LNUM - 1].id;
-  if (C.course.num) { try { history.replaceState(null, '', LID ? lecUrl(LID) : courseUrl()); } catch (e) {} }
+  if (C.course.num) { try { history.replaceState(null, '', LID ? lecPretty(LID) : courseUrl()); } catch (e) {} }
   if (LID) open(LID); else draw();
 }
 function fail(t) { $('#root').innerHTML = '<div class="empty"><div><i>🔒</i>' + t + '<br><br><a class="btn" href="/home">الرئيسية</a></div></div>'; }
@@ -230,7 +232,7 @@ function showItem(i) {
 
 async function open(id) {
   const l = C.lessons.find(x => x.id === id); if (!l) return fail('المحاضرة غير موجودة');
-  if (!canOpen(l)) { toast('🔒 اشترك في الكورس الأول عشان تفتح المحاضرة'); setTimeout(() => location.replace(courseUrl()), 900); return; }
+  if (!canOpen(l)) { toast('🔒 اشترك في الكورس الأول عشان تفتح المحاضرة'); setTimeout(() => location.replace(courseReal()), 900); return; }
   C.cur = id;
   const [it, ct] = await Promise.all([
     (async () => { let r = await supabaseClient.from('lesson_items').select('id,kind,title,url,position,allow_open').eq('lesson_id', id).order('position'); if (r.error) r = await supabaseClient.from('lesson_items').select('id,kind,title,url,position').eq('lesson_id', id).order('position'); return r; })(),
@@ -251,7 +253,7 @@ async function open(id) {
     + (hw.length ? '<div class="ch">📚 الواجب</div>' + hw.map(qrow).join('') : '') + (ex.length ? '<div class="ch">📝 اختبارات المحاضرة</div>' + ex.map(qrow).join('') : '')
     + (FILE ? '<div class="ci" data-f="1"><span>📄 ملف المحاضرة</span><span class="ck"></span></div>' : '');
 
-  $('#root').innerHTML = '<div class="top"><div><p>' + esc(C.course.title) + '</p><h1>' + esc(l.title) + '</h1></div><a class="btn g" href="' + courseUrl() + '">← كل المحاضرات</a></div>'
+  $('#root').innerHTML = '<div class="top"><div><p>' + esc(C.course.title) + '</p><h1>' + esc(l.title) + '</h1></div><a class="btn g" href="' + courseReal() + '">← كل المحاضرات</a></div>'
     + '<div class="grid lg"><aside><div class="card"><b style="display:block;margin-bottom:12px;font-size:17px">محتوى المحاضرة</b><div id="itemList">' + (list || '<div class="empty" style="aspect-ratio:auto;border:0">لا يوجد محتوى بعد</div>') + '</div></div></aside>'
     + '<div><div id="player"></div>'
     + '<div class="acts"><button class="btn' + (dn ? ' g' : '') + '" id="dn">' + (dn ? '✓ تم الإنجاز (إلغاء)' : 'إنهاء المحاضرة ✅') + '</button></div>'
