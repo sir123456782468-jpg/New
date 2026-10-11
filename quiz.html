@@ -248,7 +248,7 @@ function srvSave(now) {
   if (now) f(); else svT = setTimeout(f, 1200);
 }
 function save() { try { if (E && !E.practice) { localStorage.setItem(KEY, JSON.stringify({ st: E.stAt, ans: E.ans, idx: E.idx, viol: E.viol, seen: Array.from(E.seen), flag: Array.from(E.flag) })); srvSave(); } } catch (e) {} }
-async function latestAttempt() { const { data } = await supabaseClient.from('quiz_attempts').select('id').eq('quiz_id', QID).eq('student_id', currentUser.id).order('created_at', { ascending: false }).limit(1); return data && data[0] && data[0].id; }
+async function latestAttempt() { try { const r = await supabaseClient.rpc('my_attempts_basic'); if (!r.error && Array.isArray(r.data)) { const x = r.data.find(z => z.quiz_id === QID); return x && x.id; } } catch (e) {} const { data } = await supabaseClient.from('quiz_attempts').select('id').eq('quiz_id', QID).eq('student_id', currentUser.id).order('created_at', { ascending: false }).limit(1); return data && data[0] && data[0].id; }
 
 // ===== تحميل الامتحان =====
 async function init() {
@@ -268,7 +268,7 @@ async function loadExam() {
   const [a, m, c] = await Promise.all([
     supabaseClient.from('quizzes').select('id,title,kind,pass_percent,time_limit_minutes,max_attempts,shuffle,opens_at,closes_at,result_mode,instructions').eq('id', QID).maybeSingle(),
     supabaseClient.rpc('quiz_meta', { p_quiz: QID }),
-    supabaseClient.from('quiz_attempts').select('id', { count: 'exact', head: true }).eq('quiz_id', QID)
+    (async () => { const r = await supabaseClient.rpc('my_attempts_basic'); if (!r.error && Array.isArray(r.data)) return { count: r.data.filter(x => x.quiz_id === QID).length }; return supabaseClient.from('quiz_attempts').select('id', { count: 'exact', head: true }).eq('quiz_id', QID); })()
   ]);
   const qz = a.data; if (!qz) return msg('🔒', 'الامتحان غير متاح', 'تأكد إنك مشترك في الكورس وإن الامتحان منشور.');
   if ((c.count || 0) >= qz.max_attempts) {          // خلّص محاولاته: اعرض نتيجته وتفاصيلها بدل رسالة جافة
@@ -277,6 +277,7 @@ async function loadExam() {
   }
   const meta = m.data || { n: 0, pts: 0 }; if (!meta.n) return msg('📭', 'لا توجد أسئلة في هذا الامتحان');
   E = { qz, meta, qs: [], ans: {}, idx: 0, viol: 0, endAt: null, off: 0, seen: new Set(), flag: new Set(), used: c.count || 0 };
+  try { supabaseClient.from('quizzes').select('num').eq('id', QID).maybeSingle().then(r => { const n = r && r.data && r.data.num, t = String(qz.title || '').trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60); if (n && MODE === 'exam') { try { history.replaceState(history.state, '', '/exam/' + n + (t ? '-' + t : '')); } catch (e) {} } }); } catch (e) {}
   intro();
 }
 async function loadMistakes() {
@@ -512,6 +513,7 @@ async function submit(auto) {
   renderResult(R || fallbackR(data || {}), {});
 }
 function fallbackR(d) {
+  if (d.hidden) return { hidden: true, hidden_reason: d.hidden_reason, title: E.qz.title };
   const a = E.qs.filter(isAns).length;
   return { title: E.qz.title, score: d.score, total: d.total, pass_percent: E.qz.pass_percent, passed: d.passed, pending: d.pending, n_questions: E.qs.length, n_unanswered: E.qs.length - a, max_attempts: E.qz.max_attempts, violations: E.viol, quiz_id: QID, can_review: false, fallback: true, questions: [] };
 }
@@ -530,7 +532,7 @@ function practiceResult() {
 function renderResult(R, o) {
   o = o || {}; finished = true; running = false;
   if (R.hidden) {
-    const why = R.hidden_reason === 'grading' ? 'نتيجتك هتظهر بعد ما المدرس يخلّص تصحيح الأسئلة المقالية.' : 'نتيجتك هتظهر بعد انتهاء وقت الامتحان.';
+    const why = R.hidden_reason === 'grading' ? 'نتيجتك هتظهر بعد ما المدرس يخلّص تصحيح الأسئلة المقالية.' : R.hidden_reason === 'manual' ? 'نتيجتك هتظهر لما المدرس يعتمدها.' : 'نتيجتك هتظهر بعد انتهاء وقت الامتحان.';
     $('#stage').innerHTML = '<div class="card c"><div class="big">✅</div><h2>تم تسليم إجاباتك بنجاح</h2><p>' + esc(R.title || '') + '</p><p class="nt">🕒 ' + why + '</p><div class="ra"><a class="btn" href="/home.html#results">نتائجي</a><a class="btn g" href="/home.html">الرئيسية</a></div></div>';
     return;
   }
