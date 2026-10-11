@@ -4,7 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover">
     <title>منصة The Leader In English</title>
-    <link rel="icon" href="logo.svg" type="image/svg+xml">
+    <link rel="icon" href="/logo.svg" type="image/svg+xml">
     <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@700;800&display=swap" rel="stylesheet">
     <style>
         html { visibility: hidden; } /* مخفية لحد ما auth-guard.js يتأكد من تسجيل الدخول */
@@ -26,6 +26,9 @@
         .dd { position: relative; } .menu { position: absolute; top: calc(100% + 10px); left: 0; min-width: 240px; padding: 8px; background: var(--card); border: 1px solid var(--line); border-radius: 16px; box-shadow: var(--sh); display: none; z-index: 90; } .dd.open .menu { display: block; animation: up .2s ease; }
         .menu .hi { padding: 10px 12px; font-weight: 800; font-size: 14px; border-bottom: 1px solid var(--line); margin-bottom: 6px; } .menu .hi small { display: block; color: var(--muted); font-weight: 600; font-size: 12px; }
         .menu a, .menu button { display: flex; align-items: center; gap: 10px; width: 100%; padding: 10px 12px; border: none; background: none; color: var(--ink); border-radius: 10px; font-weight: 700; font-size: 14px; cursor: pointer; text-align: right; } .menu a:hover, .menu button:hover { background: rgba(239,68,68,.1); } .menu .out { color: var(--bad); }
+        .ib .dot { min-width: 17px; height: 17px; top: 4px; left: 5px; font-size: 10px; font-weight: 800; color: #fff; line-height: 13px; text-align: center; padding: 0 3px; box-sizing: border-box; }
+        .menu#bellList { width: min(340px, 86vw); padding: 0; } .nh { display: flex; align-items: center; justify-content: space-between; gap: 8px; padding: 12px 14px !important; margin: 0 !important; } .nh button { width: auto !important; padding: 4px 10px !important; font-size: 12px !important; color: var(--brand) !important; }
+        .nl { max-height: 360px; overflow: auto; } .nl .nt { display: flex; gap: 10px; cursor: pointer; opacity: .62; } .nl .nt.un { opacity: 1; background: rgba(239,68,68,.07); } .nl .nt.un b::after { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); margin-inline-start: 6px; } .nl .nt:hover { background: rgba(239,68,68,.12); } .nt .ni { font-size: 20px; } .nt em { font-style: normal; font-size: 11px; color: var(--muted); font-weight: 600; }
         .nt { padding: 10px 12px; font-size: 13px; font-weight: 700; line-height: 1.7; border-bottom: 1px solid var(--line); } .nt:last-child { border: 0; } .nt small { display: block; color: var(--muted); font-weight: 600; }
         .shell { display: flex; align-items: flex-start; }
         .side { width: 250px; flex: none; position: sticky; top: 71px; height: calc(100vh - 71px); padding: 14px; background: var(--card); border-left: 1px solid var(--line); transition: width .3s; overflow: hidden; }
@@ -122,7 +125,7 @@
             <a href="#exams" data-v="exams"><b class="ic">📝</b><span class="lbl">الاختبارات</span></a>
             <a href="#results" data-v="results"><b class="ic">🏅</b><span class="lbl">نتائجي</span></a>
             <a href="#mistakes" data-v="mistakes"><b class="ic">🧠</b><span class="lbl">أخطائي</span></a>
-            <a href="quiz.html?mode=mistakes"><b class="ic">🎯</b><span class="lbl">امتحان من أخطائي</span></a>
+            <a href="/quiz?mode=mistakes"><b class="ic">🎯</b><span class="lbl">امتحان من أخطائي</span></a>
             <a href="#account" data-v="account"><b class="ic">👤</b><span class="lbl">حسابي</span></a>
         </nav>
     </aside>
@@ -172,7 +175,7 @@
 
         <section class="view" id="v-mistakes">
             <div class="note" style="margin:0 0 16px">🧠 هنا كل الأسئلة اللي غلطت فيها في الاختبارات مع الإجابة الصحيحة، راجعها كويس عشان متكررش الغلطة.</div>
-            <a class="btn main" href="quiz.html?mode=mistakes" style="margin-bottom:16px">🎯 ابدأ امتحان من أخطائي</a>
+            <a class="btn main" href="/quiz?mode=mistakes" style="margin-bottom:16px">🎯 ابدأ امتحان من أخطائي</a>
             <div id="mistakeList"></div>
         </section>
 
@@ -194,7 +197,7 @@
 </footer>
 
 <nav class="bottom">
-    <a href="#home" data-v="home"><span>🏠</span>الرئيسية</a><a href="#courses" data-v="courses"><span>📚</span>كورسات</a><a href="#exams" data-v="exams"><span>📝</span>اختبارات</a><a href="#results" data-v="results"><span>🏅</span>نتائجي</a><a href="#mistakes" data-v="mistakes"><span>🧠</span>أخطائي</a><a href="quiz.html?mode=mistakes"><span>🎯</span>تدريب</a><a href="#account" data-v="account"><span>👤</span>حسابي</a>
+    <a href="#home" data-v="home"><span>🏠</span>الرئيسية</a><a href="#courses" data-v="courses"><span>📚</span>كورسات</a><a href="#exams" data-v="exams"><span>📝</span>اختبارات</a><a href="#results" data-v="results"><span>🏅</span>نتائجي</a><a href="#mistakes" data-v="mistakes"><span>🧠</span>أخطائي</a><a href="/quiz?mode=mistakes"><span>🎯</span>تدريب</a><a href="#account" data-v="account"><span>👤</span>حسابي</a>
 </nav>
 
 <div class="modal" id="logoutModal"><div class="box"><i>🚪</i><h3>تسجيل الخروج</h3><p>هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟</p>
@@ -206,7 +209,7 @@
     // لو الحماية فشلت لأي سبب: المحتوى مايظهرش، وتظهر رسالة توضح السبب بدل ما الصفحة ترجع لوحدها
     window.guardFail = function (msg) {
         document.documentElement.style.visibility = 'visible';
-        document.body.innerHTML = '<div style="max-width:460px;margin:12vh auto;padding:28px;font-family:Cairo,sans-serif;text-align:center;direction:rtl;border:2px solid #ef4444;border-radius:20px;line-height:2;background:#fff;color:#0f172a"><div style="font-size:46px">🔒</div><b style="font-size:20px">تعذر فتح الصفحة</b><p style="color:#64748b;font-weight:600">' + msg + '</p><a href="signin.html" style="display:inline-block;margin-top:10px;padding:10px 26px;border-radius:12px;background:#ef4444;color:#fff;text-decoration:none;font-weight:800">تسجيل الدخول</a></div>';
+        document.body.innerHTML = '<div style="max-width:460px;margin:12vh auto;padding:28px;font-family:Cairo,sans-serif;text-align:center;direction:rtl;border:2px solid #ef4444;border-radius:20px;line-height:2;background:#fff;color:#0f172a"><div style="font-size:46px">🔒</div><b style="font-size:20px">تعذر فتح الصفحة</b><p style="color:#64748b;font-weight:600">' + msg + '</p><a href="/signin.html" style="display:inline-block;margin-top:10px;padding:10px 26px;border-radius:12px;background:#ef4444;color:#fff;text-decoration:none;font-weight:800">تسجيل الدخول</a></div>';
     };
 </script>
 <script>
@@ -221,7 +224,7 @@
     (async () => { try {
         const { data } = await supabaseClient.auth.getSession();
         const session = data && data.session;
-        if (!session) { location.replace('signin.html'); return; }
+        if (!session) { location.replace('/signin.html'); return; }
 
         const { data: profile } = await supabaseClient
             .from('profiles')
@@ -231,13 +234,13 @@
 
         if (!profile) {
             await supabaseClient.auth.signOut({ scope: 'local' });
-            location.replace('signup.html');
+            location.replace('/signup.html');
             return;
         }
 
         if (profile.is_blocked === true) {
             await supabaseClient.auth.signOut({ scope: 'local' });
-            location.replace('signin.html?blocked=1');
+            location.replace('/signin.html?blocked=1');
             return;
         }
 
@@ -250,7 +253,7 @@
                 }
                 if (!error && ok === false) {
                     await supabaseClient.auth.signOut({ scope: 'local' });   // local: مايطلّعش الجهاز الجديد
-                    location.replace('signin.html?kicked=1');
+                    location.replace('/signin.html?kicked=1');
                     return true;
                 }
             } catch (e) {}
@@ -276,17 +279,17 @@
     } catch (e) {
         console.error('auth-guard error:', e);
         if (window.guardFail) window.guardFail('حدث خطأ أثناء التحقق من حسابك: ' + (e && e.message ? e.message : e));
-        else location.replace('signin.html');
+        else location.replace('/signin.html');
     } })();
 
     window.requireAdmin = function () {
-        if (!window.isAdmin) { location.replace('home.html'); return false; }
+        if (!window.isAdmin) { location.replace('/home.html'); return false; }
         return true;
     };
 
     window.logout = async function () {
         await supabaseClient.auth.signOut({ scope: 'local' });
-        location.replace('signin.html');
+        location.replace('/signin.html');
     };
 })();
 
@@ -388,7 +391,7 @@
         return '<article class="card cc" style="--i:' + i + '"><div class="th">📚' + img + '<span class="tag r">' + (free ? 'مجاني' : esc(c.price) + ' ج.م') + '</span>' + (on ? '<span class="tag l">✓ مشترك</span>' : '') + '</div>'
             + '<div class="cb"><h4>' + esc(c.title) + '</h4><p>' + esc(c.description) + '</p><div class="meta">🎬 ' + total + ' درس' + (on ? ' • أنجزت ' + done + ' (' + pct + '%)' : '') + '</div>'
             + (on ? '<div class="bar"><i style="width:0" data-w="' + pct + '"></i></div>' : '')
-            + '<div class="acts"><a class="btn main sm" href="course.html?id=' + esc(c.id) + '">' + (on ? 'الدخول للكورس' : 'عرض التفاصيل') + '</a>'
+            + '<div class="acts"><a class="btn main sm" href="' + courseHref(c) + '">' + (on ? 'الدخول للكورس' : 'عرض التفاصيل') + '</a>'
             + (!on && free ? '<button class="btn sm" type="button" data-enroll="' + esc(c.id) + '">اشترك مجاناً</button>' : '') + '</div></div></article>';
     }
     const visible = () => S.all.filter(c => c.academic_year === YEAR || S.enrolled.has(c.id));
@@ -415,12 +418,15 @@
     }
 
     // ===== الاختبارات والأخطاء =====
-    function qbtn(q) { const n = Date.now(), o = q.opens_at && new Date(q.opens_at) > n, c = q.closes_at && new Date(q.closes_at) < n; return o ? '<span class="badge" style="background:var(--muted)">يفتح ' + new Date(q.opens_at).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }) + '</span>' : c ? '<span class="badge f">انتهى</span>' : '<a class="btn main sm" href="quiz.html?id=' + esc(q.id) + '">ابدأ الاختبار</a>'; }
+    const slug = t => String(t || '').trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60);
+    const courseHref = c => c.num ? '/course/' + c.num + (slug(c.title) ? '-' + encodeURIComponent(slug(c.title)) : '') : '/course?id=' + encodeURIComponent(c.id);
+    const quizHref = q => q.num ? '/exam/' + q.num + (slug(q.title) ? '-' + encodeURIComponent(slug(q.title)) : '') : '/quiz?id=' + encodeURIComponent(q.id);
+    function qbtn(q) { const n = Date.now(), o = q.opens_at && new Date(q.opens_at) > n, c = q.closes_at && new Date(q.closes_at) < n; return o ? '<span class="badge" style="background:var(--muted)">يفتح ' + new Date(q.opens_at).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }) + '</span>' : c ? '<span class="badge f">انتهى</span>' : '<a class="btn main sm" href="' + quizHref(q) + '">ابدأ الاختبار</a>'; }
     function renderExams() {
         $('#quizList').innerHTML = S.quizzes.length ? S.quizzes.map(q => '<div class="card row"><div class="ic">📝</div><div class="grow"><b>' + esc(q.title) + '</b><small>' + esc((q.courses && q.courses.title) || 'امتحان شامل') + '</small></div>' + qbtn(q) + '</div>').join('') : empty('📝', 'لا توجد اختبارات متاحة حالياً');
         $('#attemptList').innerHTML = S.attempts.length ? S.attempts.map(a => {
             const p = a.total ? Math.round(a.score / a.total * 100) : 0, ok = p >= ((a.quizzes && a.quizzes.pass_percent) || 50);
-            return '<div class="card row"><div class="ic">' + (ok ? '🏅' : '📉') + '</div><div class="grow"><b>' + esc(a.quizzes && a.quizzes.title) + '</b><small>' + fdate(a.created_at) + ' • ' + a.score + ' / ' + a.total + '</small><div class="bar" style="margin-top:8px"><i style="width:0" data-w="' + p + '"></i></div></div><a class="btn sm" href="quiz.html?review=' + esc(a.id) + '">التفاصيل</a><span class="badge ' + (ok ? 'p' : 'f') + '">' + p + '%</span></div>';
+            return '<div class="card row"><div class="ic">' + (ok ? '🏅' : '📉') + '</div><div class="grow"><b>' + esc(a.quizzes && a.quizzes.title) + '</b><small>' + fdate(a.created_at) + ' • ' + a.score + ' / ' + a.total + '</small><div class="bar" style="margin-top:8px"><i style="width:0" data-w="' + p + '"></i></div></div><a class="btn sm" href="/quiz?review=' + esc(a.id) + '">التفاصيل</a><span class="badge ' + (ok ? 'p' : 'f') + '">' + p + '%</span></div>';
         }).join('') : empty('📊', 'لسه ما أجريتش أي اختبار.');
     }
     // ===== نتائجي: كابشن لكل محاضرة =====
@@ -453,7 +459,7 @@
                     return '<div class="rs-q"><h5>' + esc(r.quiz_title) + '</h5><small>' + fdate(r.created_at) + '</small>'
                         + '<div class="rs-g"><div><small>عدد الأسئلة</small><b>' + (r.n_questions == null ? '—' : r.n_questions) + '</b></div><div class="ok"><small>صحيحة</small><b>' + (r.n_correct == null ? '—' : r.n_correct) + '</b></div><div class="no"><small>خاطئة</small><b>' + (r.n_wrong == null ? '—' : r.n_wrong) + '</b></div><div><small>بدون إجابة</small><b>' + (r.n_unanswered == null ? '—' : r.n_unanswered) + '</b></div>'
                         + '<div><small>الدرجة</small><b>' + r.score + '/' + r.total + '</b></div><div><small>النسبة</small><b>' + p + '%</b></div><div><small>النتيجة</small><b style="font-size:15px;color:' + (pend ? '#6366f1' : ok ? 'var(--ok)' : 'var(--bad)') + '">' + (pend ? 'قيد التصحيح' : ok ? 'ناجح' : 'راسب') + '</b></div><div><small>المحاولات</small><b>' + r.attempts_used + '/' + r.max_attempts + '</b></div></div>'
-                        + '<div class="rs-a"><a class="btn main sm" href="quiz.html?review=' + esc(r.attempt_id) + '">👁 تفاصيل الإجابات</a>' + (left > 0 ? '<a class="btn sm" href="quiz.html?id=' + esc(r.quiz_id) + '">🔁 محاولة جديدة</a>' : '') + '</div></div>';
+                        + '<div class="rs-a"><a class="btn main sm" href="/quiz?review=' + esc(r.attempt_id) + '">👁 تفاصيل الإجابات</a>' + (left > 0 ? '<a class="btn sm" href="/quiz?id=' + esc(r.quiz_id) + '">🔁 محاولة جديدة</a>' : '') + '</div></div>';
                 }).join('') + '</div></div>';
         });
         box.innerHTML = html;
@@ -502,24 +508,52 @@
 
         try { await supabaseClient.rpc('finalize_expired', { p_mine: true }); } catch (e) {}   // تسليم أي امتحان انتهى وقته
         const [c, e, pr, at, qz, an] = await Promise.all([
-            supabaseClient.from('courses').select('id,title,description,thumbnail_url,price,academic_year,lessons(count)').order('sort_order'),
+            (async () => { let r = await supabaseClient.from('courses').select('id,num,title,description,thumbnail_url,price,academic_year,lessons(count)').order('sort_order'); if (r.error) r = await supabaseClient.from('courses').select('id,title,description,thumbnail_url,price,academic_year,lessons(count)').order('sort_order'); return r; })(),
             supabaseClient.from('enrollments').select('course_id'),
             supabaseClient.from('lesson_progress').select('lesson_id,completed_at,lessons(course_id)'),
             supabaseClient.from('quiz_attempts').select('id,quiz_id,score,total,created_at,quizzes(title,pass_percent)').order('created_at', { ascending: false }),
-            supabaseClient.from('quizzes').select('id,title,kind,opens_at,closes_at,courses(title)').order('created_at', { ascending: false }),
+            (async () => { let r = await supabaseClient.from('quizzes').select('id,num,title,kind,opens_at,closes_at,courses(title)').order('created_at', { ascending: false }); if (r.error) r = await supabaseClient.from('quizzes').select('id,title,kind,opens_at,closes_at,courses(title)').order('created_at', { ascending: false }); return r; })(),
             (async () => { let q = await supabaseClient.from('announcements').select('title,body,academic_year').eq('is_active', true).order('created_at', { ascending: false }).limit(30); if (q.error) q = await supabaseClient.from('announcements').select('title,body').eq('is_active', true).order('created_at', { ascending: false }).limit(5); return q; })()
         ]);
         if (c.error) { $('#mineGrid').innerHTML = empty('⚠️', 'تعذر تحميل البيانات، حدّث الصفحة وحاول مرة أخرى.'); return; }
         S.all = c.data || []; S.enrolled = new Set((e.data || []).map(r => r.course_id));
         S.prog = pr.data || []; S.prog.forEach(r => { const id = r.lessons && r.lessons.course_id; if (id) S.done[id] = (S.done[id] || 0) + 1; });
         S.attempts = at.data || []; S.quizzes = qz.data || [];
-        if (an.data) an.data = an.data.filter(a => !a.academic_year || a.academic_year === YEAR).slice(0, 8);   // إعلانات صفّه + الإعلانات العامة فقط
-        if (an.data && an.data.length) {
-            $('#ann').innerHTML = an.data.slice(0, 2).map(a => '<div class="ann"><span>📢</span><div>' + esc(a.title) + (a.body ? '<small>' + esc(a.body) + '</small>' : '') + '</div></div>').join('');
-            $('#bellList').innerHTML = an.data.map(a => '<div class="nt">' + esc(a.title) + (a.body ? '<small>' + esc(a.body) + '</small>' : '') + '</div>').join(''); $('#bellDot').style.display = 'block';
-        }
+        await loadNotifs(an);
         refresh();
     }
+
+
+    /* ===== الإشعارات (مقروء / غير مقروء) ===== */
+    const NT = { list: [] };
+    const nIcon = k => ({ essay: '📝', lesson: '🎬', course: '📚', exam: '🧪', homework: '📒', announcement: '📢' }[k] || '🔔');
+    const nAgo = d => { const m = Math.max(1, Math.round((Date.now() - new Date(d)) / 60000)); return m < 60 ? 'من ' + m + ' دقيقة' : m < 1440 ? 'من ' + Math.round(m / 60) + ' ساعة' : 'من ' + Math.round(m / 1440) + ' يوم'; };
+    function drawNotifs() {
+        const un = NT.list.filter(n => !n.read), box = $('#bellList');
+        $('#bellDot').style.display = un.length ? 'block' : 'none';
+        $('#bellDot').textContent = un.length > 9 ? '9+' : (un.length || '');
+        box.innerHTML = '<div class="hi nh">الإشعارات' + (un.length ? '<button type="button" id="ntAll">تعليم الكل كمقروء</button>' : '') + '</div>'
+            + (NT.list.length ? '<div class="nl">' + NT.list.map((n, i) => '<div class="nt' + (n.read ? '' : ' un') + '" data-i="' + i + '"><span class="ni">' + nIcon(n.kind) + '</span><div><b>' + esc(n.title) + '</b>' + (n.body ? '<small>' + esc(n.body) + '</small>' : '') + '<em>' + nAgo(n.created_at) + '</em></div></div>').join('') + '</div>' : '<div class="nt">لا توجد إشعارات 👌</div>');
+        const ann = NT.list.filter(n => !n.read && n.kind === 'announcement').slice(0, 2);
+        $('#ann').innerHTML = ann.map(a => '<div class="ann"><span>📢</span><div>' + esc(a.title) + (a.body ? '<small>' + esc(a.body) + '</small>' : '') + '</div></div>').join('');
+    }
+    async function loadNotifs(oldAnn) {
+        let r = null;
+        try { r = await supabaseClient.rpc('my_notifications'); } catch (e) {}
+        if (r && !r.error && Array.isArray(r.data)) NT.list = r.data;
+        else {   // الـ SQL لسه متنفذش: نرجع للإعلانات القديمة بدون حالة قراءة
+            const d = ((oldAnn && oldAnn.data) || []).filter(a => !a.academic_year || a.academic_year === YEAR).slice(0, 8);
+            NT.list = d.map((a, i) => ({ ref: 'x:' + i, kind: 'announcement', title: a.title, body: a.body, created_at: new Date().toISOString(), read: false, legacy: true }));
+        }
+        drawNotifs();
+    }
+    document.addEventListener('click', async e => {
+        if (e.target.closest('#ntAll')) { e.stopPropagation(); NT.list.forEach(n => n.read = true); drawNotifs(); try { await supabaseClient.rpc('mark_all_read'); } catch (x) {} return; }
+        const it = e.target.closest('#bellList .nt[data-i]'); if (!it) return;
+        const n = NT.list[+it.dataset.i]; if (!n) return;
+        if (!n.read) { n.read = true; drawNotifs(); if (!n.legacy) { try { await supabaseClient.rpc('mark_read', { p_ref: n.ref }); } catch (x) {} } }
+        if (n.link) location.href = n.link;
+    });
 
     $$('.tab').forEach(t => t.addEventListener('click', () => { $$('.tab').forEach(x => x.classList.remove('on')); t.classList.add('on'); S.filter = t.dataset.f; renderCourses(); }));
     document.addEventListener('click', e => { const b = e.target.closest('[data-enroll]'); if (b) enroll(b.dataset.enroll, b); });
