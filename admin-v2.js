@@ -7,7 +7,7 @@ VIEWS.xbuild = ['منشئ الامتحان', vBuilder];
 let XB = null, xbT = null, xbUid = 0;
 const xuid = () => 'n' + (++xbUid) + Date.now().toString(36);
 const LT = 'ABCDEFGH';
-const RMODES = [['now', 'تظهر فوراً بعد التسليم'], ['after_grading', 'تظهر بعد ما أصحّح الأسئلة المقالية (لو مفيش مقالي بتظهر فوراً)'], ['after_close', 'تظهر بعد انتهاء وقت الامتحان (حدد وقت الإغلاق)']];
+const RMODES = [['now', 'تظهر فوراً بعد التسليم'], ['after_grading', 'تظهر بعد ما أصحّح الأسئلة المقالية (لو مفيش مقالي بتظهر فوراً)'], ['after_close', 'تظهر بعد انتهاء وقت الامتحان (حدد وقت الإغلاق)'], ['manual', '🔒 ما تظهرش للطالب غير لما أوافق أنا (من تقرير الامتحان)'], ['manual_released', '✅ موافق — النتيجة ظاهرة للطلاب دلوقتي']];
 const blankQ = (type, pts, pick, n) => ({ uid: xuid(), id: '', type, pick: pick || 1, pts: pts == null ? (type === 'mcq' ? 1 : 5) : pts, text: '', opts: type === 'mcq' ? Array.from({ length: n || 4 }, () => '') : [], ok: 0, oks: [], img: '', note: '' });
 function metaFrom(q) {
   return { title: q.title || '', kind: q.kind || 'course', course_id: q.course_id || (S.courses[0] && S.courses[0].id) || '', academic_year: q.academic_year || YEARS[0], lesson_id: q.lesson_id || '',
@@ -243,7 +243,7 @@ async function vReport(id) {
   const notRows = not.map(s => '<tr><td>' + esc(fname(s)) + '</td><td dir="ltr">' + esc(s.phone_number) + '</td><td dir="ltr">' + esc(s.parent_phone || '—') + '</td><td>' + esc(s.academic_year) + '</td></tr>').join('');
   const misRows = mis.map(x => { const tot = x.ok + x.w + x.u, pr = Math.round((x.w + x.u) / tot * 100); return '<tr><td>' + x.q.position + '</td><td dir="auto">' + esc(x.q.question.slice(0, 140)) + '</td><td><b>' + x.w + '</b></td><td>' + x.u + '</td><td><span class="pill ' + (pr >= 50 ? 'no' : '') + '">' + pr + '%</span></td></tr>'; }).join('');
   const tab = (k, l, on) => '<button class="yt' + (on ? ' on' : '') + '" data-act="rsub" data-id="' + k + '">' + l + '</button>';
-  return '<div class="bar"><button class="btn g" data-go="exams">← الامتحانات</button><b>' + esc(qz.title) + '</b><span class="pill">' + esc(year || '') + '</span><button class="btn s" data-act="editExam" data-id="' + id + '">✏️ المحرر</button><button class="btn s" data-act="rpdf" style="margin-right:auto">📄 تصدير PDF</button><button class="btn s g" data-act="rexport">⬇️ Excel/CSV</button></div>'
+  return '<div class="bar"><button class="btn g" data-go="exams">← الامتحانات</button><b>' + esc(qz.title) + '</b><span class="pill">' + esc(year || '') + '</span>' + (['manual', 'manual_released'].includes(qz.result_mode) ? '<button class="btn s ' + (qz.result_mode === 'manual' ? '' : 'r') + '" data-act="relRes" data-id="' + id + '" data-r="' + (qz.result_mode === 'manual' ? '1' : '0') + '">' + (qz.result_mode === 'manual' ? '📢 إظهار النتائج للطلاب' : '🔒 إخفاء النتائج') + '</button>' : '') + '<button class="btn s" data-act="editExam" data-id="' + id + '">✏️ المحرر</button><button class="btn s" data-act="rpdf" style="margin-right:auto">📄 تصدير PDF</button><button class="btn s g" data-act="rexport">⬇️ Excel/CSV</button></div>'
     + '<div class="grid sm" style="margin-bottom:16px">' + [[exp.length, 'المفروض يمتحنوا'], [took.length, 'امتحنوا'], [not.length, 'لم يمتحنوا'], [avg + '%', 'متوسط الدرجات'], [pass + '%', 'نسبة النجاح'], [pend, 'تصحيح معلّق']].map(x => '<div class="card stat"><b>' + x[0] + '</b><span>' + x[1] + '</span></div>').join('') + '</div>'
     + '<div class="ytabs" id="rpTabs">' + tab('took', '✅ اللي امتحنوا (' + took.length + ')', 1) + tab('not', '❌ اللي لم يمتحنوا (' + not.length + ')') + tab('mis', '🧠 أكتر الأسئلة غلطاً') + '</div>'
     + '<div id="rp_took"><div class="tw"><table><tr><th>الطالب</th><th>الدرجة</th><th>النسبة</th><th>الحالة</th><th>محاولات</th><th>مخالفات</th><th>الوقت</th><th>التاريخ</th><th></th></tr>' + (tookRows || '<tr><td colspan="9" class="empty">لا توجد محاولات بعد</td></tr>') + '</table></div><p class="nt" style="margin-top:8px">بنعرض أعلى درجة لكل طالب.</p></div>'
@@ -340,6 +340,13 @@ Object.assign(ACT, {
   },
   delItem: async (id, el) => { if (!confirm('حذف العنصر؟')) return; const { error } = await sb.from('lesson_items').delete().eq('id', id); if (error) throw error; itRefresh(el.dataset.l); },
   rsub: (id, el) => { ['took', 'not', 'mis'].forEach(k => { const d = $('#rp_' + k); if (d) d.hidden = k !== id; }); document.querySelectorAll('#rpTabs .yt').forEach(b => b.classList.toggle('on', b === el)); },
+  relRes: async (id, el) => {
+    const rel = el.dataset.r === '1';
+    if (!confirm(rel ? 'هتظهر النتيجة لكل الطلاب اللي امتحنوا، وهيوصلهم إشعار. تكمل؟' : 'هتتخبّى النتيجة عن الطلاب تاني. تكمل؟')) return;
+    const { data, error } = await sb.rpc('set_results_released', { p_quiz: id, p_release: rel });
+    if (error) throw new Error((error.message || '').includes('does not exist') || (error.message || '').includes('schema cache') ? 'شغّل ملف supabase_update_v5.sql في Supabase الأول' : error.message);
+    toast(rel ? 'تم إظهار النتائج ✅ (إشعار لـ ' + (data || 0) + ' طالب)' : 'تم إخفاء النتائج 🔒'); go('results', id);
+  },
   rpdf: () => {
     const R = window.__rep, e = esc, d = new Date().toLocaleDateString('ar-EG');
     const st = a => { const p = pcent(a); return a.status === 'pending' ? 'تصحيح معلّق' : p >= R.ps ? 'ناجح' : 'راسب'; };
