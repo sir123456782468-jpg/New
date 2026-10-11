@@ -4,7 +4,7 @@
 <meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
 <meta name="robots" content="noindex,nofollow">
 <title>لوحة التحكم - The Leader In English</title>
-<link rel="icon" href="logo.svg" type="image/svg+xml">
+<link rel="icon" href="/logo.svg" type="image/svg+xml">
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&display=swap" rel="stylesheet">
 <style>
 :root{--bg:#0b1120;--card:#131c31;--ink:#f1f5f9;--muted:#94a3b8;--line:#22304d;--brand:#ef4444;--grad:linear-gradient(135deg,#ef4444,#ec4899);--ok:#22c55e}
@@ -42,7 +42,8 @@ table{width:100%;border-collapse:collapse;font-size:13.5px}th,td{padding:10px 12
 #toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99;display:grid;gap:8px}.toast{background:#1e293b;border:1px solid var(--line);padding:11px 20px;border-radius:12px;font-weight:700;font-size:14px}.toast.bad{background:#7f1d1d}
 .yt{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:8px 16px;border-radius:50px;font-weight:800;font-size:13px;cursor:pointer}.yt.on{background:var(--grad);color:#fff;border-color:transparent}
 .ytabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px;align-items:center}.cnt{display:inline-block;min-width:20px;padding:0 6px;margin-right:6px;border-radius:50px;background:#dc2626;color:#fff;font-size:11px;line-height:20px;text-align:center}
-.mbox.wide{max-width:880px}.xq textarea{min-height:60px}
+.mbox.wide{max-width:880px}
+input.ck{width:22px!important;height:22px;min-width:22px;padding:0;flex:none;accent-color:#ef4444;cursor:pointer}.grid.sm{grid-template-columns:repeat(auto-fill,minmax(150px,1fr))}.grid.sm .stat b{font-size:24px}.xq textarea{min-height:60px}
 .nt{color:var(--muted);font-size:13px;line-height:1.9;margin-bottom:12px;font-weight:600}
 @media(max-width:800px){.side{position:fixed;bottom:0;top:auto;height:auto;width:100%;display:flex;overflow-x:auto;z-index:40;border:0;border-top:1px solid var(--line);padding:6px}.side .logo,.side a.off{display:none}.side a{flex:none;margin:0 2px}.main{padding:16px 12px 80px}.row2{grid-template-columns:1fr}}
 </style>
@@ -82,7 +83,7 @@ const sb = supabase.createClient('https://cxtmvsoxgfsormhcklfx.supabase.co','eyJ
 const $ = s => document.querySelector(s);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const YEARS = ['أولى إعدادي','ثانية إعدادي','ثالثة إعدادي','أولى ثانوي','ثانية ثانوي','ثالثة ثانوي'];
-const S = { courses: [], students: null, enr: null, lessons: null, y: '', sub: 'res', atc: null };
+const S = { courses: [], students: null, enr: null, lessons: null, y: (() => { try { return sessionStorage.getItem('adm_y') || ''; } catch (e) { return ''; } })(), sub: 'res', atc: null };
 const NAV = [['overview','📊','نظرة عامة'],['courses','📚','الكورسات'],['students','👥','الطلاب'],['codes','🎟️','الأكواد'],['exams','📝','الامتحانات'],['essay','✍️','تصحيح المقالي'],['sres','🎓','نتائج الطلاب والأخطاء'],['ann','📢','الإعلانات'],['devices','💻','الأجهزة'],['admins','🛡️','المسؤولون']];
 
 function toast(m, bad) { const e = document.createElement('div'); e.className = 'toast' + (bad ? ' bad' : ''); e.textContent = m; $('#toasts').appendChild(e); setTimeout(() => e.remove(), 3500); }
@@ -106,7 +107,14 @@ async function gate() {
   if (ok !== true) { await sb.auth.signOut({ scope: 'local' }); return showLogin('هذا الحساب لا يملك صلاحية الإدارة.'); }
   $('#login').hidden = true; $('#app').hidden = false; $('#who').textContent = data.session.user.email;
   $('#nav').innerHTML = NAV.map(n => n[0].startsWith('x') ? '<a class="off">' + n[1] + ' ' + n[2] + '<small>قريباً</small></a>' : '<a data-go="' + n[0] + '">' + n[1] + ' ' + n[2] + '</a>').join('');
-  await loadCourses(); go('overview');
+  await loadCourses();
+  const h = decodeURIComponent(location.hash.slice(1)).split('/'), v0 = VIEWS[h[0]] && h[0] !== 'bulk' ? h[0] : 'overview';
+  go(v0, h[1] || undefined);
+  if (!window.__guard) {      // حماية: تأكد كل دقيقة إن الحساب لسه أدمن، وإلا اقفل اللوحة
+    window.__guard = true;
+    const chk = async () => { try { const { data: s2 } = await sb.auth.getSession(); if (!s2.session) return location.reload(); const { data: ok2, error: e2 } = await sb.rpc('is_admin'); if (!e2 && ok2 !== true) { await sb.auth.signOut({ scope: 'local' }); location.reload(); } } catch (e) {} };
+    setInterval(chk, 60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) chk(); });
+  }
 }
 function showLogin(msg) { $('#app').hidden = true; $('#login').hidden = false; $('#lm').textContent = msg || ''; }
 $('#lf').addEventListener('submit', async e => {
@@ -127,6 +135,7 @@ async function loadStudents() {
 const VIEWS = { overview: ['نظرة عامة', vOverview], courses: ['الكورسات', vCourses], students: ['الطلاب', vStudents], codes: ['أكواد التفعيل', vCodes] };
 async function go(v, arg) {
   window.__cur = v;
+  try { history.replaceState(null, '', '#' + v + (typeof arg === 'string' && arg ? '/' + encodeURIComponent(arg) : '')); } catch (e) {}   // الصفحة تفضل في نفس القسم بعد التحديث
   document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.dataset.go === v));
   $('#title').textContent = VIEWS[v][0]; $('#view').innerHTML = '<div class="empty">جاري التحميل...</div>';
   if (['essay', 'sres', 'results', 'exams'].includes(v)) { try { await sb.rpc('finalize_expired'); } catch (e) {} }   // تسليم أي امتحان انتهى وقته
@@ -190,11 +199,12 @@ async function lessonForm(cid, l) {
   if (!l) { const { data } = await sb.from('lessons').select('position').eq('course_id', cid).order('position', { ascending: false }).limit(1); next = data && data[0] ? data[0].position + 1 : 1; }
   modal(l ? 'تعديل الدرس' : 'درس جديد', '<form><label>عنوان الدرس</label><input name="title" required value="' + esc(l && l.title) + '"><div class="row2"><div><label>الوحدة / الباب (اختياري)</label><input name="section" value="' + esc(l && l.section_title) + '"></div><div><label>الترتيب</label><input type="number" name="pos" value="' + (l ? l.position : next) + '"></div></div>'
     + '<label>ملاحظات الدرس (اختياري)</label><textarea name="notes">' + esc(lc.notes) + '</textarea><div class="row2"><div><label>المدة بالدقائق</label><input type="number" name="dur" min="0" value="' + esc(l && l.duration_minutes) + '"></div><label class="chk" style="align-self:end"><input type="checkbox" name="free"' + (l && l.is_free ? ' checked' : '') + '> درس مجاني (معاينة)</label></div>'
-    + '<p style="color:var(--muted);font-size:12.5px;margin-top:10px;line-height:1.9">بعد حفظ الدرس اضغط زرار "المحتوى" عشان تضيف فيديو الشرح وفيديو الحل وملفات الـPDF (بروابط درايف).</p><button class="btn" style="width:100%;margin-top:12px">حفظ الدرس</button></form>',
+    + (l ? '' : '<label class="chk"><input type="checkbox" name="notify" checked> 🔔 ابعت إشعار للطلاب بالمحاضرة الجديدة</label>') + '<p style="color:var(--muted);font-size:12.5px;margin-top:10px;line-height:1.9">بعد حفظ الدرس اضغط زرار "المحتوى" عشان تضيف فيديو الشرح وفيديو الحل وملفات الـPDF (بروابط درايف).</p><button class="btn" style="width:100%;margin-top:12px">حفظ الدرس</button></form>',
     async f => {
       const row = { course_id: cid, title: f.get('title').trim(), section_title: f.get('section').trim() || null, position: +f.get('pos') || 0, is_free: f.get('free') === 'on', duration_minutes: +f.get('dur') || null };
       let id; if (l) { const { error } = await sb.from('lessons').update(row).eq('id', l.id); if (error) throw error; id = l.id; } else { const { data, error } = await sb.from('lessons').insert(row).select('id').single(); if (error) throw error; id = data.id; }
       const r = await sb.from('lesson_content').upsert({ lesson_id: id, notes: f.get('notes').trim() || null }); if (r.error) throw r.error;
+      if (!l && f.get('notify') === 'on') { const cc = S.courses.find(c => c.id === cid) || {}; await sb.rpc('notify_students', { p_year: cc.academic_year || '', p_student: null, p_kind: 'lesson', p_title: 'محاضرة جديدة: ' + row.title, p_body: cc.title || null, p_link: '/course.html?id=' + cid + '&l=' + id }); }
       toast('تم حفظ الدرس ✅'); go('lessons', cid);
     });
 }
@@ -458,7 +468,7 @@ const ACT = {
   editCourse: id => courseForm(S.courses.find(c => c.id === id)),
   lessons: id => go('lessons', id),
   newLesson: id => lessonForm(id),
-  togglePub: async id => { const c = S.courses.find(x => x.id === id); const { error } = await sb.from('courses').update({ is_published: !c.is_published }).eq('id', id); if (error) throw error; go('courses'); },
+  togglePub: async id => { const c = S.courses.find(x => x.id === id); const { error } = await sb.from('courses').update({ is_published: !c.is_published }).eq('id', id); if (error) throw error; if (!c.is_published && confirm('ابعت إشعار للطلاب إن الكورس نزل؟')) await sb.rpc('notify_students', { p_year: c.academic_year || '', p_student: null, p_kind: 'course', p_title: 'كورس جديد: ' + c.title, p_body: null, p_link: '/course.html?id=' + id }); go('courses'); },
   delCourse: async id => { if (!confirm('حذف الكورس نهائياً بكل دروسه واشتراكاته وأكواده؟')) return; const { error } = await sb.from('courses').delete().eq('id', id); if (error) throw error; toast('تم الحذف'); go('courses'); },
   delLesson: async (id, el) => { if (!confirm('حذف الدرس؟')) return; const { error } = await sb.from('lessons').delete().eq('id', id); if (error) throw error; toast('تم الحذف'); go('lessons', el.dataset.c); },
   student: id => studentModal(id),
@@ -493,7 +503,7 @@ Object.assign(ACT, {
   rmCard: (id, el) => el.closest('.bq').remove()
 });
 Object.assign(ACT, {
-  setY: (id, el) => { S.y = id; go(el.dataset.v); },
+  setY: (id, el) => { S.y = id; try { sessionStorage.setItem('adm_y', id); } catch (e) {} go(el.dataset.v); },
   setSub: id => { S.sub = id; go('sres'); },
   refSres: () => { S.atc = null; go('sres'); },
   stuAtt: id => stuAttModal(id)
@@ -501,6 +511,6 @@ Object.assign(ACT, {
 
 window.addEventListener('DOMContentLoaded', gate);   // بيشتغل بعد تحميل admin-v2.js
 </script>
-<script src="admin-v2.js"></script>
+<script src="/admin-v2.js"></script>
 </body>
 </html>
