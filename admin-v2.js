@@ -173,7 +173,9 @@ async function xbSave() {
   if (kind === 'comprehensive') { row.academic_year = m.academic_year; row.course_id = null; row.lesson_id = null; } else { row.course_id = m.course_id; row.academic_year = null; row.lesson_id = kind === 'lesson' ? m.lesson_id : null; }
   let qid = XB.id;
   if (qid) { const { error } = await sb.from('quizzes').update(row).eq('id', qid); if (error) throw error; }
-  else { const { data, error } = await sb.from('quizzes').insert(row).select('id').single(); if (error) throw error; qid = data.id; XB.id = qid; XB.orig = []; }
+  else {
+    if (kind === 'lesson' && m.lesson_id) { try { const [a1, a2] = await Promise.all([sb.from('lesson_items').select('position').eq('lesson_id', m.lesson_id).order('position', { ascending: false }).limit(1), sb.from('quizzes').select('lesson_pos').eq('lesson_id', m.lesson_id).order('lesson_pos', { ascending: false }).limit(1)]); if (!a2.error) row.lesson_pos = Math.max((a1.data && a1.data[0] && a1.data[0].position) || 0, (a2.data && a2.data[0] && a2.data[0].lesson_pos) || 0) + 1; } catch (e) {} }
+    const { data, error } = await sb.from('quizzes').insert(row).select('id').single(); if (error) throw error; qid = data.id; XB.id = qid; XB.orig = []; }
   if (del.length) { const { error } = await sb.from('quiz_questions').delete().in('id', del); if (error) throw error; }
   const rows = jobs.map((j, i) => ({ quiz_id: qid, position: i + 1, question: j.text, options: j.options, qtype: j.q.type, pick_n: j.q.type === 'mcq' ? j.q.pick : 1, points: isNaN(+j.q.pts) || j.q.pts === '' ? 1 : +j.q.pts, image_url: j.q.img || null, note: (j.q.note || '').trim() || null }));
   const upd = jobs.map((j, i) => ({ j, r: rows[i] })).filter(x => x.j.q.id), ins = jobs.map((j, i) => ({ j, r: rows[i] })).filter(x => !x.j.q.id);
@@ -189,21 +191,25 @@ async function xbSave() {
 }
 
 // ---------- محتوى الدرس: فيديوهات / PDF / كويزات / روابط ----------
-const ISEC = { video: ['🎬', 'الفيديوهات', 'فيديو الشرح، فيديو الحل... (YouTube / Drive / Vimeo)'], pdf: ['📄', 'ملفات PDF', 'رابط Google Drive (بيتفتح جوه المنصة)'], link: ['🔗', 'روابط خارجية', 'أي رابط https'] };
+const IKIND = { video: ['🎬', 'فيديو'], pdf: ['📄', 'PDF'], link: ['🔗', 'رابط'] };
 async function itemsModal(lid) {
   const l = (window.__L || []).find(x => x.id === lid) || {};
-  const [it, qz] = await Promise.all([sb.from('lesson_items').select('*').eq('lesson_id', lid).order('position'), sb.from('quizzes').select('id,title,is_published,is_homework,time_limit_minutes,quiz_questions(count)').eq('lesson_id', lid)]);
+  const [it, qz] = await Promise.all([sb.from('lesson_items').select('*').eq('lesson_id', lid).order('position'), sb.from('quizzes').select('*,quiz_questions(count)').eq('lesson_id', lid)]);
   if (it.error) throw it.error; const items = it.data || [], quizzes = qz.error ? [] : (qz.data || []);
-  const sec = k => {
-    const L = items.filter(x => x.kind === k), s = ISEC[k];
-    return `<div class="card" style="margin-bottom:12px"><b>${s[0]} ${s[1]} (${L.length})</b><p class="nt" style="margin:4px 0 8px">${s[2]}</p>`
-      + (L.length ? '<div class="tw" style="margin-bottom:10px"><table>' + L.map((x, i) => `<tr><td style="width:1%;white-space:nowrap"><button class="btn s g" data-act="itMove" data-id="${x.id}" data-d="-1" data-l="${lid}"${i === 0 ? ' disabled' : ''}>↑</button> <button class="btn s g" data-act="itMove" data-id="${x.id}" data-d="1" data-l="${lid}"${i === L.length - 1 ? ' disabled' : ''}>↓</button></td><td>${esc(x.title)}<br><small dir="ltr" style="color:var(--muted)">${esc((x.url || '').slice(0, 60))}</small>${k === 'pdf' ? `<label class="chk" style="margin-top:6px;font-size:12.5px"><input type="checkbox" data-act="itAllow" data-id="${x.id}" data-l="${lid}"${x.allow_open ? ' checked' : ''}> مسموح يفتحه الطالب خارج المنصة</label>` : ''}</td><td style="white-space:nowrap"><button class="btn s g" data-act="itEdit" data-id="${x.id}" data-l="${lid}">تعديل</button> <button class="btn s r" data-act="delItem" data-id="${x.id}" data-l="${lid}">حذف</button></td></tr>`).join('') + '</table></div>' : '')
-      + `<div class="row2"><input id="ni_${k}_t" placeholder="الاسم (يظهر للطالب)"><input id="ni_${k}_u" dir="ltr" placeholder="https://..."></div>${k === 'pdf' ? '<label class="chk" style="margin-top:8px"><input type="checkbox" id="ni_pdf_a"> السماح بفتحه خارج المنصة</label>' : ''}<button class="btn s" style="margin-top:8px" data-act="itAdd" data-k="${k}" data-l="${lid}">+ إضافة</button></div>`;
+  const all = items.map(x => ({ t: 'i', pos: x.position == null ? 0 : x.position, x })).concat(quizzes.map(x => ({ t: 'q', pos: x.lesson_pos == null ? 100000 : x.lesson_pos, x })))
+    .map((r, k) => (r._k = k, r)).sort((a, b) => (a.pos - b.pos) || (a.t === b.t ? a._k - b._k : a.t === 'i' ? -1 : 1));
+  const row = (r, i) => {
+    const x = r.x, first = i === 0, last = i === all.length - 1, mv = `<button class="btn s g" data-act="itMv" data-t="${r.t}" data-id="${x.id}" data-d="-1" data-l="${lid}"${first ? ' disabled' : ''}>↑</button> <button class="btn s g" data-act="itMv" data-t="${r.t}" data-id="${x.id}" data-d="1" data-l="${lid}"${last ? ' disabled' : ''}>↓</button>`;
+    const gate = `<label class="chk" style="margin-top:6px;font-size:12.5px"><input type="checkbox" data-act="itGate" data-t="${r.t}" data-id="${x.id}" data-l="${lid}"${x.gate ? ' checked' : ''}> 🔒 اللي بعده مايفتحش للطالب غير بعد ما يخلّص ده</label>`;
+    if (r.t === 'i') return `<tr data-t="i" data-id="${x.id}"><td style="width:1%;white-space:nowrap">${mv}</td><td>${(IKIND[x.kind] || ['•'])[0]} <b>${esc(x.title)}</b> <span class="pill">${(IKIND[x.kind] || [0, x.kind])[1]}</span><br><small dir="ltr" style="color:var(--muted)">${esc((x.url || '').slice(0, 60))}</small>${gate}</td><td style="white-space:nowrap"><button class="btn s g" data-act="itEdit" data-id="${x.id}" data-l="${lid}">تعديل</button> <button class="btn s r" data-act="delItem" data-id="${x.id}" data-l="${lid}">حذف</button></td></tr>`;
+    const n = (((x.quiz_questions || [])[0]) || {}).count || 0;
+    return `<tr data-t="q" data-id="${x.id}"><td style="width:1%;white-space:nowrap">${mv}</td><td>${x.is_homework ? '📚' : '📝'} <b>${esc(x.title)}</b> <span class="pill ${x.is_published ? 'ok' : 'no'}">${x.is_homework ? 'واجب' : 'امتحان'} • ${x.is_published ? 'منشور' : 'مخفي'}</span><br><small style="color:var(--muted)">${n} سؤال${x.time_limit_minutes ? ' • ' + x.time_limit_minutes + ' دقيقة' : ''}</small>${gate}</td><td style="white-space:nowrap"><button class="btn s" data-act="editExam" data-id="${x.id}">✏️ المحرر</button> <button class="btn s g" data-act="results" data-id="${x.id}">📊 التقرير</button></td></tr>`;
   };
-  const qs = `<div class="card" style="margin-bottom:12px"><b>📝 الكويزات والامتحانات (${quizzes.length})</b><p class="nt" style="margin:4px 0 8px">بتظهر للطالب جوه المحاضرة نفسها وهو بيتنقل بينها بحرية.</p>`
-    + (quizzes.length ? '<div class="tw" style="margin-bottom:10px"><table>' + quizzes.map(q => `<tr><td>${q.is_homework ? '📚 ' : ''}${esc(q.title)}<br><small style="color:var(--muted)">${q.is_homework ? 'واجب • ' : ''}${(((q.quiz_questions || [])[0]) || {}).count || 0} سؤال${q.time_limit_minutes ? ' • ' + q.time_limit_minutes + ' دقيقة' : ''}</small></td><td><span class="pill ${q.is_published ? 'ok' : 'no'}">${q.is_published ? 'منشور' : 'مخفي'}</span></td><td style="white-space:nowrap"><button class="btn s" data-act="editExam" data-id="${q.id}">✏️ المحرر</button> <button class="btn s g" data-act="results" data-id="${q.id}">📊 التقرير</button></td></tr>`).join('') + '</table></div>' : '')
-    + `<button class="btn s" data-act="itNewQuiz" data-id="${lid}">+ كويز جديد للمحاضرة دي</button> <button class="btn s" data-act="itNewHw" data-id="${lid}">+ 📚 واجب جديد للمحاضرة دي</button></div>`;
-  modal('محتوى المحاضرة: ' + (l.title || ''), sec('video') + sec('pdf') + qs + sec('link'));
+  modal('محتوى المحاضرة: ' + (l.title || ''),
+    `<p class="nt" style="margin:0 0 10px;line-height:1.9">ده ترتيب ما يشوفه الطالب بالظبط (فوق ← تحت). رتّبهم بالأسهم. علّم 🔒 على أي عنصر لو عايز اللي بعده يتقفل لحد ما الطالب يخلّصه (PDF/رابط = يفتحه، فيديو = يضغط «أنهيت»، امتحان/واجب = يسلّمه).</p>`
+    + `<div class="tw" style="margin-bottom:12px"><table>${all.map(row).join('') || '<tr><td class="empty">لسه مفيش محتوى — ضيف من تحت</td></tr>'}</table></div>`
+    + `<div class="card"><b>➕ إضافة محتوى</b><div class="row2" style="margin-top:8px"><select id="ni_k"><option value="video">🎬 فيديو (YouTube / Drive / Vimeo)</option><option value="pdf">📄 PDF (رابط Google Drive أو غيره)</option><option value="link">🔗 رابط</option></select><input id="ni_t" placeholder="الاسم (يظهر للطالب)"></div><input id="ni_u" dir="ltr" placeholder="https://..." style="margin-top:8px"><button class="btn s" style="margin-top:8px" data-act="itAdd" data-l="${lid}">+ إضافة</button>`
+    + `<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn s" data-act="itNewQuiz" data-id="${lid}">+ كويز جديد</button><button class="btn s" data-act="itNewHw" data-id="${lid}">+ 📚 واجب جديد</button></div></div>`);
   $('#modal .mbox').classList.add('wide');
 }
 async function itRefresh(lid) { go('lessons', window.__cid); await itemsModal(lid); }
@@ -239,7 +245,7 @@ async function vReport(id) {
   const mis = Object.values(st).filter(x => x.q.qtype === 'mcq' && (x.w + x.u)).sort((a, b) => (b.w + b.u) - (a.w + a.u));
   window.__rep = { qz, took, not, ps };
   const T = (cells, i) => '<td>' + cells.join('</td><td>') + '</td>';
-  const tookRows = took.map(x => { const a = x.o.b, p = pcent(a), pd = a.status === 'pending'; return '<tr><td>' + esc(fname(x.s)) + '<br><small style="color:var(--muted)" dir="ltr">' + esc(x.s.phone_number) + '</small></td><td><b>' + a.score + '/' + a.total + '</b></td><td><b>' + p + '%</b></td><td><span class="pill ' + (pd ? 'no' : p >= ps ? 'ok' : 'no') + '">' + (pd ? 'تصحيح معلّق' : p >= ps ? 'ناجح' : 'راسب') + '</span></td><td>' + x.o.n + '</td><td style="color:' + (a.violations ? '#f87171' : 'inherit') + '">' + (a.violations || 0) + '</td><td>' + (a.seconds_spent != null ? Math.floor(a.seconds_spent / 60) + ':' + String(a.seconds_spent % 60).padStart(2, '0') : '—') + '</td><td>' + fdate(a.created_at) + '</td><td><button class="btn s" data-act="attempt" data-id="' + a.id + '">تفاصيل</button></td></tr>'; }).join('');
+  const tookRows = took.map(x => { const a = x.o.b, p = pcent(a), pd = a.status === 'pending'; return '<tr><td>' + esc(fname(x.s)) + '<br><small style="color:var(--muted)" dir="ltr">' + esc(x.s.phone_number) + '</small></td><td><b>' + a.score + '/' + a.total + '</b></td><td><b>' + p + '%</b></td><td><span class="pill ' + (pd ? 'no' : p >= ps ? 'ok' : 'no') + '">' + (pd ? 'تصحيح معلّق' : p >= ps ? 'ناجح' : 'راسب') + '</span></td><td>' + x.o.n + '</td><td style="color:' + (a.violations ? '#f87171' : 'inherit') + '">' + (a.violations || 0) + '</td><td>' + (a.seconds_spent != null ? Math.floor(a.seconds_spent / 60) + ':' + String(a.seconds_spent % 60).padStart(2, '0') : '—') + '</td><td>' + fdate(a.created_at) + '</td><td><button class="btn s" data-act="attempt" data-id="' + a.id + '">تفاصيل</button> <button class="btn s g" data-act="newTry" data-id="' + qz.id + '" data-s="' + x.s.id + '" title="فتح محاولة جديدة لهذا الطالب">🔁 محاولة جديدة</button></td></tr>'; }).join('');
   const notRows = not.map(s => '<tr><td>' + esc(fname(s)) + '</td><td dir="ltr">' + esc(s.phone_number) + '</td><td dir="ltr">' + esc(s.parent_phone || '—') + '</td><td>' + esc(s.academic_year) + '</td></tr>').join('');
   const misRows = mis.map(x => { const tot = x.ok + x.w + x.u, pr = Math.round((x.w + x.u) / tot * 100); return '<tr><td>' + x.q.position + '</td><td dir="auto">' + esc(x.q.question.slice(0, 140)) + '</td><td><b>' + x.w + '</b></td><td>' + x.u + '</td><td><span class="pill ' + (pr >= 50 ? 'no' : '') + '">' + pr + '%</span></td></tr>'; }).join('');
   const tab = (k, l, on) => '<button class="yt' + (on ? ' on' : '') + '" data-act="rsub" data-id="' + k + '">' + l + '</button>';
@@ -321,12 +327,23 @@ Object.assign(ACT, {
   xoAdd: id => { const q = xq(id); if (q.opts.length < 8) { q.opts.push(''); drawQs(); persist(); const i = document.querySelectorAll('.xq[data-u="' + id + '"] [data-f="opt"]'); if (i.length) i[i.length - 1].focus(); } },
   xoDel: (id, el) => { const q = xq(id), k = +el.dataset.k; if (q.opts.length <= 2) return; q.opts.splice(k, 1); if (q.ok === k) q.ok = -1; else if (q.ok > k) q.ok--; q.oks = q.oks.filter(x => x !== k).map(x => x > k ? x - 1 : x); drawQs(); persist(); },
   itAdd: async (id, el) => {
-    const k = el.dataset.k, lid = el.dataset.l, t = $('#ni_' + k + '_t').value.trim(), u = normUrl($('#ni_' + k + '_u').value);
+    const k = $('#ni_k').value, lid = el.dataset.l, t = $('#ni_t').value.trim(), u = normUrl($('#ni_u').value);
     if (!t) throw new Error('اكتب اسم العنصر'); if (!u) throw new Error('الرابط لازم يبدأ بـ https://');
-    const { data: last } = await sb.from('lesson_items').select('position').eq('lesson_id', lid).order('position', { ascending: false }).limit(1);
-    const row = { lesson_id: lid, kind: k, title: t, url: u, position: last && last[0] ? last[0].position + 1 : 1 }; if (k === 'pdf') row.allow_open = !!$('#ni_pdf_a').checked;
-    const { error } = await sb.from('lesson_items').insert(row); if (error) throw new Error((error.message || '').includes('allow_open') ? 'شغّل ملف SQL الجديد في Supabase الأول' : error.message);
+    const [a1, a2] = await Promise.all([sb.from('lesson_items').select('position').eq('lesson_id', lid).order('position', { ascending: false }).limit(1), sb.from('quizzes').select('lesson_pos').eq('lesson_id', lid).order('lesson_pos', { ascending: false }).limit(1)]);
+    const mx = Math.max((a1.data && a1.data[0] && a1.data[0].position) || 0, (a2.data && a2.data[0] && a2.data[0].lesson_pos) || 0, 0);
+    const { error } = await sb.from('lesson_items').insert({ lesson_id: lid, kind: k, title: t, url: u, position: mx + 1 }); if (error) throw error;
     toast('تمت الإضافة ✅'); itRefresh(lid);
+  },
+  itMv: async (id, el) => {
+    const lid = el.dataset.l, d = +el.dataset.d, rows = Array.from(document.querySelectorAll('#modal tr[data-t]')).map(r => ({ t: r.dataset.t, id: r.dataset.id })), i = rows.findIndex(r => r.id === id), j = i + d;
+    if (i < 0 || j < 0 || j >= rows.length) return; const tmp = rows[i]; rows[i] = rows[j]; rows[j] = tmp;
+    const { error } = await sb.rpc('reorder_lesson', { p_lesson: lid, p_order: rows }); if (error) throw new Error((error.message || '').includes('schema cache') || (error.message || '').includes('does not exist') ? 'شغّل ملف supabase_update_v6.sql في Supabase الأول' : error.message);
+    itRefresh(lid);
+  },
+  itGate: async (id, el) => {
+    const { error } = await sb.from(el.dataset.t === 'q' ? 'quizzes' : 'lesson_items').update({ gate: el.checked }).eq('id', id);
+    if (error) { el.checked = !el.checked; throw new Error((error.message || '').includes('gate') ? 'شغّل ملف supabase_update_v6.sql في Supabase الأول' : error.message); }
+    toast(el.checked ? '🔒 اتقفل اللي بعده لحد ما الطالب يخلّص ده' : 'اتفتح اللي بعده');
   },
   itEdit: async (id, el) => {
     const { data } = await sb.from('lesson_items').select('title,url').eq('id', id).single(); if (!data) return;
@@ -334,10 +351,6 @@ Object.assign(ACT, {
     const { error } = await sb.from('lesson_items').update({ title: t.trim(), url: nu }).eq('id', id); if (error) throw error; toast('تم التعديل ✅'); itRefresh(el.dataset.l);
   },
   itAllow: async (id, el) => { const { error } = await sb.from('lesson_items').update({ allow_open: el.checked }).eq('id', id); if (error) { el.checked = !el.checked; throw new Error((error.message || '').includes('allow_open') ? 'شغّل ملف SQL الجديد في Supabase الأول' : error.message); } toast(el.checked ? 'الطالب يقدر يفتحه خارج المنصة ✅' : 'اتقفل فتحه خارج المنصة 🔒'); },
-  itMove: async (id, el) => {
-    const lid = el.dataset.l, d = +el.dataset.d, { data } = await sb.from('lesson_items').select('id,kind,position').eq('lesson_id', lid).order('position'); const me = data.find(x => x.id === id), same = data.filter(x => x.kind === me.kind), i = same.findIndex(x => x.id === id), o = same[i + d]; if (!o) return;
-    const a = await sb.from('lesson_items').update({ position: o.position }).eq('id', me.id), b = await sb.from('lesson_items').update({ position: me.position }).eq('id', o.id); if (a.error || b.error) throw a.error || b.error; itRefresh(lid);
-  },
   delItem: async (id, el) => { if (!confirm('حذف العنصر؟')) return; const { error } = await sb.from('lesson_items').delete().eq('id', id); if (error) throw error; itRefresh(el.dataset.l); },
   rsub: (id, el) => { ['took', 'not', 'mis'].forEach(k => { const d = $('#rp_' + k); if (d) d.hidden = k !== id; }); document.querySelectorAll('#rpTabs .yt').forEach(b => b.classList.toggle('on', b === el)); },
   relRes: async (id, el) => {
@@ -346,6 +359,21 @@ Object.assign(ACT, {
     const { data, error } = await sb.rpc('set_results_released', { p_quiz: id, p_release: rel });
     if (error) throw new Error((error.message || '').includes('does not exist') || (error.message || '').includes('schema cache') ? 'شغّل ملف supabase_update_v5.sql في Supabase الأول' : error.message);
     toast(rel ? 'تم إظهار النتائج ✅ (إشعار لـ ' + (data || 0) + ' طالب)' : 'تم إخفاء النتائج 🔒'); go('results', id);
+  },
+  newTry: async (id, el) => {
+    const st = (S.students || []).find(x => x.id === el.dataset.s) || {};
+    if (!confirm('هتفتح محاولة جديدة للطالب ' + (st.first_name || '') + '؟\nمحاولاته القديمة في الامتحان ده هتتشال من قايمته (وبتتحفظ نسخة منها عندك) وهيوصله إشعار.')) return;
+    const { data, error } = await sb.rpc('grant_new_attempt', { p_quiz: id, p_student: el.dataset.s }); if (error) throw new Error((error.message || '').includes('schema cache') || (error.message || '').includes('does not exist') ? 'شغّل ملف supabase_update_v6.sql في Supabase الأول' : error.message);
+    toast('تم فتح محاولة جديدة ✅ (اتشال ' + (data || 0) + ' محاولة قديمة)'); go('results', id);
+  },
+  stNewTry: async (id, el) => {
+    const q = $('#rq').value; if (!q) throw new Error('اختار الامتحان'); el.dataset.s = id; await ACT.newTry(q, el); closeModal();
+  },
+  stResetCourse: async (id, el) => {
+    const c = $('#rc').value; if (!c) throw new Error('اختار الكورس');
+    if (!confirm('هتتمسح كل علامات الإنجاز للطالب في الكورس ده وهيبدأ من الأول. تكمل؟')) return;
+    const { error } = await sb.rpc('reset_course_progress', { p_course: c, p_student: id }); if (error) throw new Error((error.message || '').includes('does not exist') || (error.message || '').includes('schema cache') ? 'شغّل ملف supabase_update_v6.sql في Supabase الأول' : error.message);
+    toast('تمت إعادة فتح الكورس للطالب ✅'); closeModal();
   },
   rpdf: () => {
     const R = window.__rep, e = esc, d = new Date().toLocaleDateString('ar-EG');
@@ -373,3 +401,84 @@ Object.assign(ACT, {
     async f => { const row = { title: f.get('t').trim(), body: f.get('b').trim() || null, academic_year: f.get('y') || null }; const { error } = await sb.from('announcements').insert(row); if (error) throw new Error((error.message || '').includes('academic_year') ? 'شغّل ملف SQL الجديد في Supabase الأول' : error.message); toast('تم نشر الإعلان ✅'); go('ann'); }),
   saveFb: async (id, el) => { const { error } = await sb.rpc('set_feedback', { p_attempt: id, p_question: el.dataset.q, p_text: $('#fb' + el.dataset.i).value }); if (error) throw error; toast('تم حفظ التعليق ✅'); }
 });
+
+
+// ---------- إدارة الطالب: إعادة فتح امتحان / كورس ----------
+const _studentModal0 = studentModal;
+studentModal = function (id) {
+  _studentModal0(id);
+  (async () => {
+    const [q, e] = await Promise.all([sb.from('quizzes').select('id,title,kind,courses(title),academic_year').order('created_at', { ascending: false }).limit(300), sb.from('enrollments').select('course_id').eq('student_id', id)]);
+    const qo = (q.data || []).map(x => `<option value="${x.id}">${esc(x.title)} — ${esc(x.kind === 'comprehensive' ? 'شامل ' + (x.academic_year || '') : ((x.courses && x.courses.title) || ''))}</option>`).join('');
+    const ids = new Set((e.data || []).map(x => x.course_id)), co = S.courses.filter(c => ids.has(c.id)).map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join('');
+    const box = document.createElement('div'); box.className = 'card'; box.style.marginTop = '14px';
+    box.innerHTML = `<b>🔁 إعادة فتح</b><label>فتح محاولة جديدة في امتحان</label><div class="bar"><select id="rq"><option value="">— اختار الامتحان —</option>${qo}</select><button class="btn s" data-act="stNewTry" data-id="${id}">فتح محاولة</button></div>`
+      + (co ? `<label>إعادة فتح كورس من البداية (يمسح علامات الإنجاز)</label><div class="bar"><select id="rc">${co}</select><button class="btn s" data-act="stResetCourse" data-id="${id}">إعادة فتح</button></div>` : '');
+    const mb = document.querySelector('#mb'); if (mb) mb.appendChild(box);
+  })();
+};
+
+// ---------- الدعم الفني ----------
+const sp = { id: null, timer: null, status: 'open', img: null };
+const tfmt = d => new Date(d).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' });
+async function vSupport() {
+  clearInterval(sp.timer); sp.id = null;
+  const st = window.__spStatus || 'open';
+  const { data, error } = await sb.rpc('support_admin_list', { p_status: st }); if (error) throw new Error((error.message || '').includes('does not exist') || (error.message || '').includes('schema cache') ? 'شغّل ملف supabase_update_v6.sql في Supabase الأول' : error.message);
+  setTimeout(() => { if (document.querySelector('#spList')) sp.timer = setInterval(() => { if (window.__cur !== 'support') return clearInterval(sp.timer); if (sp.id) spThread(sp.id, true); else spRefreshList(); }, 6000); });
+  return '<div class="bar"><button class="yt' + (st === 'open' ? ' on' : '') + '" data-act="spTab" data-id="open">مفتوحة</button><button class="yt' + (st === 'closed' ? ' on' : '') + '" data-act="spTab" data-id="closed">منتهية</button><button class="yt' + (st === 'all' ? ' on' : '') + '" data-act="spTab" data-id="all">الكل</button></div>'
+    + '<div class="grid2" style="display:grid;grid-template-columns:minmax(260px,340px) 1fr;gap:14px"><div id="spList">' + spListHTML(data) + '</div><div id="spBox" class="card" style="min-height:360px"><div class="empty">اختار محادثة من القايمة</div></div></div>';
+}
+const spListHTML = d => (d || []).map(t => '<div class="card sprow" data-act="spOpen" data-id="' + t.id + '" style="margin-bottom:8px;cursor:pointer"><b>' + esc(t.name || 'طالب') + '</b>' + (t.verified === false ? ' <span class="pill no" title="كتب رقمه من غير تسجيل دخول">⚠️ غير موثّق</span>' : '') + (t.unread ? ' <span class="pill no">' + t.unread + ' جديد</span>' : '') + (t.status === 'closed' ? ' <span class="pill">منتهية</span>' : '') + '<br><small dir="ltr" style="color:var(--muted)">' + esc(t.phone) + ' • ' + tfmt(t.last_at) + '</small><br><small>' + esc((t.last || '').slice(0, 70)) + '</small></div>').join('') || '<div class="empty">لا توجد محادثات</div>';
+async function spRefreshList() { const { data } = await sb.rpc('support_admin_list', { p_status: window.__spStatus || 'open' }); const el = document.querySelector('#spList'); if (el && data) el.innerHTML = spListHTML(data); }
+function spMsgHTML(m) { return '<div class="spm ' + (m.sender === 'staff' ? 'me' : 'th') + '">' + (m.image_url ? '<a href="' + esc(m.image_url) + '" target="_blank" rel="noopener"><img src="' + esc(m.image_url) + '" alt="صورة" loading="lazy"></a>' : '') + (m.body ? '<div dir="auto">' + esc(m.body) + '</div>' : '') + '<small>' + tfmt(m.created_at) + '</small></div>'; }
+async function spThread(id, quiet) {
+  sp.id = id; const { data, error } = await sb.rpc('support_admin_thread', { p_thread: id }); if (error) throw error;
+  const box = document.querySelector('#spBox'); if (!box) return;
+  const feed = box.querySelector('#spFeed'), near = feed ? feed.scrollHeight - feed.scrollTop - feed.clientHeight < 80 : true;
+  if (quiet && feed && feed.dataset.n === String(data.messages.length) && feed.dataset.s === data.status) return;
+  const draft = box.querySelector('#spTxt') ? box.querySelector('#spTxt').value : '';
+  box.innerHTML = '<div class="bar" style="margin-bottom:8px"><b>' + esc(data.name || 'طالب') + '</b><span dir="ltr" style="color:var(--muted)">' + esc(data.phone) + '</span>' + (data.verified === false ? '<span class="pill no" title="الطالب كتب الرقم من غير تسجيل دخول، اتأكد من هويته قبل ما تشاركه أي بيانات">⚠️ غير موثّق</span>' : '') + '<span class="pill ' + (data.status === 'open' ? 'ok' : 'no') + '">' + (data.status === 'open' ? 'مفتوحة' : 'منتهية') + '</span><button class="btn s ' + (data.status === 'open' ? 'r' : 'g') + '" data-act="spClose" data-id="' + id + '" data-c="' + (data.status === 'open' ? 1 : 0) + '" style="margin-right:auto">' + (data.status === 'open' ? '⛔ إنهاء المحادثة' : '↩️ إعادة فتحها') + '</button></div>'
+    + '<div id="spFeed" data-n="' + data.messages.length + '" data-s="' + data.status + '">' + data.messages.map(spMsgHTML).join('') + '</div>'
+    + (data.status === 'open' ? '<div class="spin"><textarea id="spTxt" dir="auto" placeholder="اكتب ردك..." rows="2">' + esc(draft) + '</textarea><input type="file" id="spImg" accept="image/*" hidden><button class="btn s g" data-act="spPick" title="إرفاق صورة">📎</button><button class="btn" data-act="spSend" data-id="' + id + '">إرسال</button></div><small id="spInfo" style="color:var(--muted)"></small>' : '<p class="nt" style="margin-top:10px">المحادثة منتهية — الطالب لو راسل تاني هيبدأ محادثة جديدة، وده السجل محفوظ هنا.</p>');
+  const f2 = box.querySelector('#spFeed'); if (f2 && (near || !quiet)) f2.scrollTop = f2.scrollHeight;
+  if (!quiet) spRefreshList();
+}
+async function spUpload(file) {
+  const img = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('الملف مش صورة')); i.src = r.result; }; r.onerror = rej; r.readAsDataURL(file); });
+  const k = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
+  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .82)); const path = 'u/s-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+  const { error } = await sb.storage.from('support-files').upload(path, blob, { contentType: 'image/jpeg' }); if (error) throw error;
+  return sb.storage.from('support-files').getPublicUrl(path).data.publicUrl;
+}
+Object.assign(ACT, {
+  spTab: id => { window.__spStatus = id; go('support'); },
+  spOpen: id => spThread(id),
+  spPick: () => { const f = $('#spImg'); f.onchange = async () => { const file = f.files[0]; if (!file) return; const info = $('#spInfo'); info.textContent = '⏳ جاري رفع الصورة...'; try { sp.img = await spUpload(file); info.textContent = '✅ الصورة جاهزة — اضغط إرسال'; } catch (e) { sp.img = null; info.textContent = '⚠️ تعذر رفع الصورة'; } }; f.click(); },
+  spSend: async (id, el) => {
+    const t = $('#spTxt').value.trim(); if (!t && !sp.img) return; el.disabled = true;
+    const { error } = await sb.rpc('support_admin_reply', { p_thread: id, p_body: t || null, p_image: sp.img || null }); el.disabled = false; if (error) throw error;
+    sp.img = null; $('#spTxt').value = ''; await spThread(id);
+  },
+  spClose: async (id, el) => { if (el.dataset.c === '1' && !confirm('إنهاء المحادثة؟ السجل هيفضل محفوظ.')) return; const { error } = await sb.rpc('support_admin_close', { p_thread: id, p_close: el.dataset.c === '1' }); if (error) throw error; await spThread(id); }
+});
+VIEWS.support = ['الدعم الفني', vSupport];
+
+// ---------- فريق العمل (صلاحيات محدودة) ----------
+const PERMS = [['support', '💬 الدعم الفني (الرد على الطلاب)'], ['ann', '📢 الإعلانات والإشعارات'], ['results', '🎓 النتائج والتقارير وتصحيح المقالي'], ['students', '👥 الطلاب (عرض + فتح محاولة جديدة / إعادة كورس)'], ['content', '📚 المحتوى: الكورسات والدروس والامتحانات']];
+async function vStaff() {
+  const { data, error } = await sb.rpc('staff_list'); if (error) { if ((error.message || '').includes('forbidden')) return '<div class="empty">🔒 هذا القسم للمالك فقط.</div>'; throw new Error((error.message || '').includes('does not exist') || (error.message || '').includes('schema cache') ? 'شغّل ملف supabase_update_v6.sql في Supabase الأول' : error.message); }
+  const pb = (sel) => PERMS.map(p => '<label class="chk"><input type="checkbox" class="pm" value="' + p[0] + '"' + (sel.includes(p[0]) ? ' checked' : '') + '> ' + p[1] + '</label>').join('');
+  return '<div class="card" style="margin-bottom:16px"><b>➕ إضافة عضو فريق</b><p class="nt" style="margin:6px 0 10px;line-height:1.9">اكتب إيميل الحساب أو رقم الهاتف المسجّل بيه في المنصة. العضو هيدخل من صفحة <b>/admin</b> بنفس حسابه، ومش هيشوف غير الأقسام اللي تديله صلاحيتها.</p><input id="sf_w" dir="ltr" placeholder="الإيميل أو رقم الهاتف">' + pb(['support']) + '<button class="btn" data-act="stfAdd" style="margin-top:10px">إضافة</button></div>'
+    + '<div class="tw"><table><tr><th>العضو</th><th>الصلاحيات</th><th></th></tr>' + (data.map(m => '<tr><td>' + esc(m.label || '—') + '<br><small dir="ltr" style="color:var(--muted)">' + esc(m.email || '') + '</small></td><td>' + (m.perms || []).map(p => '<span class="pill ok">' + esc((PERMS.find(x => x[0] === p) || [p, p])[1]) + '</span>').join(' ') + '</td><td><button class="btn s r" data-act="stfDel" data-id="' + m.user_id + '">إزالة</button></td></tr>').join('') || '<tr><td colspan="3" class="empty">لا يوجد أعضاء بعد</td></tr>') + '</table></div>'
+    + '<p class="nt" style="margin-top:10px;line-height:1.9">ملاحظة: صلاحية «مسؤول» الكاملة بتتدار من قسم «المسؤولون». أعضاء الفريق هنا صلاحياتهم محدودة بالأقسام المذكورة بس.</p>';
+}
+Object.assign(ACT, {
+  stfAdd: async () => { const w = $('#sf_w').value.trim(), perms = Array.from(document.querySelectorAll('.pm:checked')).map(x => x.value); if (!w) throw new Error('اكتب الإيميل أو الهاتف'); if (!perms.length) throw new Error('اختار صلاحية واحدة على الأقل'); const { error } = await sb.rpc('staff_add', { p_who: w, p_perms: perms }); if (error) throw new Error((error.message || '').includes('user_not_found') ? 'مفيش حساب بالإيميل/الرقم ده' : error.message); toast('تمت الإضافة ✅'); go('staff'); },
+  stfDel: async id => { if (!confirm('إزالة العضو من الفريق؟')) return; const { error } = await sb.rpc('staff_remove', { p_user: id }); if (error) throw error; toast('تمت الإزالة'); go('staff'); }
+});
+VIEWS.staff = ['فريق العمل', vStaff];
+if (typeof NAV !== 'undefined' && !NAV.some(n => n[0] === 'support')) { NAV.splice(NAV.length - 1, 0, ['support', '💬', 'الدعم الفني']); NAV.push(['staff', '👷', 'فريق العمل']); }
+
+// CSS
+(function () { const st = document.createElement('style'); st.textContent = '#spFeed{max-height:52vh;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:6px 2px}.spm{max-width:78%;padding:9px 12px;border-radius:14px;line-height:1.8;font-weight:600;white-space:pre-wrap;word-break:break-word}.spm small{display:block;font-size:11px;opacity:.65;margin-top:3px}.spm img{max-width:240px;max-height:240px;border-radius:10px;display:block;margin-bottom:4px}.spm.th{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}.spm.me{align-self:flex-end;background:rgba(99,102,241,.18)}.spin{display:flex;gap:8px;align-items:flex-end;margin-top:10px}.spin textarea{min-height:48px}.sprow:hover{border-color:var(--brand)}@media(max-width:760px){.grid2{grid-template-columns:1fr!important}}'; document.head.appendChild(st); })();
