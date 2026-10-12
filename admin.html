@@ -103,16 +103,24 @@ const fdate = d => new Date(d).toLocaleDateString('ar-EG', { year: 'numeric', mo
 async function gate() {
   const { data } = await sb.auth.getSession();
   if (!data.session) return showLogin();
-  const { data: ok } = await sb.rpc('is_admin');
-  if (ok !== true) { await sb.auth.signOut({ scope: 'local' }); return showLogin('هذا الحساب لا يملك صلاحية الإدارة.'); }
+  const { data: ok } = await sb.rpc('is_admin'); let perms = null;
+  if (ok !== true) { try { const r = await sb.rpc('staff_perms'); if (Array.isArray(r.data) && r.data.length && r.data[0] !== '*') perms = r.data; } catch (e) {} }
+  if (ok !== true && !perms) { await sb.auth.signOut({ scope: 'local' }); return showLogin('هذا الحساب لا يملك صلاحية الإدارة.'); }
+  window.__perms = perms;                 // null = مسؤول كامل، غير كده = عضو فريق بصلاحيات محدودة
+  if (perms) {                              // عضو فريق: الأقسام بتتحدد من صلاحياته (والسيرفر بيتأكد كمان)
+    const PMAP = { support: ['support'], ann: ['ann'], students: ['students'], results: ['exams', 'results', 'essay', 'sres'], content: ['courses', 'lessons', 'exams', 'xbuild', 'questions', 'bulk'] };
+    const allow = new Set(); perms.forEach(p => (PMAP[p] || []).forEach(v => allow.add(v))); window.__allow = allow;
+    for (let i = NAV.length - 1; i >= 0; i--) if (!allow.has(NAV[i][0])) NAV.splice(i, 1);
+    if (!NAV.length) { await sb.auth.signOut({ scope: 'local' }); return showLogin('الصلاحيات المعيّنة لك مش مفعّلة بعد.'); }
+  }
   $('#login').hidden = true; $('#app').hidden = false; $('#who').textContent = data.session.user.email;
   $('#nav').innerHTML = NAV.map(n => n[0].startsWith('x') ? '<a class="off">' + n[1] + ' ' + n[2] + '<small>قريباً</small></a>' : '<a data-go="' + n[0] + '">' + n[1] + ' ' + n[2] + '</a>').join('');
-  await loadCourses();
-  const h = decodeURIComponent(location.hash.slice(1)).split('/'), v0 = VIEWS[h[0]] && h[0] !== 'bulk' ? h[0] : 'overview';
+  if (!perms || perms.some(p => p !== 'support')) { try { await loadCourses(); } catch (e) {} }
+  const h = decodeURIComponent(location.hash.slice(1)).split('/'), v0 = VIEWS[h[0]] && h[0] !== 'bulk' && (!perms || window.__allow.has(h[0])) ? h[0] : (perms ? NAV[0][0] : 'overview');
   go(v0, h[1] || undefined);
   if (!window.__guard) {      // حماية: تأكد كل دقيقة إن الحساب لسه أدمن، وإلا اقفل اللوحة
     window.__guard = true;
-    const chk = async () => { try { const { data: s2 } = await sb.auth.getSession(); if (!s2.session) return location.reload(); const { data: ok2, error: e2 } = await sb.rpc('is_admin'); if (!e2 && ok2 !== true) { await sb.auth.signOut({ scope: 'local' }); location.reload(); } } catch (e) {} };
+    const chk = async () => { try { const { data: s2 } = await sb.auth.getSession(); if (!s2.session) return location.reload(); const { data: ok2, error: e2 } = await sb.rpc('is_admin'); let okS = false; if (!e2 && ok2 !== true && window.__perms) { const r2 = await sb.rpc('staff_perms'); okS = Array.isArray(r2.data) && r2.data.length > 0 && r2.data[0] !== '*'; } if (!e2 && ok2 !== true && !okS) { await sb.auth.signOut({ scope: 'local' }); location.reload(); } } catch (e) {} };
     setInterval(chk, 60000); document.addEventListener('visibilitychange', () => { if (!document.hidden) chk(); });
   }
 }
@@ -134,6 +142,7 @@ async function loadStudents() {
 // ===== التنقل =====
 const VIEWS = { overview: ['نظرة عامة', vOverview], courses: ['الكورسات', vCourses], students: ['الطلاب', vStudents], codes: ['أكواد التفعيل', vCodes] };
 async function go(v, arg) {
+  if (window.__allow && !window.__allow.has(v)) { toast('🔒 مفيش عندك صلاحية للقسم ده'); return; }
   window.__cur = v;
   try { history.replaceState(null, '', '#' + v + (typeof arg === 'string' && arg ? '/' + encodeURIComponent(arg) : '')); } catch (e) {}   // الصفحة تفضل في نفس القسم بعد التحديث
   document.querySelectorAll('#nav a').forEach(a => a.classList.toggle('on', a.dataset.go === v));
