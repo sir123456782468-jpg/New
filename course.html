@@ -27,6 +27,8 @@ body{background:var(--bg);color:var(--ink);min-height:100vh}
 .empty{aspect-ratio:16/9;display:grid;place-items:center;text-align:center;background:var(--card);border:2px dashed var(--line);border-radius:18px;color:var(--muted);font-weight:700;line-height:2;padding:20px}.empty i{display:block;font-size:46px;font-style:normal}
 .lt{margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.lt h2{font-size:19px}
 .acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.note{margin-top:12px;padding:14px;border-radius:14px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.5);font-weight:600;line-height:1.9;white-space:pre-wrap}
+.pcard{text-align:center;padding:34px 22px}.pcard h2{font-size:22px;margin-bottom:10px}.pcard p{color:var(--muted);font-weight:600;line-height:1.9;margin-bottom:20px}.pbtns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}.pbtns .btn{flex:1;min-width:150px;text-align:center}.pbtns .btn.dl{background:#c9d04a;color:#1a1a1a}
+.inav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}.inav .btn{flex:1}.ictr{font-weight:800;color:var(--muted);flex:none}.inav .btn.go{background:var(--ok,#16a34a);color:#fff}.inav .btn[disabled]{opacity:.45;cursor:not-allowed}.ci.lk{opacity:.55}
 .ch{margin:12px 0 6px;font-weight:800;font-size:14px;color:var(--muted)}
 .sec{font-size:12px;font-weight:900;color:var(--brand);padding:12px 6px 6px}
 .ls{max-height:70vh;overflow:auto}.li{display:flex;align-items:center;gap:10px;padding:11px 10px;margin-bottom:5px;border-radius:12px;border:1px solid transparent;cursor:pointer;font-weight:700;font-size:14px}
@@ -157,7 +159,7 @@ const C = { course: null, lessons: [], on: false, done: new Set(), exams: [], cu
 let wmTimer = null, ITEMS = [], SEEN = new Set(), FILE = null;
 const toast = m => { const e = document.createElement('div'); e.className = 'toast'; e.textContent = m; $('#toasts').appendChild(e); setTimeout(() => e.remove(), 3000); };
 const canOpen = l => C.on || l.is_free;
-const quizQ = async () => { const c = 'id,title,kind,time_limit_minutes,opens_at,closes_at'; let r; for (const ex of [',lesson_id,is_homework,num', ',lesson_id,is_homework', ',lesson_id', '']) { r = await supabaseClient.from('quizzes').select(c + ex).eq('course_id', CID); if (!r.error) break; } return r; };
+const quizQ = async () => { const c = 'id,title,kind,time_limit_minutes,opens_at,closes_at'; let r; for (const ex of [',lesson_id,is_homework,num,lesson_pos,gate', ',lesson_id,is_homework,num', ',lesson_id,is_homework', ',lesson_id', '']) { r = await supabaseClient.from('quizzes').select(c + ex).eq('course_id', CID); if (!r.error) break; } return r; };
 const lecUrl = id => '/course.html?id=' + encodeURIComponent(CID) + '&l=' + encodeURIComponent(id);
 const lecPretty = id => { const i = C.lessons.findIndex(x => x.id === id); return courseUrl() + (i >= 0 ? '/lesson-' + (i + 1) : ''); };
 
@@ -218,71 +220,104 @@ const seenKey = () => 'seen_' + currentUser.id + '_' + C.cur;
 function markSeen(k) { SEEN.add(k); try { localStorage.setItem(seenKey(), JSON.stringify(Array.from(SEEN))); } catch (e) {} }
 
 const openUrl = u => { const m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/); return /drive\.google\.com/.test(u) && m ? 'https://drive.google.com/file/d/' + m[1] + '/view' : u; };
+const dlUrl = u => { const m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/); return /drive\.google\.com/.test(u) && m ? 'https://drive.google.com/uc?export=download&id=' + m[1] : u; };
+let LIST = [], PROGSRV = false, IPROG = new Set(), CURI = 0;
+const isDone = x => x.type === 'quiz' ? C.tried.has(x.id) : (PROGSRV ? IPROG.has(x.id) : SEEN.has(x.key));
+const lockedAt = i => { for (let j = 0; j < i; j++) if (LIST[j].gate && !isDone(LIST[j])) return true; return false; };
+const ico = x => x.type === 'quiz' ? (x.is_homework ? '📚 ' : '📝 ') : x.kind === 'video' ? '🎬 ' : x.kind === 'pdf' ? '📄 ' : x.kind === 'file' ? '📄 ' : '🔗 ';
+const quizState = x => { const n = Date.now(), o = x.opens_at && new Date(x.opens_at) > n, cl = x.closes_at && new Date(x.closes_at) < n; return o ? 'o' : (cl && !C.tried.has(x.id)) ? 'c' : ''; };
+
+async function markItemDone(x) {
+  if (!x || x.type === 'quiz' || x.id == null || isDone(x)) return;
+  SEEN.add(x.key); try { localStorage.setItem(seenKey(), JSON.stringify(Array.from(SEEN))); } catch (e) {}
+  if (PROGSRV && x.id !== 'v' && x.id !== 'f') { IPROG.add(x.id); try { await supabaseClient.from('item_progress').insert({ student_id: currentUser.id, item_id: x.id }); } catch (e) {} }
+  drawList(); autoLesson();
+}
+async function autoLesson() {
+  const its = LIST.filter(x => x.type === 'item');
+  if (!its.length || C.done.has(C.cur) || !its.every(isDone)) return;
+  const { error } = await supabaseClient.from('lesson_progress').insert({ student_id: currentUser.id, lesson_id: C.cur });
+  if (!error || error.code === '23505') { C.done.add(C.cur); toast('أحسنت! خلّصت المحاضرة ✅'); }
+}
+function drawList() {
+  $('#itemList').innerHTML = LIST.map((x, i) => {
+    const lk = lockedAt(i), dn = isDone(x), st = x.type === 'quiz' ? quizState(x) : '';
+    return '<div class="ci' + (dn ? ' seen' : '') + (lk ? ' lk' : '') + (i === CURI ? ' on' : '') + '" data-i="' + i + '"><span>' + ico(x) + esc(x.title) + (lk ? '<small>🔒 خلّص اللي قبله الأول</small>' : st === 'o' ? '<small>لم يفتح بعد</small>' : st === 'c' ? '<small>انتهى</small>' : x.type === 'quiz' ? '<small>' + (x.is_homework ? 'واجب' : 'امتحان') + '</small>' : '') + '</span><span class="ck">' + (lk ? '🔒' : '✓') + '</span></div>';
+  }).join('') || '<div class="empty" style="aspect-ratio:auto;border:0">لا يوجد محتوى بعد</div>';
+  $$('#itemList .ci').forEach(b => b.onclick = () => gotoItem(+b.dataset.i));
+}
+function gotoItem(i) {
+  if (i < 0 || i >= LIST.length) return;
+  if (lockedAt(i)) return toast('🔒 لازم تخلّص اللي قبله الأول');
+  showItem(i);
+}
+function pdfCard(x) {
+  return '<div class="card pcard"><h2>' + esc(x.title) + '</h2><p>تقدر تفتح الملف في تاب جديدة، أو تنزّله على جهازك عشان ترجعله في أي وقت.</p><div class="pbtns"><a class="btn dl" href="' + esc(dlUrl(x.url)) + '" target="_blank" rel="noopener" download>⬇️ نزّل الملف</a><a class="btn" href="' + esc(openUrl(x.url)) + '" target="_blank" rel="noopener">👁 افتح الملف</a></div></div>';
+}
 function showItem(i) {
-  const x = ITEMS[i], p = currentProfile, wm = [p.first_name, p.last_name].join(' ') + ' • ' + p.phone_number;
-  $$('#itemList .ci[data-i]').forEach(b => { b.classList.toggle('on', +b.dataset.i === i); });
-  clearInterval(wmTimer);
-  markSeen(x.key); const row = $('#itemList .ci[data-i="' + i + '"]'); if (row) row.classList.add('seen');
-  if (x.kind === 'link') { $('#player').innerHTML = '<div class="empty"><div><i>🔗</i>' + esc(x.title) + '<br><br><a class="btn" href="' + esc(x.url) + '" target="_blank" rel="noopener">فتح الرابط</a></div></div>'; return; }
-  const e = embedOf(x.url);
-  if (!e) { $('#player').innerHTML = '<div class="empty"><div><i>⚠️</i>الرابط غير صالح</div></div>'; return; }
-  $('#player').innerHTML = '<div class="vwrap' + (x.kind === 'pdf' ? ' pdf' : '') + '" id="vw"><iframe src="' + esc(e.src) + '" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>' + (e.yt ? '<div class="sh t"></div><div class="sh b"></div>' : '') + (e.dr && !x.allow_open ? '<div class="sh dr"></div>' : '') + '<div class="wm" id="wm">' + esc(wm) + '</div></div>' + (x.allow_open ? '<div class="acts"><a class="btn g" target="_blank" rel="noopener" href="' + esc(openUrl(x.url)) + '">↗ فتح خارج المنصة (مسموح من المدرس)</a></div>' : (x.kind === 'pdf' ? '<p style="margin-top:10px;color:var(--muted);font-weight:700;font-size:13px">📄 الملف بيتفتح جوه المنصة فقط.</p>' : ''));
-  startWm();
+  const x = LIST[i], p = currentProfile, wm = [p.first_name, p.last_name].join(' ') + ' • ' + p.phone_number;
+  CURI = i; clearInterval(wmTimer);
+  let body = '';
+  if (x.type === 'quiz') {
+    const st = quizState(x), tr = C.tried.has(x.id);
+    body = '<div class="card pcard"><h2>' + (x.is_homework ? '📚 ' : '📝 ') + esc(x.title) + '</h2><p>' + (x.is_homework ? 'ده واجب المحاضرة.' : 'ده امتحان على المحاضرة.') + (tr ? ' ✅ حليته قبل كده.' : '') + '</p><div class="pbtns">' + (st === 'o' ? '<span class="badge">لسه ما فتحش</span>' : st === 'c' ? '<span class="badge">انتهى الوقت</span>' : '<a class="btn" href="' + quizUrl(x) + '">' + (tr ? 'عرض / محاولة جديدة' : 'ابدأ الآن') + '</a>') + '</div></div>';
+  } else if (x.kind === 'pdf') { body = pdfCard(x); markItemDone(x); }
+  else if (x.kind === 'file') { body = '<div class="card pcard"><h2>📄 ' + esc(x.title) + '</h2><p>ملف المحاضرة.</p><div class="pbtns"><button class="btn" id="fileBtn">👁 افتح / نزّل الملف</button></div></div>'; }
+  else if (x.kind === 'link') { body = '<div class="card pcard"><h2>🔗 ' + esc(x.title) + '</h2><div class="pbtns"><a class="btn" href="' + esc(x.url) + '" target="_blank" rel="noopener">فتح الرابط</a></div></div>'; markItemDone(x); }
+  else {
+    const e = embedOf(x.url);
+    body = e ? '<div class="vwrap" id="vw"><iframe src="' + esc(e.src) + '" allow="encrypted-media; picture-in-picture; fullscreen" allowfullscreen referrerpolicy="strict-origin-when-cross-origin"></iframe>' + (e.yt ? '<div class="sh t"></div><div class="sh b"></div>' : '') + (e.dr ? '<div class="sh dr"></div>' : '') + '<div class="wm" id="wm">' + esc(wm) + '</div></div>' : '<div class="empty"><div><i>⚠️</i>الرابط غير صالح</div></div>';
+    if (!x.gate) markItemDone(x);
+  }
+  const nxLocked = i + 1 < LIST.length && lockedAt(i + 1) && !(x.gate && !isDone(x));
+  const needDone = x.gate && !isDone(x);
+  $('#player').innerHTML = body + '<div class="inav"><button class="btn g" id="ipv"' + (i === 0 ? ' disabled' : '') + '>→ السابق</button><span class="ictr">' + (i + 1) + ' / ' + LIST.length + '</span><button class="btn' + (needDone ? ' go' : '') + '" id="inx"' + (i + 1 >= LIST.length ? ' disabled' : '') + '>' + (needDone ? (x.type === 'quiz' ? 'لازم تحل ده الأول 🔒' : 'أنهيت ← التالي') : 'التالي ←') + '</button></div>';
+  $('#ipv').onclick = () => gotoItem(i - 1);
+  $('#inx').onclick = async () => {
+    if (needDone) { if (x.type === 'quiz') return toast('🔒 لازم تحل ده الأول'); await markItemDone(x); }
+    gotoItem(i + 1);
+  };
+  const fb = $('#fileBtn'); if (fb) fb.onclick = async () => { const { data: sg, error } = await supabaseClient.storage.from('lesson-files').createSignedUrl(FILE, 3600); if (error) return toast('تعذر فتح الملف'); window.open(sg.signedUrl, '_blank', 'noopener'); markItemDone(x); };
+  drawList(); startWm();
 }
 
 async function open(id) {
   const l = C.lessons.find(x => x.id === id); if (!l) return fail('المحاضرة غير موجودة');
   if (!canOpen(l)) { toast('🔒 اشترك في الكورس الأول عشان تفتح المحاضرة'); setTimeout(() => location.replace(courseReal()), 900); return; }
   C.cur = id;
-  const [it, ct] = await Promise.all([
-    (async () => { let r = await supabaseClient.from('lesson_items').select('id,kind,title,url,position,allow_open').eq('lesson_id', id).order('position'); if (r.error) r = await supabaseClient.from('lesson_items').select('id,kind,title,url,position').eq('lesson_id', id).order('position'); return r; })(),
-    supabaseClient.from('lesson_content').select('video_url,notes,attachment_path').eq('lesson_id', id).maybeSingle()
+  const [it, ct, ip] = await Promise.all([
+    (async () => { let r; for (const c of ['id,kind,title,url,position,gate', 'id,kind,title,url,position']) { r = await supabaseClient.from('lesson_items').select(c).eq('lesson_id', id).order('position'); if (!r.error) break; } return r; })(),
+    supabaseClient.from('lesson_content').select('video_url,notes,attachment_path').eq('lesson_id', id).maybeSingle(),
+    supabaseClient.from('item_progress').select('item_id')
   ]);
-  ITEMS = (it.data || []).map(x => Object.assign({ key: x.id }, x)); const d = ct.data || {};
-  if (d.video_url) ITEMS.unshift({ kind: 'video', title: 'فيديو المحاضرة', url: d.video_url, key: 'v' });
-  FILE = d.attachment_path || null;
+  const d = ct.data || {}; PROGSRV = !ip.error; IPROG = new Set((ip.data || []).map(x => x.item_id));
   try { SEEN = new Set(JSON.parse(localStorage.getItem(seenKey()) || '[]')); } catch (e) { SEEN = new Set(); }
+  const items = (it.data || []).map(x => ({ type: 'item', key: x.id, id: x.id, kind: x.kind, title: x.title, url: x.url, pos: x.position == null ? 0 : x.position, gate: !!x.gate }));
+  const quizzes = C.on ? C.exams.filter(x => x.lesson_id === id).map(x => Object.assign({ type: 'quiz', pos: x.lesson_pos == null ? 100000 : x.lesson_pos, gate: !!x.gate }, x)) : [];
+  LIST = items.concat(quizzes).map((x, k) => (x._k = k, x)).sort((a, b) => (a.pos - b.pos) || (a.type === b.type ? a._k - b._k : a.type === 'item' ? -1 : 1));
+  if (d.video_url && !items.some(x => x.kind === 'video' && x.url === d.video_url)) LIST.unshift({ type: 'item', key: 'v', id: 'v', kind: 'video', title: 'فيديو المحاضرة', url: d.video_url, gate: false });
+  FILE = d.attachment_path || null;
+  if (FILE) LIST.push({ type: 'item', key: 'f', id: 'f', kind: 'file', title: 'ملف المحاضرة', gate: false });
 
-  const idx = C.lessons.findIndex(x => x.id === id), dn = C.done.has(id);
+  const idx = C.lessons.findIndex(x => x.id === id);
   const nx = C.lessons.slice(idx + 1).find(canOpen), pv = C.lessons.slice(0, idx).reverse().find(canOpen);
-  const lq = C.on ? C.exams.filter(x => x.lesson_id === id) : [];
-  const ico = k => k === 'video' ? '🎬 ' : k === 'pdf' ? '📄 ' : '🔗 ';
-  const qrow = x => { const n = Date.now(), o = x.opens_at && new Date(x.opens_at) > n, cl = x.closes_at && new Date(x.closes_at) < n; return '<div class="ci' + (C.tried.has(x.id) ? ' seen' : '') + '" data-q="' + x.id + '" data-s="' + (o ? 'o' : cl ? 'c' : '') + '"><span>' + (x.is_homework ? '📚 ' : '📝 ') + esc(x.title) + (o ? '<small>لم يفتح بعد</small>' : cl && !C.tried.has(x.id) ? '<small>انتهى</small>' : '') + '</span><span class="ck">✓</span></div>'; };
-  const hw = lq.filter(x => x.is_homework), ex = lq.filter(x => !x.is_homework);
-  const list = ITEMS.map((x, i) => '<div class="ci' + (SEEN.has(x.key) ? ' seen' : '') + '" data-i="' + i + '"><span>' + ico(x.kind) + esc(x.title) + '</span><span class="ck">✓</span></div>').join('')
-    + (hw.length ? '<div class="ch">📚 الواجب</div>' + hw.map(qrow).join('') : '') + (ex.length ? '<div class="ch">📝 اختبارات المحاضرة</div>' + ex.map(qrow).join('') : '')
-    + (FILE ? '<div class="ci" data-f="1"><span>📄 ملف المحاضرة</span><span class="ck"></span></div>' : '');
-
   $('#root').innerHTML = '<div class="top"><div><p>' + esc(C.course.title) + '</p><h1>' + esc(l.title) + '</h1></div><a class="btn g" href="' + courseReal() + '">← كل المحاضرات</a></div>'
-    + '<div class="grid lg"><aside><div class="card"><b style="display:block;margin-bottom:12px;font-size:17px">محتوى المحاضرة</b><div id="itemList">' + (list || '<div class="empty" style="aspect-ratio:auto;border:0">لا يوجد محتوى بعد</div>') + '</div></div></aside>'
+    + '<div class="grid lg"><aside><div class="card"><b style="display:block;margin-bottom:12px;font-size:17px">محتوى المحاضرة</b><div id="itemList"></div></div></aside>'
     + '<div><div id="player"></div>'
-    + '<div class="acts"><button class="btn' + (dn ? ' g' : '') + '" id="dn">' + (dn ? '✓ تم الإنجاز (إلغاء)' : 'إنهاء المحاضرة ✅') + '</button></div>'
     + (d.notes ? '<div class="note">' + esc(d.notes) + '</div>' : '')
     + '<div class="pn">' + (pv ? '<a class="btn g" href="' + lecUrl(pv.id) + '">→ المحاضرة السابقة</a>' : '<span></span>') + (nx ? '<a class="btn g" href="' + lecUrl(nx.id) + '">المحاضرة التالية ←</a>' : '') + '</div></div></div>';
-
-  $$('#itemList .ci').forEach(b => b.onclick = async () => {
-    if (b.dataset.q) { if (b.dataset.s === 'o') return toast('الامتحان لسه ما فتحش'); if (b.dataset.s === 'c' && !C.tried.has(b.dataset.q)) return toast('انتهى وقت الامتحان'); location.href = quizUrl(C.exams.find(z => z.id === b.dataset.q) || { id: b.dataset.q }); return; }
-    if (b.dataset.f) { const { data: s, error } = await supabaseClient.storage.from('lesson-files').createSignedUrl(FILE, 3600); if (error) return toast('تعذر فتح الملف'); window.open(s.signedUrl, '_blank', 'noopener'); return; }
-    showItem(+b.dataset.i);
-  });
-  $('#dn').onclick = () => toggleDone(id);
-  if (ITEMS.length) showItem(0); else $('#player').innerHTML = '<div class="empty"><div><i>📭</i>لا يوجد محتوى لهذه المحاضرة بعد</div></div>';
+  drawList();
+  if (LIST.length) { const f = LIST.findIndex((x, i) => !lockedAt(i)); showItem(Math.max(f, 0)); } else $('#player').innerHTML = '<div class="empty"><div><i>📭</i>لا يوجد محتوى لهذه المحاضرة بعد</div></div>';
 }
 function startWm() {
   clearInterval(wmTimer); const w = $('#wm'), box = $('#vw'); if (!w || !box) return;
   const mv = () => { w.style.top = (8 + Math.random() * (box.clientHeight - 50)) + 'px'; w.style.left = (8 + Math.random() * Math.max(10, box.clientWidth - w.clientWidth - 16)) + 'px'; };
   mv(); wmTimer = setInterval(mv, 4000);
 }
-async function toggleDone(id) {
-  const b = $('#dn'); b.disabled = true;
-  const q = C.done.has(id) ? supabaseClient.from('lesson_progress').delete().eq('student_id', currentUser.id).eq('lesson_id', id) : supabaseClient.from('lesson_progress').insert({ student_id: currentUser.id, lesson_id: id });
-  const { error } = await q; if (error && error.code !== '23505') { toast('تعذر الحفظ'); b.disabled = false; return; }
-  if (C.done.has(id)) C.done.delete(id); else { C.done.add(id); toast('أحسنت! ✅'); }
-  const dn = C.done.has(id); b.disabled = false; b.className = 'btn' + (dn ? ' g' : ''); b.textContent = dn ? '✓ تم الإنجاز (إلغاء)' : 'إنهاء المحاضرة ✅';
-}
 // منع كليك يمين على المشغّل
 document.addEventListener('contextmenu', e => { if (e.target.closest('.vwrap')) e.preventDefault(); });
 if (window.currentProfile) init(); else document.addEventListener('auth-ready', init);
 </script>
+<script src="/support-widget.js" defer></script>
 </body>
 </html>
