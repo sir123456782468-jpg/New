@@ -17,12 +17,15 @@
     + '#spw .i{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line,#ddd);align-items:flex-end}#spw textarea{flex:1;resize:none;border:1px solid var(--line,#ddd);border-radius:12px;padding:8px 10px;font:600 14px Cairo,sans-serif;background:var(--card,#fff);color:var(--ink,#111);min-height:40px;max-height:90px}'
     + '#spw .i button,#spw .pn button{border:0;border-radius:12px;padding:0 12px;min-height:40px;font:800 14px Cairo,sans-serif;cursor:pointer;background:var(--brand,#6366f1);color:#fff}#spw .i button.g{background:var(--line,#e6eaf2);color:var(--ink,#111)}'
     + '#spw .pn{padding:18px;display:flex;flex-direction:column;gap:10px;justify-content:center;flex:1}#spw .pn input{padding:12px;border:1px solid var(--line,#ddd);border-radius:12px;font:700 15px Cairo,sans-serif;direction:ltr;text-align:center;background:var(--card,#fff);color:var(--ink,#111)}#spw .nt{color:var(--muted,#64748b);font-weight:600;font-size:13px;line-height:1.9;text-align:center}#spw .er{color:#dc2626;font-weight:700;font-size:13px;text-align:center}';
+  css.textContent += '#spw.inl{position:static;display:flex;width:100%;max-width:none;height:calc(100vh - 230px);min-height:420px;max-height:none;box-shadow:none}#spw.inl .h button{display:none}'
+    + '#spw .at{display:none;align-items:center;gap:8px;padding:6px 10px;border-top:1px solid var(--line,#ddd);background:var(--card,#fff)}#spw .at.on{display:flex}#spw .at img{width:44px;height:44px;object-fit:cover;border-radius:8px}#spw .at span{flex:1;font-weight:700;font-size:13px}#spw .at button{border:0;background:none;font-size:18px;cursor:pointer;color:#dc2626}'
+    + '#spw .m.me small{opacity:.85}';
   document.head.appendChild(css);
   const btn = document.createElement('button'); btn.id = 'spw-b'; btn.type = 'button'; btn.setAttribute('aria-label', 'الدعم الفني'); btn.innerHTML = '💬<i></i>';
   const box = document.createElement('div'); box.id = 'spw';
   box.innerHTML = '<div class="h"><span>💬 الدعم الفني</span><button type="button" id="spw-x" aria-label="إغلاق">✕</button></div><div id="spw-body" style="display:flex;flex-direction:column;flex:1;min-height:0"></div>';
   document.body.appendChild(btn); document.body.appendChild(box);
-  const body = $('#spw-body'); let T = null, poll = null, cache = [], pending = [], lastCount = 0, closed = false, busy = false;
+  const body = $('#spw-body'); let seenAt = null, T = null, poll = null, cache = [], pending = [], lastCount = 0, closed = false, busy = false;
   const load = () => { try { return JSON.parse(localStorage.getItem(KEY)); } catch (e) { return null; } };
   const save = t => { try { t ? localStorage.setItem(KEY, JSON.stringify(t)) : localStorage.removeItem(KEY); } catch (e) {} };
   const uidOf = async () => { try { const r = await sbc().auth.getSession(); return (r.data && r.data.session && r.data.session.user.id) || null; } catch (e) { return null; } };
@@ -40,19 +43,26 @@
     T = { id: data.thread_id, token: data.token, phone: phone || null, uid: await uidOf() }; save(T); cache = []; pending = []; closed = false; chatScreen(); await refresh(true);
   }
   function chatScreen() {
-    body.innerHTML = '<div class="f" id="spw-f"></div><div id="spw-cl" class="nt" style="display:none;padding:10px"></div><div class="i" id="spw-in"><input type="file" id="spw-im" accept="image/*" hidden><button type="button" class="g" id="spw-at" title="صورة">📎</button><textarea id="spw-t" rows="1" placeholder="اكتب مشكلتك أو استفسارك..."></textarea><button type="button" id="spw-s">إرسال</button></div>';
+    body.innerHTML = '<div class="f" id="spw-f"></div><div id="spw-cl" class="nt" style="display:none;padding:10px"></div><div class="at" id="spw-at-box"><img id="spw-at-img" alt=""><span>📷 الصورة جاهزة — اكتب تعليق (اختياري) واضغط إرسال</span><button type="button" id="spw-at-x" title="إلغاء الصورة">✕</button></div><div class="i" id="spw-in"><input type="file" id="spw-im" accept="image/*" hidden><button type="button" class="g" id="spw-at" title="صورة">📎</button><textarea id="spw-t" rows="1" placeholder="اكتب مشكلتك أو استفسارك..."></textarea><button type="button" id="spw-s">إرسال</button></div>';
     $('#spw-s').onclick = () => send(); $('#spw-at').onclick = () => $('#spw-im').click();
     $('#spw-t').onkeydown = e => { if (e.key === 'Enter' && !e.shiftKey) { e.preventDefault(); send(); } };
-    $('#spw-im').onchange = async e => { const f = e.target.files[0]; e.target.value = ''; if (f) sendImage(f); };
+    $('#spw-im').onchange = e => { const f = e.target.files[0]; e.target.value = ''; if (f) setAtt(f); };
+    $('#spw-at-x').onclick = () => setAtt(null);
+    setAtt(att);
+  }
+  let att = null;
+  function setAtt(f) {
+    att = f || null; const b = $('#spw-at-box'); if (!b) return;
+    if (att) { $('#spw-at-img').src = URL.createObjectURL(att); b.classList.add('on'); } else { b.classList.remove('on'); $('#spw-at-img').removeAttribute('src'); }
   }
   const bub = (m, cls, st) => '<div class="m ' + cls + '">' + (m.image_url ? '<a href="' + esc(m.image_url) + '" target="_blank" rel="noopener"><img src="' + esc(m.image_url) + '" alt="صورة"></a>' : '') + (m.body ? '<div dir="auto">' + esc(m.body) + '</div>' : '') + '<small>' + (st || new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })) + '</small></div>';
   function draw(server) {
     const f = $('#spw-f'); if (!f) return; const near = f.scrollHeight - f.scrollTop - f.clientHeight < 90;
-    let h = server.map(m => bub(m, m.sender === 'staff' ? 'th' : 'me', m.sender === 'student' ? '✓ تم الإرسال' : null)).join('');
-    pending.forEach((p, i) => { h += '<div class="m me' + (p.err ? ' bad' : '') + '">' + (p.preview ? '<img src="' + esc(p.preview) + '" alt="">' : '') + (p.body ? '<div dir="auto">' + esc(p.body) + '</div>' : '') + '<small>' + (p.err ? '⚠️ لم يُرسل — <a href="#" data-r="' + i + '" style="color:#fff;text-decoration:underline">إعادة المحاولة</a>' : '⏳ جاري الإرسال...') + '</small></div>'; });
+    let h = server.map(m => bub(m, m.sender === 'staff' ? 'th' : 'me', m.sender === 'student' ? (seenAt && new Date(m.created_at) <= new Date(seenAt) ? '✓✓ شافها الدعم' : '✓ تم الإرسال') : null)).join('');
+    pending.forEach((p, i) => { h += '<div class="m me' + (p.err ? ' bad' : '') + '">' + (p.preview ? '<img src="' + esc(p.preview) + '" alt="">' : '') + (p.body ? '<div dir="auto">' + esc(p.body) + '</div>' : '') + '<small>' + (p.err ? '⚠️ لم يُرسل' + (p.msg ? ' (' + esc(p.msg) + ')' : '') + ' — <a href="#" data-r="' + i + '" style="color:#fff;text-decoration:underline">إعادة المحاولة</a>' : '⏳ جاري الإرسال...') + '</small></div>'; });
     if (!server.length && !pending.length) h = '<div class="nt">اكتب رسالتك وهنرد عليك في أقرب وقت 🤝</div>';
     f.innerHTML = h; if (near || pending.length) f.scrollTop = f.scrollHeight;
-    f.querySelectorAll('a[data-r]').forEach(a => a.onclick = ev => { ev.preventDefault(); const p = pending.splice(+a.dataset.r, 1)[0]; if (p.file) sendImage(p.file, p.body); else { $('#spw-t').value = p.body || ''; send(); } });
+    f.querySelectorAll('a[data-r]').forEach(a => a.onclick = ev => { ev.preventDefault(); const p = pending.splice(+a.dataset.r, 1)[0]; p.err = false; pending.push(p); draw(cache); deliver(p); });
   }
   async function refresh(scroll) {
     if (!T || busy) return; busy = true;
@@ -61,29 +71,40 @@
       if (error) { if ((error.message || '').includes('bad_thread')) { save(null); T = null; return open(); } return; }
       const staffN = data.messages.filter(m => m.sender === 'staff').length;
       if (!box.classList.contains('on') && staffN > (+localStorage.getItem(KEY + '_n') || 0)) $('i', btn).style.display = 'block';
-      cache = data.messages; draw(cache); lastCount = data.messages.length;
+      seenAt = data.admin_seen_at || null; cache = data.messages; draw(cache); lastCount = data.messages.length;
       closed = data.status !== 'open'; const cl = $('#spw-cl'), inn = $('#spw-in');
       if (cl) { cl.style.display = closed ? 'block' : 'none'; inn.style.display = closed ? 'none' : 'flex'; if (closed) { cl.innerHTML = '🔒 المحادثة دي اتقفلت من الدعم.<br><button type="button" id="spw-new" style="margin-top:8px;border:0;border-radius:12px;padding:10px 16px;background:var(--brand,#6366f1);color:#fff;font:800 14px Cairo,sans-serif;cursor:pointer">ابدأ محادثة جديدة</button>'; $('#spw-new').onclick = () => start(T.phone, true); } }
     } finally { busy = false; }
   }
-  async function send(retryBody) {
-    const ta = $('#spw-t'); const text = (retryBody != null ? retryBody : (ta && ta.value) || '').trim(); if (!text || !T || closed) return;
-    if (ta) ta.value = ''; const p = { body: text }; pending.push(p); draw(cache);
-    const { error } = await sbc().rpc('support_send', { p_thread: T.id, p_token: T.token, p_body: text, p_image: null });
-    if (error) { p.err = true; draw(cache); return; }
-    pending = pending.filter(x => x !== p); await refresh(true);
+async function __cmp(img) {
+  let side = 1024, q = .72, blob;
+  for (let i = 0; i < 6; i++) {
+    const k = Math.min(1, side / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+    blob = await new Promise(r => c.toBlob(r, 'image/jpeg', q));
+    if (blob.size <= 150 * 1024) break;
+    if (i % 2 === 0) q = Math.max(.45, q - .12); else side = Math.max(640, side - 160);
   }
-  async function sendImage(file, caption) {
-    if (!T || closed) return; const p = { body: caption || '', file, preview: URL.createObjectURL(file) }; pending.push(p); draw(cache);
+  return blob;
+}
+  async function upImage(file) {
+    const img = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('x')); i.src = r.result; }; r.onerror = rej; r.readAsDataURL(file); });
+    const blob = await __cmp(img); const path = 'u/' + T.id + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+    const up = await sbc().storage.from('support-files').upload(path, blob, { contentType: 'image/jpeg' }); if (up.error) throw up.error;
+    return sbc().storage.from('support-files').getPublicUrl(path).data.publicUrl;
+  }
+  // رسالة واحدة: نص و/أو صورة
+  async function deliver(p) {
     try {
-      const img = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('x')); i.src = r.result; }; r.onerror = rej; r.readAsDataURL(file); });
-      const k = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-      const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .82)); const path = 'u/' + T.id + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
-      const up = await sbc().storage.from('support-files').upload(path, blob, { contentType: 'image/jpeg' }); if (up.error) throw up.error;
-      const url = sbc().storage.from('support-files').getPublicUrl(path).data.publicUrl;
-      const { error } = await sbc().rpc('support_send', { p_thread: T.id, p_token: T.token, p_body: p.body || null, p_image: url }); if (error) throw error;
+      if (p.file && !p.url) p.url = await upImage(p.file);
+      const { error } = await sbc().rpc('support_send', { p_thread: T.id, p_token: T.token, p_body: p.body || null, p_image: p.url || null }); if (error) throw error;
       pending = pending.filter(x => x !== p); await refresh(true);
-    } catch (e) { p.err = true; draw(cache); }
+    } catch (e) { p.err = true; p.msg = msgOf(e); draw(cache); }
+  }
+  async function send() {
+    const ta = $('#spw-t'); const text = ((ta && ta.value) || '').trim(); if ((!text && !att) || !T || closed) return;
+    const p = { body: text, file: att, preview: att ? URL.createObjectURL(att) : null }; if (ta) ta.value = ''; setAtt(null);
+    pending.push(p); draw(cache); await deliver(p);
   }
   async function open() {
     box.classList.add('on'); $('i', btn).style.display = 'none';
@@ -97,7 +118,9 @@
   function closeBox() { box.classList.remove('on'); clearInterval(poll); try { localStorage.setItem(KEY + '_n', String(cache.filter(m => m.sender === 'staff').length)); } catch (e) {} }
   btn.onclick = () => box.classList.contains('on') ? closeBox() : open(); $('#spw-x').onclick = closeBox;
   window.openSupport = open;
-  if (/[?&]support=1/.test(location.search)) setTimeout(open, 800);
+  window.spMount = async el => { if (!el) return; if (box.parentNode !== el) el.appendChild(box); box.classList.add('inl'); btn.style.display = 'none'; await open(); };
+  window.spUnmount = () => { if (box.parentNode !== document.body) { document.body.appendChild(box); box.classList.remove('inl'); box.classList.remove('on'); clearInterval(poll); } btn.style.display = ''; };
+  if (/[?&]support=1/.test(location.search)) setTimeout(() => { if (document.getElementById('spTab')) location.hash = '#support'; else open(); }, 800);
   // نقطة حمراء لو فيه رد جديد (فحص هادي كل 40 ثانية لو فيه محادثة)
-  setInterval(async () => { const t = load(); if (!t || box.classList.contains('on') || document.hidden) return; try { const { data } = await sbc().rpc('support_fetch', { p_thread: t.id, p_token: t.token }); if (data && data.messages.filter(m => m.sender === 'staff').length > (+localStorage.getItem(KEY + '_n') || 0)) $('i', btn).style.display = 'block'; } catch (e) {} }, 40000);
+  setInterval(async () => { const t = load(); if (!t || box.classList.contains('on') || document.hidden) return; try { const { data } = await sbc().rpc('support_fetch', { p_thread: t.id, p_token: t.token, p_peek: true }); if (data && data.messages.filter(m => m.sender === 'staff').length > (+localStorage.getItem(KEY + '_n') || 0)) $('i', btn).style.display = 'block'; } catch (e) {} }, 40000);
 })();
