@@ -96,11 +96,8 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
 
         const kicked = async (allowReclaim) => {
             try {
+                if (allowReclaim) await supabaseClient.rpc('claim_session');          // دخول جديد = الجهاز ده هو المعتمد وأي جهاز تاني بيتخرّج
                 let { data: ok, error } = await supabaseClient.rpc('session_ok');
-                if (!error && ok === false && allowReclaim) {
-                    await supabaseClient.rpc('claim_session');
-                    ({ data: ok, error } = await supabaseClient.rpc('session_ok'));
-                }
                 if (!error && ok === false) {
                     await supabaseClient.auth.signOut({ scope: 'local' });   // local: مايطلّعش الجهاز الجديد
                     location.replace('/signin.html?kicked=1');
@@ -112,7 +109,7 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
         const fresh = sessionStorage.getItem('just_logged_in') === '1';
         sessionStorage.removeItem('just_logged_in');
         if (await kicked(fresh)) return;
-        setInterval(() => kicked(false), 15000);
+        setInterval(() => { if (!document.hidden) kicked(false); }, 45000);
         document.addEventListener('visibilitychange', () => { if (!document.hidden) kicked(false); });
 
         let admin = false;
@@ -205,7 +202,7 @@ function draw() {
     location.href = lecUrl(l.id);
   });
   const jf = $('#jf'); if (jf) jf.onclick = async () => { jf.disabled = true; const { error } = await supabaseClient.from('enrollments').insert({ student_id: currentUser.id, course_id: CID }); if (error && error.code !== '23505') { toast('تعذر الاشتراك'); jf.disabled = false; return; } location.reload(); };
-  const jb = $('#jb'); if (jb) jb.onclick = async () => { jb.disabled = true; const { data, error } = await supabaseClient.rpc('redeem_code', { p_code: $('#jc').value.trim() }); if (error) { const m = error.message || ''; toast(m.includes('invalid_code') ? 'الكود غير صحيح' : m.includes('code_used') ? 'الكود ده اتستخدم قبل كده' : 'تعذر التفعيل'); jb.disabled = false; return; } if (data !== CID) { toast('الكود ده لكورس تاني، اتفعّل في حسابك ✅'); jb.disabled = false; return; } location.reload(); };
+  const jb = $('#jb'); if (jb) jb.onclick = async () => { jb.disabled = true; const { data, error } = await supabaseClient.rpc('redeem_code', { p_code: $('#jc').value.trim() }); if (error) { const m = error.message || ''; toast(m.includes('invalid_code') ? 'الكود غير صحيح أو انتهت صلاحيته (صالح 72 ساعة بس)' : m.includes('too_many') ? 'محاولات كتير غلط، استنى شوية وحاول تاني' : m.includes('code_used') ? 'الكود ده اتستخدم قبل كده' : 'تعذر التفعيل'); jb.disabled = false; return; } if (data !== CID) { toast('الكود ده لكورس تاني، اتفعّل في حسابك ✅'); jb.disabled = false; return; } location.reload(); };
 }
 
 /* ===== صفحة المحاضرة ===== */
@@ -221,7 +218,7 @@ function markSeen(k) { SEEN.add(k); try { localStorage.setItem(seenKey(), JSON.s
 
 const openUrl = u => { const m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/); return /drive\.google\.com/.test(u) && m ? 'https://drive.google.com/file/d/' + m[1] + '/view' : u; };
 const dlUrl = u => { const m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/); return /drive\.google\.com/.test(u) && m ? 'https://drive.google.com/uc?export=download&id=' + m[1] : u; };
-let LIST = [], PROGSRV = false, IPROG = new Set(), CURI = 0;
+let LIST = [], SRV = false, PROGSRV = false, IPROG = new Set(), CURI = 0;
 const isDone = x => x.type === 'quiz' ? C.tried.has(x.id) : (PROGSRV ? IPROG.has(x.id) : SEEN.has(x.key));
 const lockedAt = i => { for (let j = 0; j < i; j++) if (LIST[j].gate && !isDone(LIST[j])) return true; return false; };
 const ico = x => x.type === 'quiz' ? (x.is_homework ? '📚 ' : '📝 ') : x.kind === 'video' ? '🎬 ' : x.kind === 'pdf' ? '📄 ' : x.kind === 'file' ? '📄 ' : '🔗 ';
@@ -230,7 +227,7 @@ const quizState = x => { const n = Date.now(), o = x.opens_at && new Date(x.open
 async function markItemDone(x) {
   if (!x || x.type === 'quiz' || x.id == null || isDone(x)) return;
   SEEN.add(x.key); try { localStorage.setItem(seenKey(), JSON.stringify(Array.from(SEEN))); } catch (e) {}
-  if (PROGSRV && x.id !== 'v' && x.id !== 'f') { IPROG.add(x.id); try { await supabaseClient.from('item_progress').insert({ student_id: currentUser.id, item_id: x.id }); } catch (e) {} }
+  if (PROGSRV && x.id !== 'v' && x.id !== 'f') { IPROG.add(x.id); try { if (SRV) await supabaseClient.rpc('item_mark_done', { p_item: x.id }); else await supabaseClient.from('item_progress').insert({ student_id: currentUser.id, item_id: x.id }); } catch (e) {} }
   drawList(); autoLesson();
 }
 async function autoLesson() {
@@ -285,14 +282,25 @@ async function open(id) {
   const l = C.lessons.find(x => x.id === id); if (!l) return fail('المحاضرة غير موجودة');
   if (!canOpen(l)) { toast('🔒 اشترك في الكورس الأول عشان تفتح المحاضرة'); setTimeout(() => location.replace(courseReal()), 900); return; }
   C.cur = id;
-  const [it, ct, ip] = await Promise.all([
-    (async () => { let r; for (const c of ['id,kind,title,url,position,gate', 'id,kind,title,url,position']) { r = await supabaseClient.from('lesson_items').select(c).eq('lesson_id', id).order('position'); if (!r.error) break; } return r; })(),
-    supabaseClient.from('lesson_content').select('video_url,notes,attachment_path').eq('lesson_id', id).maybeSingle(),
-    supabaseClient.from('item_progress').select('item_id')
-  ]);
-  const d = ct.data || {}; PROGSRV = !ip.error; IPROG = new Set((ip.data || []).map(x => x.item_id));
+  let rpc = await supabaseClient.rpc('lesson_items_for', { p_lesson: id });
+  let it, ct, ip;
+  if (!rpc.error && rpc.data) {                       // السيرفر بيسلّم الروابط للمفتوح بس
+    SRV = true; const rd = rpc.data;
+    it = { data: rd.items || [] }; ct = { data: rd.content || {} };
+    ip = { data: (rd.items || []).filter(x => x.done).map(x => ({ item_id: x.id })) };
+  } else if (rpc.error && /forbidden/.test(rpc.error.message || '')) {
+    toast('🔒 المحاضرة دي مقفولة دلوقتي'); setTimeout(() => location.replace(courseReal()), 900); return;
+  } else {                                            // احتياطي: لو ملف SQL الجديد لسه ما اتشغّلش
+    SRV = false;
+    [it, ct, ip] = await Promise.all([
+      (async () => { let r; for (const c of ['id,kind,title,url,position,gate', 'id,kind,title,url,position']) { r = await supabaseClient.from('lesson_items').select(c).eq('lesson_id', id).order('position'); if (!r.error) break; } return r; })(),
+      supabaseClient.from('lesson_content').select('video_url,notes,attachment_path').eq('lesson_id', id).maybeSingle(),
+      supabaseClient.from('item_progress').select('item_id')
+    ]);
+  }
+  const d = ct.data || {}; PROGSRV = SRV || !ip.error; IPROG = new Set((ip.data || []).map(x => x.item_id));
   try { SEEN = new Set(JSON.parse(localStorage.getItem(seenKey()) || '[]')); } catch (e) { SEEN = new Set(); }
-  const items = (it.data || []).map(x => ({ type: 'item', key: x.id, id: x.id, kind: x.kind, title: x.title, url: x.url, pos: x.position == null ? 0 : x.position, gate: !!x.gate }));
+  const items = (it.data || []).map(x => ({ type: 'item', key: x.id, id: x.id, kind: x.kind, title: x.title, url: x.url, pos: x.position == null ? 0 : x.position, gate: !!x.gate, locked: !!x.locked }));
   const quizzes = C.on ? C.exams.filter(x => x.lesson_id === id).map(x => Object.assign({ type: 'quiz', pos: x.lesson_pos == null ? 100000 : x.lesson_pos, gate: !!x.gate }, x)) : [];
   LIST = items.concat(quizzes).map((x, k) => (x._k = k, x)).sort((a, b) => (a.pos - b.pos) || (a.type === b.type ? a._k - b._k : a.type === 'item' ? -1 : 1));
   if (d.video_url && !items.some(x => x.kind === 'video' && x.url === d.video_url)) LIST.unshift({ type: 'item', key: 'v', id: 'v', kind: 'video', title: 'فيديو المحاضرة', url: d.video_url, gate: false });
