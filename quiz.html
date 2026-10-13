@@ -172,11 +172,8 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
 
         const kicked = async (allowReclaim) => {
             try {
+                if (allowReclaim) await supabaseClient.rpc('claim_session');          // دخول جديد = الجهاز ده هو المعتمد وأي جهاز تاني بيتخرّج
                 let { data: ok, error } = await supabaseClient.rpc('session_ok');
-                if (!error && ok === false && allowReclaim) {
-                    await supabaseClient.rpc('claim_session');
-                    ({ data: ok, error } = await supabaseClient.rpc('session_ok'));
-                }
                 if (!error && ok === false) {
                     await supabaseClient.auth.signOut({ scope: 'local' });   // local: مايطلّعش الجهاز الجديد
                     location.replace('/signin.html?kicked=1');
@@ -188,7 +185,7 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
         const fresh = sessionStorage.getItem('just_logged_in') === '1';
         sessionStorage.removeItem('just_logged_in');
         if (await kicked(fresh)) return;
-        setInterval(() => kicked(false), 15000);
+        setInterval(() => { if (!document.hidden) kicked(false); }, 30000);
         document.addEventListener('visibilitychange', () => { if (!document.hidden) kicked(false); });
 
         let admin = false;
@@ -311,7 +308,8 @@ async function start() {
     try { await document.documentElement.requestFullscreen(); } catch (e) {}
     if (!(await tabGuard())) { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); return msg('🚫', 'الامتحان مفتوح في تبويب آخر', 'اقفل التبويبات التانية للامتحان ده وحدّث الصفحة.'); }
     const { data, error } = await supabaseClient.rpc('start_quiz', { p_quiz: QID });
-    if (error) { const t = error.message || ''; if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); return msg('⚠️', 'تعذر بدء الامتحان', t.includes('not_open') ? 'الامتحان لسه ما فتحش.' : t.includes('closed') ? 'انتهى وقت الامتحان.' : t.includes('max_attempts') ? 'استنفدت عدد المحاولات المسموحة.' : 'تأكد من الاتصال وحاول مرة أخرى.'); }
+    if (error) { const t = error.message || ''; if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); return msg('⚠️', 'تعذر بدء الامتحان', t.includes('not_open') ? 'الامتحان لسه ما فتحش.' : t.includes('closed') ? 'انتهى وقت الامتحان.' : t.includes('max_attempts') ? 'استنفدت عدد المحاولات المسموحة.' : t.includes('locked') ? 'الامتحان ده مقفول حالياً — كلّم المعلم.' : 'تأكد من الاتصال وحاول مرة أخرى.'); }
+    if (!data || !Array.isArray(data.questions) || !data.questions.length) { if (document.fullscreenElement) document.exitFullscreen().catch(() => {}); return msg('⚠️', 'مفيش أسئلة اتحمّلت', 'حدّث الصفحة وحاول تاني، ولو المشكلة فضلت كلّم المعلم (الامتحان ما اتسلّمش).'); }
     E.off = new Date(data.now).getTime() - Date.now();
     const ends = [], st = new Date(data.started_at).getTime(); E.stAt = st;
     if (E.qz.time_limit_minutes) ends.push(st + E.qz.time_limit_minutes * 60000);
