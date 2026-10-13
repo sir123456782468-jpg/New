@@ -126,6 +126,7 @@
             <a href="#results" data-v="results"><b class="ic">🏅</b><span class="lbl">نتائجي</span></a>
             <a href="#mistakes" data-v="mistakes"><b class="ic">🧠</b><span class="lbl">أخطائي</span></a>
             <a href="/quiz?mode=mistakes"><b class="ic">🎯</b><span class="lbl">امتحان من أخطائي</span></a>
+            <a href="#support" data-v="support"><b class="ic">💬</b><span class="lbl">الدعم الفني</span></a>
             <a href="#account" data-v="account"><b class="ic">👤</b><span class="lbl">حسابي</span></a>
         </nav>
     </aside>
@@ -179,6 +180,11 @@
             <div id="mistakeList"></div>
         </section>
 
+        <section class="view" id="v-support">
+            <div class="note" style="margin:0 0 16px">💬 اكتب مشكلتك أو استفسارك وابعت صورة لو محتاج — محادثتك محفوظة وبنرد عليك هنا.</div>
+            <div id="spTab"></div>
+        </section>
+
         <section class="view" id="v-account">
             <div class="card pf"><div class="av" id="avatar2">؟</div><div><h3 id="fullName" style="font-size:21px"></h3><span class="chip" id="yearChip"></span></div></div>
             <div class="card info" id="infoGrid"></div>
@@ -197,7 +203,7 @@
 </footer>
 
 <nav class="bottom">
-    <a href="#home" data-v="home"><span>🏠</span>الرئيسية</a><a href="#courses" data-v="courses"><span>📚</span>كورسات</a><a href="#exams" data-v="exams"><span>📝</span>اختبارات</a><a href="#results" data-v="results"><span>🏅</span>نتائجي</a><a href="#mistakes" data-v="mistakes"><span>🧠</span>أخطائي</a><a href="/quiz?mode=mistakes"><span>🎯</span>تدريب</a><a href="#account" data-v="account"><span>👤</span>حسابي</a>
+    <a href="#home" data-v="home"><span>🏠</span>الرئيسية</a><a href="#courses" data-v="courses"><span>📚</span>كورسات</a><a href="#exams" data-v="exams"><span>📝</span>اختبارات</a><a href="#results" data-v="results"><span>🏅</span>نتائجي</a><a href="#mistakes" data-v="mistakes"><span>🧠</span>أخطائي</a><a href="/quiz?mode=mistakes"><span>🎯</span>تدريب</a><a href="#support" data-v="support"><span>💬</span>الدعم</a><a href="#account" data-v="account"><span>👤</span>حسابي</a>
 </nav>
 
 <div class="modal" id="logoutModal"><div class="box"><i>🚪</i><h3>تسجيل الخروج</h3><p>هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟</p>
@@ -246,11 +252,8 @@
 
         const kicked = async (allowReclaim) => {
             try {
+                if (allowReclaim) await supabaseClient.rpc('claim_session');          // دخول جديد = الجهاز ده هو المعتمد وأي جهاز تاني بيتخرّج
                 let { data: ok, error } = await supabaseClient.rpc('session_ok');
-                if (!error && ok === false && allowReclaim) {
-                    await supabaseClient.rpc('claim_session');
-                    ({ data: ok, error } = await supabaseClient.rpc('session_ok'));
-                }
                 if (!error && ok === false) {
                     await supabaseClient.auth.signOut({ scope: 'local' });   // local: مايطلّعش الجهاز الجديد
                     location.replace('/signin.html?kicked=1');
@@ -262,7 +265,7 @@
         const fresh = sessionStorage.getItem('just_logged_in') === '1';
         sessionStorage.removeItem('just_logged_in');
         if (await kicked(fresh)) return;
-        setInterval(() => kicked(false), 15000);
+        setInterval(() => { if (!document.hidden) kicked(false); }, 45000);
         document.addEventListener('visibilitychange', () => { if (!document.hidden) kicked(false); });
 
         let admin = false;
@@ -304,7 +307,7 @@
     const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
     const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
     const S = { all: [], enrolled: new Set(), done: {}, prog: [], attempts: [], quizzes: [], mistakes: null, filter: 'all' };
-    const TITLES = { home: 1, courses: 1, exams: 1, results: 1, mistakes: 1, account: 1 };
+    const TITLES = { home: 1, courses: 1, exams: 1, results: 1, mistakes: 1, account: 1, support: 1 };
     const empty = (i, t) => '<div class="empty"><i>' + i + '</i>' + t + '</div>';
     const fdate = d => new Date(d).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
     const lessonsOf = c => (c.lessons && c.lessons[0] && c.lessons[0].count) || 0;
@@ -334,6 +337,7 @@
         const v = (location.hash || '#home').slice(1), n = TITLES[v] ? v : 'home';
         $$('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + n));
         $$('[data-v]').forEach(a => a.classList.toggle('on', a.dataset.v === n));
+        if (n === 'support') { const m = () => window.spMount ? window.spMount($('#spTab')) : setTimeout(m, 300); m(); } else if (window.spUnmount) window.spUnmount();
         if (n === 'mistakes') loadMistakes();
         if (n === 'results') loadResults();
         if (n === 'home') requestAnimationFrame(fillBars);
@@ -413,7 +417,7 @@
         e.preventDefault(); const btn = $('#redeemBtn'); btn.disabled = true;
         const { data, error } = await supabaseClient.rpc('redeem_code', { p_code: $('#codeIn').value.trim() });
         btn.disabled = false;
-        if (error) { const m = error.message || ''; toast(m.includes('invalid_code') ? 'الكود غير صحيح، تأكد منه وحاول مرة أخرى' : m.includes('code_used') ? 'الكود ده اتستخدم قبل كده' : 'تعذر تفعيل الكود، حاول مرة أخرى'); return; }
+        if (error) { const m = error.message || ''; toast(m.includes('invalid_code') ? 'الكود غير صحيح أو انتهت صلاحيته (الكود صالح 72 ساعة بس) — تأكد منه أو اطلب كود جديد' : m.includes('too_many') ? 'محاولات كتير غلط، استنى شوية وحاول تاني' : m.includes('code_used') ? 'الكود ده اتستخدم قبل كده' : 'تعذر تفعيل الكود، حاول مرة أخرى'); return; }
         S.enrolled.add(data); $('#codeIn').value = ''; confetti(); toast('تم تفعيل الكورس بنجاح 🎉'); refresh(); location.hash = '#courses';
     }
 
