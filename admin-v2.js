@@ -431,23 +431,35 @@ async function vSupport() {
 }
 const spListHTML = d => (d || []).map(t => '<div class="card sprow" data-act="spOpen" data-id="' + t.id + '" style="margin-bottom:8px;cursor:pointer"><b>' + esc(t.name || 'طالب') + '</b>' + (t.verified === false ? ' <span class="pill no" title="كتب رقمه من غير تسجيل دخول">⚠️ غير موثّق</span>' : '') + (t.unread ? ' <span class="pill no">' + t.unread + ' جديد</span>' : '') + (t.status === 'closed' ? ' <span class="pill">منتهية</span>' : '') + '<br><small dir="ltr" style="color:var(--muted)">' + esc(t.phone) + ' • ' + tfmt(t.last_at) + '</small><br><small>' + esc((t.last || '').slice(0, 70)) + '</small></div>').join('') || '<div class="empty">لا توجد محادثات</div>';
 async function spRefreshList() { const { data } = await sb.rpc('support_admin_list', { p_status: window.__spStatus || 'open' }); const el = document.querySelector('#spList'); if (el && data) el.innerHTML = spListHTML(data); }
-function spMsgHTML(m) { return '<div class="spm ' + (m.sender === 'staff' ? 'me' : 'th') + '">' + (m.image_url ? '<a href="' + esc(m.image_url) + '" target="_blank" rel="noopener"><img src="' + esc(m.image_url) + '" alt="صورة" loading="lazy"></a>' : '') + (m.body ? '<div dir="auto">' + esc(m.body) + '</div>' : '') + '<small>' + tfmt(m.created_at) + '</small></div>'; }
+let spSeen = null;
+function spMsgHTML(m) { return '<div class="spm ' + (m.sender === 'staff' ? 'me' : 'th') + '">' + (m.image_url ? '<a href="' + esc(m.image_url) + '" target="_blank" rel="noopener"><img src="' + esc(m.image_url) + '" alt="صورة" loading="lazy"></a>' : '') + (m.body ? '<div dir="auto">' + esc(m.body) + '</div>' : '') + '<small>' + tfmt(m.created_at) + (m.sender === 'staff' ? (spSeen && new Date(m.created_at) <= new Date(spSeen) ? ' • <span style="color:#16a34a">👁 شافها الطالب</span>' : ' • ✓ اتبعتت') : '') + '</small></div>'; }
 async function spThread(id, quiet) {
   sp.id = id; const { data, error } = await sb.rpc('support_admin_thread', { p_thread: id }); if (error) throw error;
+  spSeen = data.student_seen_at || null;
   const box = document.querySelector('#spBox'); if (!box) return;
   const feed = box.querySelector('#spFeed'), near = feed ? feed.scrollHeight - feed.scrollTop - feed.clientHeight < 80 : true;
-  if (quiet && feed && feed.dataset.n === String(data.messages.length) && feed.dataset.s === data.status) return;
+  if (quiet && feed && feed.dataset.n === String(data.messages.length) && feed.dataset.s === data.status && feed.dataset.v === String(data.student_seen_at || '')) return;
   const draft = box.querySelector('#spTxt') ? box.querySelector('#spTxt').value : '';
-  box.innerHTML = '<div class="bar" style="margin-bottom:8px"><b>' + esc(data.name || 'طالب') + '</b><span dir="ltr" style="color:var(--muted)">' + esc(data.phone) + '</span>' + (data.verified === false ? '<span class="pill no" title="الطالب كتب الرقم من غير تسجيل دخول، اتأكد من هويته قبل ما تشاركه أي بيانات">⚠️ غير موثّق</span>' : '') + '<span class="pill ' + (data.status === 'open' ? 'ok' : 'no') + '">' + (data.status === 'open' ? 'مفتوحة' : 'منتهية') + '</span><button class="btn s ' + (data.status === 'open' ? 'r' : 'g') + '" data-act="spClose" data-id="' + id + '" data-c="' + (data.status === 'open' ? 1 : 0) + '" style="margin-right:auto">' + (data.status === 'open' ? '⛔ إنهاء المحادثة' : '↩️ إعادة فتحها') + '</button></div>'
-    + '<div id="spFeed" data-n="' + data.messages.length + '" data-s="' + data.status + '">' + data.messages.map(spMsgHTML).join('') + '</div>'
+  box.innerHTML = '<div class="bar" style="margin-bottom:8px"><b>' + esc(data.name || 'طالب') + '</b><span dir="ltr" style="color:var(--muted)">' + esc(data.phone) + '</span>' + (data.verified === false ? '<span class="pill no" title="الطالب كتب الرقم من غير تسجيل دخول، اتأكد من هويته قبل ما تشاركه أي بيانات">⚠️ غير موثّق</span>' : '') + '<span class="pill ' + (data.status === 'open' ? 'ok' : 'no') + '">' + (data.status === 'open' ? 'مفتوحة' : 'منتهية') + '</span><button class="btn s ' + (data.status === 'open' ? 'r' : 'g') + '" data-act="spClose" data-id="' + id + '" data-c="' + (data.status === 'open' ? 1 : 0) + '" style="margin-right:auto">' + (data.status === 'open' ? '⛔ إنهاء المحادثة' : '↩️ إعادة فتحها') + '</button><button class="btn s r" data-act="spDel" data-id="' + id + '" title="مسح المحادثة نهائياً">🗑 مسح</button></div>'
+    + '<div id="spFeed" data-n="' + data.messages.length + '" data-s="' + data.status + '" data-v="' + (data.student_seen_at || '') + '">' + data.messages.map(spMsgHTML).join('') + '</div>'
     + (data.status === 'open' ? '<div class="spin"><textarea id="spTxt" dir="auto" placeholder="اكتب ردك..." rows="2">' + esc(draft) + '</textarea><input type="file" id="spImg" accept="image/*" hidden><button class="btn s g" data-act="spPick" title="إرفاق صورة">📎</button><button class="btn" data-act="spSend" data-id="' + id + '">إرسال</button></div><small id="spInfo" style="color:var(--muted)"></small>' : '<p class="nt" style="margin-top:10px">المحادثة منتهية — الطالب لو راسل تاني هيبدأ محادثة جديدة، وده السجل محفوظ هنا.</p>');
   const f2 = box.querySelector('#spFeed'); if (f2 && (near || !quiet)) f2.scrollTop = f2.scrollHeight;
   if (!quiet) spRefreshList();
 }
+async function __cmp(img) {
+  let side = 1024, q = .72, blob;
+  for (let i = 0; i < 6; i++) {
+    const k = Math.min(1, side / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+    blob = await new Promise(r => c.toBlob(r, 'image/jpeg', q));
+    if (blob.size <= 150 * 1024) break;
+    if (i % 2 === 0) q = Math.max(.45, q - .12); else side = Math.max(640, side - 160);
+  }
+  return blob;
+}
 async function spUpload(file) {
   const img = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('الملف مش صورة')); i.src = r.result; }; r.onerror = rej; r.readAsDataURL(file); });
-  const k = Math.min(1, 1280 / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.round(img.width * k); c.height = Math.round(img.height * k); c.getContext('2d').drawImage(img, 0, 0, c.width, c.height);
-  const blob = await new Promise(r => c.toBlob(r, 'image/jpeg', .82)); const path = 'u/s-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+  const blob = await __cmp(img); const path = 'u/s-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
   const { error } = await sb.storage.from('support-files').upload(path, blob, { contentType: 'image/jpeg' }); if (error) throw error;
   return sb.storage.from('support-files').getPublicUrl(path).data.publicUrl;
 }
@@ -460,6 +472,7 @@ Object.assign(ACT, {
     const { error } = await sb.rpc('support_admin_reply', { p_thread: id, p_body: t || null, p_image: sp.img || null }); el.disabled = false; if (error) throw error;
     sp.img = null; $('#spTxt').value = ''; await spThread(id);
   },
+  spDel: async id => { if (!confirm('مسح المحادثة نهائياً بكل رسائلها؟ مش هتقدر ترجعها.')) return; const { error } = await sb.rpc('support_admin_delete', { p_thread: id }); if (error) throw error; sp.id = null; go('support'); },
   spClose: async (id, el) => { if (el.dataset.c === '1' && !confirm('إنهاء المحادثة؟ السجل هيفضل محفوظ.')) return; const { error } = await sb.rpc('support_admin_close', { p_thread: id, p_close: el.dataset.c === '1' }); if (error) throw error; await spThread(id); }
 });
 VIEWS.support = ['الدعم الفني', vSupport];
@@ -482,3 +495,164 @@ if (typeof NAV !== 'undefined' && !NAV.some(n => n[0] === 'support')) { NAV.spli
 
 // CSS
 (function () { const st = document.createElement('style'); st.textContent = '#spFeed{max-height:52vh;overflow:auto;display:flex;flex-direction:column;gap:8px;padding:6px 2px}.spm{max-width:78%;padding:9px 12px;border-radius:14px;line-height:1.8;font-weight:600;white-space:pre-wrap;word-break:break-word}.spm small{display:block;font-size:11px;opacity:.65;margin-top:3px}.spm img{max-width:240px;max-height:240px;border-radius:10px;display:block;margin-bottom:4px}.spm.th{align-self:flex-start;background:var(--bg);border:1px solid var(--line)}.spm.me{align-self:flex-end;background:rgba(99,102,241,.18)}.spin{display:flex;gap:8px;align-items:flex-end;margin-top:10px}.spin textarea{min-height:48px}.sprow:hover{border-color:var(--brand)}@media(max-width:760px){.grid2{grid-template-columns:1fr!important}}'; document.head.appendChild(st); })();
+
+// ---------- المحاولات والقفل (تبويب كامل) ----------
+const AC = { sid: null, cid: null };
+async function vAccess() {
+  await loadStudents(); if (!S.courses) await loadCourses();
+  const co = S.courses.map(c => `<option value="${c.id}" ${c.id === AC.cid ? 'selected' : ''}>${esc(c.title)}${c.academic_year ? ' — ' + esc(c.academic_year) : ''}</option>`).join('');
+  const st = AC.sid ? S.students.find(x => x.id === AC.sid) : null;
+  return `<div class="card"><b>🔁 المحاولات والقفل</b><p class="nt">افتح محاولة جديدة لأي طالب، أو اقفل/افتح كورس أو درس أو امتحان — لطالب واحد أو لكل الطلاب. محاولاته القديمة بتتحفظ في السجل.</p>
+  <label>ابحث عن الطالب (اسم أو رقم)</label><div class="bar"><input id="acq" placeholder="اكتب الاسم أو الرقم" value="${esc(st ? fname(st) : '')}"><button class="btn s" data-act="acFind">بحث</button></div><div id="acr"></div>
+  <label>الكورس</label><div class="bar"><select id="acc">${co}</select><button class="btn s" data-act="acShow">عرض</button></div></div><div id="acb">${AC.sid && AC.cid ? '' : '<div class="empty">اختار طالب وكورس</div>'}</div>`;
+}
+const _ac = (k, id, all, me, who) => (all ? '<span class="pill no">🌐 مقفول للكل</span> ' : '') + (me ? '<span class="pill no">🔒 مقفول للطالب</span> ' : '')
+  + `<button class="btn s ${me ? 'g' : 'r'}" data-act="acLock" data-id="${id}" data-k="${k}" data-w="s" data-l="${me ? 0 : 1}">${me ? '🔓 فتح له' : '🔒 قفل له'}</button> `
+  + `<button class="btn s ${all ? 'g' : ''}" data-act="acLock" data-id="${id}" data-k="${k}" data-w="a" data-l="${all ? 0 : 1}">${all ? '🔓 فتح للكل' : '🌐 قفل للكل'}</button>`;
+async function acDraw() {
+  const box = $('#acb'); if (!box || !AC.sid || !AC.cid) return;
+  box.innerHTML = '<div class="empty">جاري التحميل...</div>';
+  const { data, error } = await sb.rpc('access_state', { p_student: AC.sid, p_course: AC.cid });
+  if (error) { box.innerHTML = '<div class="empty">' + esc((error.message || '').includes('does not exist') || (error.message || '').includes('schema cache') ? 'شغّل ملف supabase_update_v8.sql في Supabase الأول' : error.message) + '</div>'; return; }
+  const st = S.students.find(x => x.id === AC.sid) || {};
+  box.innerHTML = `<div class="card"><div class="bar"><b>👤 ${esc(fname(st))}</b><span dir="ltr" style="color:var(--muted)">${esc(st.phone_number || '')}</span></div>
+    <h4 style="margin:12px 0 6px">📚 الكورس كله</h4><div class="bar">${_ac('course', AC.cid, data.course_locked_all, data.course_locked)}<button class="btn s" data-act="acReset">♻️ إعادة فتح الكورس من البداية</button></div>
+    <h4 style="margin:16px 0 6px">📖 الدروس</h4>${(data.lessons || []).map(l => `<div class="bar" style="padding:6px 0;border-bottom:1px solid var(--line,#eee)"><b style="min-width:160px">${esc(l.title)}</b>${_ac('lesson', l.id, l.all, l.me)}</div>`).join('') || '<div class="empty">لا دروس</div>'}
+    <h4 style="margin:16px 0 6px">📝 الامتحانات</h4>${(data.quizzes || []).map(z => `<div class="bar" style="padding:6px 0;border-bottom:1px solid var(--line,#eee)"><b style="min-width:160px">${esc(z.title)}${z.kind === 'comprehensive' ? ' <small>(شامل)</small>' : ''}</b><span class="pill">${z.used}/${z.max || 1} محاولة</span>${z.archived ? `<span class="pill">📜 ${z.archived} قديمة</span>` : ''}<button class="btn s" data-act="acNew" data-id="${z.id}">🔁 محاولة جديدة</button><button class="btn s g" data-act="acHist" data-id="${z.id}">📜 السجل</button>${_ac('quiz', z.id, z.all, z.me)}</div>`).join('') || '<div class="empty">لا امتحانات</div>'}</div>`;
+}
+Object.assign(ACT, {
+  acFind: () => {
+    const q = ($('#acq').value || '').trim().toLowerCase(); if (!q) return;
+    const r = S.students.filter(s => (fname(s) + ' ' + (s.phone_number || '')).toLowerCase().includes(q)).slice(0, 12);
+    $('#acr').innerHTML = r.map(s => `<button class="btn s g" data-act="acStu" data-id="${s.id}" style="margin:4px">${esc(fname(s))} • ${esc(s.phone_number || '')}</button>`).join('') || '<div class="empty">لا نتائج</div>';
+  },
+  acStu: id => { AC.sid = id; const s = S.students.find(x => x.id === id); $('#acq').value = fname(s); $('#acr').innerHTML = '<span class="pill ok">✓ تم اختيار ' + esc(fname(s)) + '</span>'; AC.cid = $('#acc').value; acDraw(); },
+  acShow: () => { AC.cid = $('#acc').value; if (!AC.sid) return toast('اختار الطالب الأول', true); acDraw(); },
+  acLock: async (id, el) => {
+    const all = el.dataset.w === 'a', lock = el.dataset.l === '1';
+    if (all && lock && !confirm('هتقفل ده لكل الطلاب. تكمل؟')) return;
+    const { error } = await sb.rpc('set_lock', { p_kind: el.dataset.k, p_ref: id, p_student: all ? null : AC.sid, p_locked: lock }); if (error) throw error;
+    toast(lock ? 'تم القفل 🔒' : 'تم الفتح 🔓'); acDraw();
+  },
+  acNew: async id => {
+    const st = S.students.find(x => x.id === AC.sid) || {};
+    if (!confirm('فتح محاولة جديدة للطالب ' + (st.first_name || '') + '؟\nمحاولاته القديمة بتتحفظ في «السجل» وهيوصله إشعار.')) return;
+    const { data, error } = await sb.rpc('grant_new_attempt', { p_quiz: id, p_student: AC.sid }); if (error) throw error;
+    toast('تم فتح محاولة جديدة ✅ (' + (data || 0) + ' محاولة اتحفظت في السجل)'); acDraw();
+  },
+  acHist: async id => {
+    const { data, error } = await sb.rpc('attempt_history', { p_student: AC.sid, p_quiz: id }); if (error) throw error;
+    const row = (a, t) => `<tr><td>${t}</td><td>${a.score == null ? '—' : a.score + ' / ' + a.total}</td><td>${a.at ? tfmt(a.at) : ''}</td></tr>`;
+    modal('📜 سجل المحاولات', `<table class="tb"><tr><th>الحالة</th><th>الدرجة</th><th>التاريخ</th></tr>${(data.current || []).map(a => row(a, a.status === 'pending' ? 'حالية (تصحيح معلّق)' : 'حالية')).join('')}${(data.archived || []).map(a => row(a, 'قديمة (مؤرشفة)')).join('') || ''}</table>${(data.current || []).length + (data.archived || []).length ? '' : '<div class="empty">لا محاولات</div>'}`, null);
+  },
+  acReset: async () => {
+    if (!confirm('هتتمسح علامات الإنجاز للطالب في الكورس ده وهيبدأ من الأول. تكمل؟')) return;
+    const { error } = await sb.rpc('reset_course_progress', { p_course: AC.cid, p_student: AC.sid }); if (error) throw error; toast('تمت إعادة فتح الكورس ✅');
+  }
+});
+VIEWS.access = ['المحاولات والقفل', vAccess];
+if (typeof NAV !== 'undefined' && !NAV.some(n => n[0] === 'access')) NAV.splice(NAV.findIndex(n => n[0] === 'students') + 1, 0, ['access', '🔁', 'المحاولات والقفل']);
+
+// ---------- طباعة كروت الأكواد (A4: 8 أو 10 في الورقة) + كود واحد ----------
+const CARD_CSS = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&family=Poppins:wght@500;700&display=swap');
+@page{size:A4;margin:0}*{box-sizing:border-box;margin:0}:root{--navy:#0f172a;--red:#ef4444;--mut:#64748b}
+body{font-family:'Cairo','DejaVu Sans',sans-serif;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:210mm;height:297mm;padding:10mm 13mm;display:grid;grid-template-columns:repeat(2,92mm);page-break-after:always;overflow:hidden}
+.page:last-child{page-break-after:auto}
+.card{position:relative;width:92mm;border:.3mm solid #94a3b8;padding:3.5mm 5.5mm 3mm;background:linear-gradient(135deg,#fff 60%,#fef2f2);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
+.bar{position:absolute;left:0;top:0;bottom:0;width:2.4mm;background:linear-gradient(var(--navy),var(--red))}
+.hd{display:flex;align-items:baseline;justify-content:space-between;gap:2mm;border-bottom:.45mm solid var(--red);padding:0 0 1.3mm 1.2mm}
+.t{font:700 13pt 'Poppins','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap}.s{font:500 8.5pt 'Poppins','DejaVu Sans',sans-serif;color:var(--red);white-space:nowrap}
+.cn{font:800 12.5pt 'Cairo','DejaVu Sans',sans-serif;color:var(--navy);direction:rtl;text-align:center;background:#fee2e2;border-radius:1.5mm;padding:.6mm 2mm;line-height:1.3;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:8mm}
+.row{display:flex;align-items:flex-end;gap:2mm;padding-left:1.2mm;min-height:8mm}
+.en{font:500 8pt 'Poppins','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap;padding-bottom:.6mm}
+.ar{font:800 9.5pt 'Cairo','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap;direction:rtl;padding-bottom:.2mm}
+.ln{flex:1;border-bottom:.25mm dotted var(--mut);min-height:6mm;font:800 10.5pt 'Cairo',sans-serif;direction:rtl;text-align:center;color:#111;line-height:1.5;overflow:hidden;white-space:nowrap}
+.code{align-items:center;min-height:11mm}
+.ln.box{border:.4mm solid var(--navy);border-radius:1.4mm;background:#fff;min-height:9.5mm;display:flex;align-items:center;justify-content:center;font:700 13pt 'Poppins','DejaVu Sans',monospace;letter-spacing:.5mm;direction:ltr;padding-left:.5mm;white-space:nowrap;overflow:hidden}
+.exp{font:600 7pt Cairo,sans-serif;color:var(--red);text-align:center;direction:rtl}.p8 .card{height:69mm}.p10 .card{height:55mm}.p10 .t{font-size:12pt}.p10 .cn{font-size:11.5pt}.p10 .row{min-height:6.8mm}.p10 .ln.box{min-height:8.5mm;font-size:12.5pt}
+.one{width:150mm;margin:12mm auto}.one .card{width:150mm;height:112mm;padding:6mm 9mm;gap:2mm}.one .t{font-size:19pt}.one .s{font-size:11pt}.one .cn{font-size:17pt;padding:1.2mm 3mm}
+.one .row{min-height:11mm}.one .ar{font-size:13pt}.one .ln{font-size:14pt}.one .ln.box{min-height:14mm;font-size:22pt;letter-spacing:1.2mm}.one .bar{width:3.4mm}
+.one .notes{border:.3mm dashed #94a3b8;border-radius:1.5mm;flex:1;min-height:14mm;padding:1.5mm 3mm;direction:rtl;font:800 10pt Cairo,sans-serif;color:var(--mut)}`;
+const cardHTML = (o) => `<div class="card"><div class="bar"></div><div class="hd"><div class="t">The Leader In English</div><div class="s">Mr Sherif Khafagy</div></div>
+<div class="cn" style="zoom:${(o.course || '').length > 34 ? '.75' : (o.course || '').length > 24 ? '.88' : '1'}">${esc(o.course || '')}</div>
+<div class="row"><span class="en">Student Name :</span><span class="ln">${esc(o.name || '')}</span><span class="ar">اسم الطالب :</span></div>
+<div class="row"><span class="en">Grade :</span><span class="ln">${esc(o.grade || '')}</span><span class="ar">الصف الدراسي :</span></div>
+<div class="row code"><span class="en">Code :</span><span class="ln box">${esc(o.code)}</span><span class="ar">الكود :</span></div><div class="exp">⏳ الكود صالح 72 ساعة ويُستخدم مرة واحدة فقط${o.exp ? ' — ينتهي ' + esc(o.exp) : ''}</div></div>`;
+const oneHTML = (o) => `<div class="one"><div class="card"><div class="bar"></div><div class="hd"><div class="t">The Leader In English</div><div class="s">Mr Sherif Khafagy</div></div>
+<div class="cn" style="zoom:${(o.course || '').length > 34 ? '.75' : (o.course || '').length > 24 ? '.88' : '1'}">${esc(o.course || '')}</div>
+<div class="row"><span class="ln">${esc(o.name || '')}</span><span class="ar">اسم الطالب :</span></div>
+<div class="row"><span class="ln">${esc(o.grade || '')}</span><span class="ar">الصف الدراسي :</span></div>
+<div class="row code"><span class="ln box">${esc(o.code)}</span><span class="ar">الكود :</span></div>
+<div class="exp">⏳ الكود صالح 72 ساعة ويُستخدم مرة واحدة فقط${o.exp ? ' — ينتهي ' + esc(o.exp) : ''}</div><div class="notes">${esc(o.note || 'ملاحظات :')}</div></div></div>`;
+function printHTML(body, cls, title) {
+  const html = '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>' + CARD_CSS + '</style></head><body class="' + cls + '">' + body + '</body></html>';
+  const f = document.createElement('iframe'); f.style.cssText = 'position:fixed;left:-9999px;width:900px;height:700px'; document.body.appendChild(f);
+  f.contentDocument.open(); f.contentDocument.write(html); f.contentDocument.close();
+  const go = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (x) { toast('تعذر فتح الطباعة', true); } setTimeout(() => f.remove(), 90000); };
+  setTimeout(() => { try { f.contentDocument.fonts.ready.then(() => setTimeout(go, 300)); } catch (e) { go(); } }, 700);
+  toast('اختار «حفظ كـ PDF» أو الطابعة — مقاس A4 بدون هوامش');
+}
+const expTxt = () => new Date(Date.now() + 72 * 36e5).toLocaleString('ar-EG', { day: 'numeric', month: 'numeric', hour: 'numeric', minute: '2-digit' });
+function printSheet(list, per, course, grade) {
+  const n = per === 8 ? 8 : 10, pages = []; for (let i = 0; i < list.length; i += n) pages.push(list.slice(i, i + n));
+  printHTML(pages.map(pg => '<div class="page p' + n + '">' + pg.map(o => cardHTML(Object.assign({ course, grade, exp: expTxt() }, o))).join('') + '</div>').join(''), '', 'أكواد ' + course);
+}
+// كود واحد كصورة (Canvas)
+async function cardPNG(o) {
+  try { await document.fonts.load('800 40px Cairo'); await document.fonts.load('700 40px Poppins'); } catch (e) {}
+  const W = 1500, H = 920, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(.6, '#fff'); g.addColorStop(1, '#fef2f2'); x.fillStyle = g; x.fillRect(0, 0, W, H);
+  x.strokeStyle = '#94a3b8'; x.lineWidth = 3; x.strokeRect(1.5, 1.5, W - 3, H - 3);
+  const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#0f172a'); bg.addColorStop(1, '#ef4444'); x.fillStyle = bg; x.fillRect(0, 0, 34, H);
+  x.textBaseline = 'alphabetic'; x.direction = 'ltr'; x.textAlign = 'left'; x.fillStyle = '#0f172a'; x.font = '700 70px Poppins, Arial'; x.fillText('The Leader In English', 90, 120);
+  x.textAlign = 'right'; x.fillStyle = '#ef4444'; x.font = '500 42px Poppins, Arial'; x.fillText('Mr Sherif Khafagy', W - 70, 120);
+  x.fillStyle = '#ef4444'; x.fillRect(90, 148, W - 160, 5);
+  x.fillStyle = '#fee2e2'; const bx = 90, bw = W - 160; x.beginPath(); x.roundRect ? x.roundRect(bx, 185, bw, 110, 18) : x.rect(bx, 185, bw, 110); x.fill();
+  x.direction = 'rtl'; x.textAlign = 'center'; x.fillStyle = '#0f172a'; x.font = '800 66px Cairo, Tahoma, Arial'; x.fillText(o.course || '', W / 2, 265, bw - 40);
+  const row = (y, label, val, box) => {
+    x.direction = 'rtl'; x.textAlign = 'right'; x.fillStyle = '#0f172a'; x.font = '800 54px Cairo, Tahoma, Arial'; x.fillText(label, W - 70, y);
+    const l = 90, r = W - 70 - x.measureText(label).width - 30;
+    if (box) { x.strokeStyle = '#0f172a'; x.lineWidth = 4; x.fillStyle = '#fff'; x.beginPath(); x.roundRect ? x.roundRect(l, y - 78, r - l, 104, 16) : x.rect(l, y - 78, r - l, 104); x.fill(); x.stroke(); x.direction = 'ltr'; x.textAlign = 'center'; x.fillStyle = '#0f172a'; x.font = '700 78px Poppins, monospace'; x.fillText(String(val).split('').join(' '), (l + r) / 2, y + 2); }
+    else { x.strokeStyle = '#64748b'; x.setLineDash([3, 9]); x.lineWidth = 4; x.beginPath(); x.moveTo(l, y + 8); x.lineTo(r, y + 8); x.stroke(); x.setLineDash([]); if (val) { x.direction = 'rtl'; x.textAlign = 'center'; x.font = '800 52px Cairo, Tahoma, Arial'; x.fillText(val, (l + r) / 2, y - 6, r - l - 20); } }
+  };
+  row(400, 'اسم الطالب :', o.name || ''); row(510, 'الصف الدراسي :', o.grade || ''); row(650, 'الكود :', o.code, true);
+  x.direction = 'rtl'; x.textAlign = 'center'; x.fillStyle = '#ef4444'; x.font = '800 34px Cairo, Tahoma, Arial'; x.fillText('⏳ الكود صالح 72 ساعة ويُستخدم مرة واحدة فقط' + (o.exp ? ' — ينتهي ' + o.exp : ''), W / 2, 716);
+  x.setLineDash([14, 10]); x.strokeStyle = '#94a3b8'; x.lineWidth = 3; x.strokeRect(90, 735, W - 160, 150); x.setLineDash([]);
+  x.direction = 'rtl'; x.textAlign = 'right'; x.fillStyle = '#64748b'; x.font = '800 40px Cairo, Tahoma, Arial'; x.fillText(o.note || 'ملاحظات :', W - 110, 790);
+  return new Promise(r => c.toBlob(r, 'image/png'));
+}
+const _vCodes0 = VIEWS.codes[1];
+VIEWS.codes = ['الأكواد', async () => {
+  const html = await _vCodes0();
+  await (S.courses || loadCourses());
+  const panel = `<div class="card" style="margin-bottom:16px"><b>🖨 طباعة كروت الأكواد (A4)</b>
+  <p class="nt">الكورس المختار فوق هو اللي بيتولّد له. اكتب أسماء الطلاب (اسم في كل سطر) لو عايز الاسم يتكتب على الكارت، أو سيبها فاضية والطالب يكتب بخط إيده. كل كود يشتغل مرة واحدة بس.</p>
+  <div class="bar"><div><label>الصف (يتكتب على الكارت)</label><select id="pg"><option value="">— سيبه فاضي —</option>${yopts('')}</select></div><div><label>عدد الأكواد</label><input type="number" id="pn" min="1" max="200" value="10" style="max-width:110px"></div><div><label>عدد الكروت في الورقة</label><select id="pl"><option value="10">10 كروت</option><option value="8">8 كروت (أكبر)</option></select></div></div>
+  <label>أسماء الطلاب (اختياري — سطر لكل طالب، ولو كتبت أسماء العدد بيتحدد تلقائي)</label><textarea id="pnm" style="min-height:80px" placeholder="أحمد محمد&#10;سارة علي"></textarea>
+  <div class="bar" style="margin-top:10px"><button class="btn" data-act="pgen">🖨 توليد وطباعة PDF</button><button class="btn s" data-act="pagain">🖨 إعادة طباعة آخر دفعة</button><button class="btn s g" data-act="pone">🎫 كود واحد (صورة / PDF)</button></div></div>`;
+  return panel + html;
+}];
+async function pMake(n, names, grade) {
+  const cid = $('#cc').value; if (!cid) throw new Error('اختار الكورس');
+  const { data, error } = await sb.rpc('generate_codes', { p_course: cid, p_count: n, p_names: names.length ? names : null, p_grade: grade || null });
+  if (error) throw new Error((error.message || '').includes('function') ? 'شغّل ملف supabase_update_v8.sql في Supabase الأول' : error.message);
+  const course = (S.courses.find(c => c.id === cid) || {}).title || '';
+  return { codes: data, course, list: data.map((c, i) => ({ code: c, name: names[i] || '' })), grade };
+}
+Object.assign(ACT, {
+  pgen: async el => {
+    const names = ($('#pnm').value || '').split('\n').map(s => s.trim()).filter(Boolean), n = names.length || (+$('#pn').value || 0);
+    if (n < 1 || n > 200) throw new Error('العدد من 1 لـ 200'); const grade = $('#pg').value;
+    const r = await pMake(n, names, grade); window.__lastCodes = { list: r.list, course: r.course, grade, per: +$('#pl').value };
+    $('#co').value = r.codes.join('\n'); drawCodes(); printSheet(r.list, +$('#pl').value, r.course, grade);
+  },
+  pagain: () => { const L = window.__lastCodes; if (!L) return toast('مفيش دفعة اتولّدت في الجلسة دي', true); printSheet(L.list, +$('#pl').value, L.course, L.grade); },
+  pone: async () => {
+    const names = ($('#pnm').value || '').split('\n').map(s => s.trim()).filter(Boolean), grade = $('#pg').value, r = await pMake(1, names.slice(0, 1), grade);
+    const o = { code: r.codes[0], course: r.course, name: names[0] || '', grade, exp: expTxt() }; window.__one = o; drawCodes();
+    modal('🎫 كود واحد', `<div style="direction:ltr;text-align:center;font:700 22px monospace;letter-spacing:3px;margin:10px 0">${esc(o.code)}</div><div class="bar"><button class="btn" data-act="pOnePng">🖼 تنزيل صورة PNG</button><button class="btn s" data-act="pOnePdf">🖨 طباعة / PDF</button></div><p class="nt">الكارت بالعربي بس ومعاه مساحة للملاحظات.</p>`, null);
+  },
+  pOnePng: async () => { const o = window.__one; const b = await cardPNG(o), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'code-' + o.code + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); },
+  pOnePdf: () => { const o = window.__one; printHTML(oneHTML(o), '', 'كود ' + o.code); }
+});
