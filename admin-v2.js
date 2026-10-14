@@ -719,3 +719,41 @@ Object.assign(ACT, {
   document.addEventListener('click', e => { const a = e.target.closest('img[data-lb]'); if (!a) return; e.preventDefault(); e.stopPropagation(); im.src = a.getAttribute('src'); im.classList.remove('z'); d.classList.add('on'); }, true);
   document.addEventListener('keydown', e => { if (e.key === 'Escape') d.click(); });
 })();
+
+// ---------- تقرير الطالب الكامل (PDF) — بيتعمل عند الضغط بس ومش بيتحفظ في أي حتة ----------
+async function buildStudentReport(sid, cid) {
+  const st = (S.students || []).find(x => x.id === sid) || {}, co = (S.courses || []).find(c => c.id === cid) || {};
+  const les = (await sb.from('lessons').select('id,title,position').eq('course_id', cid).order('position')).data || [], ids = les.map(l => l.id);
+  const [it, ip, qa, q1, q2] = await Promise.all([
+    ids.length ? sb.from('lesson_items').select('id,lesson_id,kind,title,position').in('lesson_id', ids).order('position') : { data: [] },
+    sb.from('item_progress').select('item_id,done_at').eq('student_id', sid),
+    sb.from('quiz_attempts').select('quiz_id,score,total,status,created_at').eq('student_id', sid).order('created_at'),
+    sb.from('quizzes').select('id,title,kind,lesson_id,is_homework,pass_percent').eq('course_id', cid),
+    st.academic_year ? sb.from('quizzes').select('id,title,kind,lesson_id,is_homework,pass_percent').eq('kind', 'comprehensive').eq('academic_year', st.academic_year) : { data: [] }
+  ]);
+  const done = {}; (ip.data || []).forEach(x => done[x.item_id] = x.done_at);
+  const att = {}; (qa.data || []).forEach(a => (att[a.quiz_id] = att[a.quiz_id] || []).push(a));
+  const quizzes = (q1.data || []).concat(q2.data || []);
+  const rows = quizzes.map(z => { const a = att[z.id] || [], best = a.slice().sort((x, y) => (y.total ? y.score / y.total : 0) - (x.total ? x.score / x.total : 0))[0];
+    const pct = best && best.total ? Math.round(best.score / best.total * 100) : null;
+    return { z, n: a.length, best, pct, res: !best ? 'لسه' : best.status === 'pending' ? 'تصحيح معلّق' : pct >= (z.pass_percent || 50) ? 'ناجح' : 'راسب' }; });
+  const taken = rows.filter(r => r.best && r.best.status !== 'pending'), avg = taken.length ? Math.round(taken.reduce((s, r) => s + r.pct, 0) / taken.length) : 0;
+  const items = it.data || [], doneN = items.filter(x => done[x.id]).length;
+  return { st, co, les, items, done, rows, avg, solved: rows.filter(r => r.n).length, doneN };
+}
+function studentReportHTML(R) {
+  const e = esc, st = R.st, d = new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
+  const pill = (t, c) => `<span class="pl ${c}">${e(t)}</span>`, bar = (p, c) => `<div class="pb"><i style="width:${Math.max(0, Math.min(100, p))}%;background:${c}"></i></div>`;
+  const kind = { video: 'فيديو', pdf: 'ملف PDF', link: 'رابط', file: 'ملف' };
+  const itemRows = R.les.map(l => { const its = R.items.filter(x => x.lesson_id === l.id); if (!its.length) return '';
+    return `<tr class="ls"><td colspan="3">📖 ${e(l.title)}</td></tr>` + its.map(x => `<tr><td>${e(x.title)}</td><td>${e(kind[x.kind] || x.kind || '')}</td><td>${R.done[x.id] ? pill('خلّصه', 'ok') + ' <small>' + new Date(R.done[x.id]).toLocaleDateString('ar-EG') + '</small>' : pill('لسه', 'no')}</td></tr>`).join(''); }).join('');
+  const grp = (title, list) => !list.length ? '' : `<div class="box"><div class="bh"><b>${e(title)}</b><span class="ct">${list.length} امتحان</span></div><table><tr><th>الامتحان</th><th>أعلى درجة</th><th>النتيجة</th><th>عدد المحاولات</th></tr>${list.map(r => `<tr><td>${e(r.z.title)}</td><td>${r.best ? (r.best.status === 'pending' ? '—' : r.best.score + ' / ' + r.best.total + ' (' + r.pct + '%)') : '—'}</td><td>${pill(r.res, r.res === 'ناجح' ? 'ok' : r.res === 'راسب' ? 'no' : r.res === 'لسه' ? 'gr' : 'wt')}</td><td>${r.n ? r.n + ' مرة' : '—'}</td></tr>`).join('')}</table></div>`;
+  const lq = R.rows.filter(r => r.z.lesson_id && !r.z.is_homework), hw = R.rows.filter(r => r.z.is_homework), cq = R.rows.filter(r => !r.z.lesson_id && !r.z.is_homework && r.z.kind !== 'comprehensive'), cm = R.rows.filter(r => r.z.kind === 'comprehensive');
+  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير ${e(fname(st))}</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&display=swap" rel="stylesheet"><style>
+@page{size:A4;margin:10mm 8mm 14mm;@bottom-center{content:"صفحة " counter(page) " من " counter(pages);font:600 8pt Cairo,sans-serif;color:#64748b}}
+*{box-sizing:border-box;margin:0}body{font-family:Cairo,Tahoma,sans-serif;color:#0f172a;font-size:10.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#fff}
+.hd{background:linear-gradient(135deg,#0f172a 0%,#1e293b 55%,#ef4444 140%);color:#fff;border-radius:14px;padding:16px 20px}
+.hd h1{font-size:22pt;font-weight:800}.hd p{opacity:.8;font-size:10pt;margin-top:2px}.br{font:700 9pt Cairo;letter-spacing:.5px;opacity:.9;direction:ltr;text-align:left;margin-bottom:6px}
+.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.chips span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:9px;padding:4px 11px;font-size:9.5pt}.chips b{font-weight:800}
+.sc{display:flex;align-items:center;gap:16px;border:1px solid #e2e8f0;border-radius:14px;padding:12px 16px;margin-top:12px;background:#fff}
+.av{width:46px;height:46px;border-radius:50%;background:#fee2e2;color:#ef4444;d
