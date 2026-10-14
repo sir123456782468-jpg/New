@@ -55,7 +55,7 @@
     att = f || null; const b = $('#spw-at-box'); if (!b) return;
     if (att) { $('#spw-at-img').src = URL.createObjectURL(att); b.classList.add('on'); } else { b.classList.remove('on'); $('#spw-at-img').removeAttribute('src'); }
   }
-  const bub = (m, cls, st) => '<div class="m ' + cls + '">' + (m.image_url ? '<a href="' + esc(m.image_url) + '" target="_blank" rel="noopener"><img src="' + esc(m.image_url) + '" alt="صورة"></a>' : '') + (m.body ? '<div dir="auto">' + esc(m.body) + '</div>' : '') + '<small>' + (st || new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })) + '</small></div>';
+  const bub = (m, cls, st) => '<div class="m ' + cls + '">' + (m.image_url ? '<img data-lb src="' + esc(m.image_url) + '" alt="صورة" style="cursor:zoom-in">' : '') + (m.body ? '<div dir="auto">' + esc(m.body) + '</div>' : '') + '<small>' + (st || new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })) + '</small></div>';
   function draw(server) {
     const f = $('#spw-f'); if (!f) return; const near = f.scrollHeight - f.scrollTop - f.clientHeight < 90;
     let h = server.map(m => bub(m, m.sender === 'staff' ? 'th' : 'me', m.sender === 'student' ? (seenAt && new Date(m.created_at) <= new Date(seenAt) ? '✓✓ شافها الدعم' : '✓ تم الإرسال') : null)).join('');
@@ -87,9 +87,18 @@ async function __cmp(img) {
   }
   return blob;
 }
+async function __r2up(blob, hdr) {
+  const W = window.IMG_WORKER; if (!W) return null;
+  const r = await fetch(String(W).replace(/\/$/, '') + '/upload', { method: 'POST', headers: Object.assign({ 'Content-Type': 'image/jpeg' }, hdr || {}), body: blob });
+  if (!r.ok) throw new Error('upload_' + r.status); const j = await r.json(); return j.url || null;
+}
   async function upImage(file) {
     const img = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('x')); i.src = r.result; }; r.onerror = rej; r.readAsDataURL(file); });
     const blob = await __cmp(img); const path = 'u/' + T.id + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+    try {
+      const ses = await sbc().auth.getSession(), tok = ses && ses.data && ses.data.session ? ses.data.session.access_token : null;
+      const u = await __r2up(blob, Object.assign({ 'X-Thread': T.id, 'X-Token': T.token }, tok ? { Authorization: 'Bearer ' + tok } : {})); if (u) return u;
+    } catch (e) { /* لو R2 مش متاح نرجع لـ Supabase */ }
     const up = await sbc().storage.from('support-files').upload(path, blob, { contentType: 'image/jpeg' }); if (up.error) throw up.error;
     return sbc().storage.from('support-files').getPublicUrl(path).data.publicUrl;
   }
@@ -123,4 +132,14 @@ async function __cmp(img) {
   if (/[?&]support=1/.test(location.search)) setTimeout(() => { if (document.getElementById('spTab')) location.hash = '#support'; else open(); }, 800);
   // نقطة حمراء لو فيه رد جديد (فحص هادي كل 40 ثانية لو فيه محادثة)
   setInterval(async () => { const t = load(); if (!t || box.classList.contains('on') || document.hidden) return; try { const { data } = await sbc().rpc('support_fetch', { p_thread: t.id, p_token: t.token, p_peek: true }); if (data && data.messages.filter(m => m.sender === 'staff').length > (+localStorage.getItem(KEY + '_n') || 0)) $('i', btn).style.display = 'block'; } catch (e) {} }, 40000);
+})();
+(function () {
+  if (window.__lbInit) return; window.__lbInit = 1;
+  const st = document.createElement('style'); st.textContent = '#__lb{position:fixed;inset:0;z-index:2147483000;background:rgba(2,6,23,.92);display:none;align-items:center;justify-content:center;overflow:auto;cursor:zoom-out;-webkit-tap-highlight-color:transparent}#__lb.on{display:flex}#__lb img{max-width:96vw;max-height:92vh;border-radius:10px;transition:transform .25s cubic-bezier(.4,0,.2,1);cursor:zoom-in;user-select:none;-webkit-user-drag:none}#__lb img.z{transform:scale(2);cursor:zoom-out}#__lb b{position:fixed;top:12px;left:14px;color:#fff;font:700 26px sans-serif;cursor:pointer;padding:6px 12px}';
+  document.head.appendChild(st);
+  const d = document.createElement('div'); d.id = '__lb'; d.innerHTML = '<b>✕</b><img alt="">'; document.body.appendChild(d);
+  const im = d.querySelector('img');
+  d.addEventListener('click', e => { if (e.target === im) { im.classList.toggle('z'); e.stopPropagation(); return; } d.classList.remove('on'); im.classList.remove('z'); im.src = ''; });
+  document.addEventListener('click', e => { const a = e.target.closest('img[data-lb]'); if (!a) return; e.preventDefault(); e.stopPropagation(); im.src = a.getAttribute('src'); im.classList.remove('z'); d.classList.add('on'); }, true);
+  document.addEventListener('keydown', e => { if (e.key === 'Escape') d.click(); });
 })();
