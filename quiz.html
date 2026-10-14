@@ -272,7 +272,8 @@ async function loadExam() {
     const id = await latestAttempt(); if (id) return openReview(id, false);
     return msg('✅', 'تم تسليم هذا الامتحان', 'استنفدت عدد المحاولات المسموحة.');
   }
-  const meta = m.data || { n: 0, pts: 0 }; if (!meta.n) return msg('📭', 'لا توجد أسئلة في هذا الامتحان');
+  let meta = m.data && typeof m.data === 'object' && !Array.isArray(m.data) ? m.data : null;
+  if (!meta) meta = { n: '؟', pts: '؟' };
   E = { qz, meta, qs: [], ans: {}, idx: 0, viol: 0, endAt: null, off: 0, seen: new Set(), flag: new Set(), used: c.count || 0 };
   try { supabaseClient.from('quizzes').select('num').eq('id', QID).maybeSingle().then(r => { const n = r && r.data && r.data.num, t = String(qz.title || '').trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60); if (n && MODE === 'exam') { try { history.replaceState(history.state, '', '/exam/' + n + (t ? '-' + t : '')); } catch (e) {} } }); } catch (e) {}
   intro();
