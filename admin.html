@@ -255,7 +255,7 @@ async function drawCodes() {
   let r0 = await sb.from('activation_codes').select('code,used_by,used_at,created_at,expires_at').eq('course_id', cid).order('created_at', { ascending: false }).limit(500); if (r0.error) r0 = await sb.from('activation_codes').select('code,used_by,used_at,created_at').eq('course_id', cid).order('created_at', { ascending: false }).limit(500);
   const { data, error } = r0; if (error) return fail(error);
   const used = data.filter(x => x.used_by).length;
-  $('#cl').innerHTML = '<p style="margin-bottom:10px;font-weight:700">المستخدم: ' + used + ' • المتاح: ' + (data.length - used) + '</p><div class="tw"><table><tr><th>الكود</th><th>الحالة</th><th>ينتهي</th><th>استخدمه</th></tr>' + data.map(x => { const s = S.students.find(t => t.id === x.used_by); return '<tr><td dir="ltr" style="font-weight:800;letter-spacing:1px">' + x.code + '</td><td><span class="pill ' + (x.used_by ? 'no' : 'ok') + '">' + (x.used_by ? 'مستخدم' : 'متاح') + '</span></td><td>' + (x.used_by ? '—' : x.expires_at ? fdate(x.expires_at) : 'بدون') + '</td><td>' + (s ? esc(fname(s)) + ' • ' + fdate(x.used_at) : '—') + '</td></tr>'; }).join('') + '</table></div>';
+  $('#cl').innerHTML = '<div class="bar" style="margin-bottom:10px"><b>المستخدم: ' + used + ' • المتاح: ' + (data.length - used) + '</b><button class="btn s r" data-act="cdDel" style="margin-right:auto">🗑 حذف المحدد (<span id="cdn">0</span>)</button><button class="btn s" data-act="cdAll">🗑 حذف كل غير المستخدم</button></div><div class="tw"><table><tr><th></th><th>الكود</th><th>الحالة</th><th>ينتهي</th><th>استخدمه</th></tr>' + data.map(x => { const s = S.students.find(t => t.id === x.used_by); return '<tr><td>' + (x.used_by ? '' : '<input type="checkbox" data-act="cdSel" data-id="' + x.code + '" style="width:auto">') + '</td><td dir="ltr" style="font-weight:800;letter-spacing:1px">' + x.code + '</td><td><span class="pill ' + (x.used_by ? 'no' : 'ok') + '">' + (x.used_by ? 'مستخدم' : 'متاح') + '</span></td><td>' + (x.used_by ? '—' : x.expires_at ? fdate(x.expires_at) : 'بدون') + '</td><td>' + (s ? esc(fname(s)) + ' • ' + fdate(x.used_at) : '—') + '</td></tr>'; }).join('') + '</table></div>';
 }
 
 // ===== الامتحانات =====
@@ -522,6 +522,7 @@ Object.assign(ACT, {
 
 window.addEventListener('DOMContentLoaded', gate);   // بيشتغل بعد تحميل admin-v2.js
 </script>
+<script src="/img-config.js"></script>
 <script src="/admin-v2.js"></script>
 </body>
 </html>
