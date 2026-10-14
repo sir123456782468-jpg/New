@@ -242,7 +242,7 @@ let svT = null;
 function srvSave(now) {
   if (!E || E.practice || !QID || !E.stAt || finished) return; clearTimeout(svT);
   const f = () => supabaseClient.rpc('draft_save', { p_quiz: QID, p_answers: answersMap(), p_state: { idx: E.idx, seen: Array.from(E.seen), flag: Array.from(E.flag) }, p_violations: E.viol, p_started: new Date(E.stAt).toISOString(), p_ends: E.endAt != null ? new Date(E.endAt).toISOString() : null }).then(() => {}, () => {});
-  if (now) f(); else svT = setTimeout(f, 1200);
+  if (now) f(); else svT = setTimeout(f, 5000);
 }
 function save() { try { if (E && !E.practice) { localStorage.setItem(KEY, JSON.stringify({ st: E.stAt, ans: E.ans, idx: E.idx, viol: E.viol, seen: Array.from(E.seen), flag: Array.from(E.flag) })); srvSave(); } } catch (e) {} }
 async function latestAttempt() { try { const r = await supabaseClient.rpc('my_attempts_basic'); if (!r.error && Array.isArray(r.data)) { const x = r.data.find(z => z.quiz_id === QID); return x && x.id; } } catch (e) {} const { data } = await supabaseClient.from('quiz_attempts').select('id').eq('quiz_id', QID).eq('student_id', currentUser.id).order('created_at', { ascending: false }).limit(1); return data && data[0] && data[0].id; }
