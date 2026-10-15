@@ -432,7 +432,7 @@ async function vSupport() {
 const spListHTML = d => (d || []).map(t => '<div class="card sprow" data-act="spOpen" data-id="' + t.id + '" style="margin-bottom:8px;cursor:pointer"><b>' + esc(t.name || 'طالب') + '</b>' + (t.verified === false ? ' <span class="pill no" title="كتب رقمه من غير تسجيل دخول">⚠️ غير موثّق</span>' : '') + (t.unread ? ' <span class="pill no">' + t.unread + ' جديد</span>' : '') + (t.status === 'closed' ? ' <span class="pill">منتهية</span>' : '') + '<br><small dir="ltr" style="color:var(--muted)">' + esc(t.phone) + ' • ' + tfmt(t.last_at) + '</small><br><small>' + esc((t.last || '').slice(0, 70)) + '</small></div>').join('') || '<div class="empty">لا توجد محادثات</div>';
 async function spRefreshList() { const { data } = await sb.rpc('support_admin_list', { p_status: window.__spStatus || 'open' }); const el = document.querySelector('#spList'); if (el && data) el.innerHTML = spListHTML(data); }
 let spSeen = null;
-function spMsgHTML(m) { return '<div class="spm ' + (m.sender === 'staff' ? 'me' : 'th') + '">' + (m.image_url ? '<img data-lb src="' + esc(m.image_url) + '" alt="صورة" loading="lazy" style="cursor:zoom-in">' : '') + (m.body ? '<div dir="auto">' + esc(m.body) + '</div>' : '') + '<small>' + tfmt(m.created_at) + (m.sender === 'staff' ? (spSeen && new Date(m.created_at) <= new Date(spSeen) ? ' • <span style="color:#16a34a">👁 شافها الطالب</span>' : ' • ✓ اتبعتت') : '') + '</small></div>'; }
+function spMsgHTML(m) { return '<div class="spm ' + (m.sender === 'staff' ? 'me' : 'th') + '">' + (m.image_url ? '<a href="' + esc(m.image_url) + '" target="_blank" rel="noopener"><img src="' + esc(m.image_url) + '" alt="صورة" loading="lazy"></a>' : '') + (m.body ? '<div dir="auto">' + esc(m.body) + '</div>' : '') + '<small>' + tfmt(m.created_at) + (m.sender === 'staff' ? (spSeen && new Date(m.created_at) <= new Date(spSeen) ? ' • <span style="color:#16a34a">👁 شافها الطالب</span>' : ' • ✓ اتبعتت') : '') + '</small></div>'; }
 async function spThread(id, quiet) {
   sp.id = id; const { data, error } = await sb.rpc('support_admin_thread', { p_thread: id }); if (error) throw error;
   spSeen = data.student_seen_at || null;
@@ -457,15 +457,9 @@ async function __cmp(img) {
   }
   return blob;
 }
-async function __r2up(blob, hdr) {
-  const W = window.IMG_WORKER; if (!W) return null;
-  const r = await fetch(String(W).replace(/\/$/, '') + '/upload', { method: 'POST', headers: Object.assign({ 'Content-Type': 'image/jpeg' }, hdr || {}), body: blob });
-  if (!r.ok) throw new Error('upload_' + r.status); const j = await r.json(); return j.url || null;
-}
 async function spUpload(file) {
   const img = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('الملف مش صورة')); i.src = r.result; }; r.onerror = rej; r.readAsDataURL(file); });
   const blob = await __cmp(img); const path = 'u/s-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
-  try { const ses = await sb.auth.getSession(); const u = await __r2up(blob, { Authorization: 'Bearer ' + ses.data.session.access_token }); if (u) return u; } catch (e) { /* رجوع لـ Supabase */ }
   const { error } = await sb.storage.from('support-files').upload(path, blob, { contentType: 'image/jpeg' }); if (error) throw error;
   return sb.storage.from('support-files').getPublicUrl(path).data.publicUrl;
 }
@@ -562,37 +556,37 @@ if (typeof NAV !== 'undefined' && !NAV.some(n => n[0] === 'access')) NAV.splice(
 // ---------- طباعة كروت الأكواد (A4: 8 أو 10 في الورقة) + كود واحد ----------
 const CARD_CSS = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&family=Poppins:wght@500;700&display=swap');
 @page{size:A4;margin:0}*{box-sizing:border-box;margin:0}:root{--navy:#0f172a;--red:#ef4444;--mut:#64748b}
-html,body{direction:ltr}body{font-family:'Cairo','DejaVu Sans',sans-serif;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.page{width:210mm;height:297mm;padding:10mm 13mm;display:grid;grid-template-columns:repeat(2,92mm);justify-content:start;page-break-after:always;overflow:hidden}
+body{font-family:'Cairo','DejaVu Sans',sans-serif;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+.page{width:210mm;height:297mm;padding:10mm 13mm;display:grid;grid-template-columns:repeat(2,92mm);page-break-after:always;overflow:hidden}
 .page:last-child{page-break-after:auto}
-.card{position:relative;width:92mm;border:.3mm solid #94a3b8;padding:3.5mm 5.5mm 3mm 7mm;background:linear-gradient(135deg,#fff 60%,#fef2f2);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
+.card{position:relative;width:92mm;border:.3mm solid #94a3b8;padding:3.5mm 5.5mm 3mm;background:linear-gradient(135deg,#fff 60%,#fef2f2);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
 .bar{position:absolute;left:0;top:0;bottom:0;width:2.4mm;background:linear-gradient(var(--navy),var(--red))}
-.hd{display:flex;align-items:baseline;justify-content:space-between;gap:2mm;border-bottom:.45mm solid var(--red);padding:0 0 1.3mm}
-.t{font:700 13pt 'Poppins','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap;direction:ltr}.s{font:500 8.5pt 'Poppins','DejaVu Sans',sans-serif;color:var(--red);white-space:nowrap;direction:ltr}
+.hd{display:flex;align-items:baseline;justify-content:space-between;gap:2mm;border-bottom:.45mm solid var(--red);padding:0 0 1.3mm 1.2mm}
+.t{font:700 13pt 'Poppins','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap}.s{font:500 8.5pt 'Poppins','DejaVu Sans',sans-serif;color:var(--red);white-space:nowrap}
 .cn{font:800 12.5pt 'Cairo','DejaVu Sans',sans-serif;color:var(--navy);direction:rtl;text-align:center;background:#fee2e2;border-radius:1.5mm;padding:.6mm 2mm;line-height:1.3;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:8mm}
-.row{display:flex;flex-direction:row;align-items:flex-end;gap:2.5mm;min-height:8mm}
-.ar{font:800 10pt 'Cairo','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap;direction:rtl;padding-bottom:.2mm}
+.row{display:flex;align-items:flex-end;gap:2mm;padding-left:1.2mm;min-height:8mm}
+.en{font:500 8pt 'Poppins','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap;padding-bottom:.6mm}
+.ar{font:800 9.5pt 'Cairo','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap;direction:rtl;padding-bottom:.2mm}
 .ln{flex:1;border-bottom:.25mm dotted var(--mut);min-height:6mm;font:800 10.5pt 'Cairo',sans-serif;direction:rtl;text-align:center;color:#111;line-height:1.5;overflow:hidden;white-space:nowrap}
 .code{align-items:center;min-height:11mm}
 .ln.box{border:.4mm solid var(--navy);border-radius:1.4mm;background:#fff;min-height:9.5mm;display:flex;align-items:center;justify-content:center;font:700 13pt 'Poppins','DejaVu Sans',monospace;letter-spacing:.5mm;direction:ltr;padding-left:.5mm;white-space:nowrap;overflow:hidden}
 .exp{font:600 7pt Cairo,sans-serif;color:var(--red);text-align:center;direction:rtl}.p8 .card{height:69mm}.p10 .card{height:55mm}.p10 .t{font-size:12pt}.p10 .cn{font-size:11.5pt}.p10 .row{min-height:6.8mm}.p10 .ln.box{min-height:8.5mm;font-size:12.5pt}
-.one{width:150mm;margin:12mm auto}.one .card{width:150mm;height:112mm;padding:6mm 9mm 6mm 11mm;gap:2mm}.one .t{font-size:19pt}.one .s{font-size:11pt}.one .cn{font-size:17pt;padding:1.2mm 3mm}
+.one{width:150mm;margin:12mm auto}.one .card{width:150mm;height:112mm;padding:6mm 9mm;gap:2mm}.one .t{font-size:19pt}.one .s{font-size:11pt}.one .cn{font-size:17pt;padding:1.2mm 3mm}
 .one .row{min-height:11mm}.one .ar{font-size:13pt}.one .ln{font-size:14pt}.one .ln.box{min-height:14mm;font-size:22pt;letter-spacing:1.2mm}.one .bar{width:3.4mm}
 .one .notes{border:.3mm dashed #94a3b8;border-radius:1.5mm;flex:1;min-height:14mm;padding:1.5mm 3mm;direction:rtl;font:800 10pt Cairo,sans-serif;color:var(--mut)}`;
-const zoomOf = c => ((c || '').length > 34 ? '.75' : (c || '').length > 24 ? '.88' : '1');
-const expLine = o => `<div class="exp">⏳ الكود صالح 72 ساعة ويُستخدم مرة واحدة فقط${o.exp ? ' — ينتهي ' + esc(o.exp) : ''}</div>`;
-const cardHTML = o => `<div class="card"><div class="bar"></div><div class="hd"><div class="t">The Leader In English</div><div class="s">Mr Sherif Khafagy</div></div>
-<div class="cn" style="zoom:${zoomOf(o.course)}">${esc(o.course || '')}</div>
+const cardHTML = (o) => `<div class="card"><div class="bar"></div><div class="hd"><div class="t">The Leader In English</div><div class="s">Mr Sherif Khafagy</div></div>
+<div class="cn" style="zoom:${(o.course || '').length > 34 ? '.75' : (o.course || '').length > 24 ? '.88' : '1'}">${esc(o.course || '')}</div>
+<div class="row"><span class="en">Student Name :</span><span class="ln">${esc(o.name || '')}</span><span class="ar">اسم الطالب :</span></div>
+<div class="row"><span class="en">Grade :</span><span class="ln">${esc(o.grade || '')}</span><span class="ar">الصف الدراسي :</span></div>
+<div class="row code"><span class="en">Code :</span><span class="ln box">${esc(o.code)}</span><span class="ar">الكود :</span></div><div class="exp">⏳ الكود صالح 72 ساعة ويُستخدم مرة واحدة فقط${o.exp ? ' — ينتهي ' + esc(o.exp) : ''}</div></div>`;
+const oneHTML = (o) => `<div class="one"><div class="card"><div class="bar"></div><div class="hd"><div class="t">The Leader In English</div><div class="s">Mr Sherif Khafagy</div></div>
+<div class="cn" style="zoom:${(o.course || '').length > 34 ? '.75' : (o.course || '').length > 24 ? '.88' : '1'}">${esc(o.course || '')}</div>
 <div class="row"><span class="ln">${esc(o.name || '')}</span><span class="ar">اسم الطالب :</span></div>
 <div class="row"><span class="ln">${esc(o.grade || '')}</span><span class="ar">الصف الدراسي :</span></div>
-<div class="row code"><span class="ln box">${esc(o.code)}</span><span class="ar">الكود :</span></div>${expLine(o)}</div>`;
-const oneHTML = o => `<div class="one"><div class="card"><div class="bar"></div><div class="hd"><div class="t">The Leader In English</div><div class="s">Mr Sherif Khafagy</div></div>
-<div class="cn" style="zoom:${zoomOf(o.course)}">${esc(o.course || '')}</div>
-<div class="row"><span class="ln">${esc(o.name || '')}</span><span class="ar">اسم الطالب :</span></div>
-<div class="row"><span class="ln">${esc(o.grade || '')}</span><span class="ar">الصف الدراسي :</span></div>
-<div class="row code"><span class="ln box">${esc(o.code)}</span><span class="ar">الكود :</span></div>${expLine(o)}<div class="notes">${esc(o.note || 'ملاحظات :')}</div></div></div>`;
+<div class="row code"><span class="ln box">${esc(o.code)}</span><span class="ar">الكود :</span></div>
+<div class="exp">⏳ الكود صالح 72 ساعة ويُستخدم مرة واحدة فقط${o.exp ? ' — ينتهي ' + esc(o.exp) : ''}</div><div class="notes">${esc(o.note || 'ملاحظات :')}</div></div></div>`;
 function printHTML(body, cls, title) {
-  const html = '<!doctype html><html lang="ar" dir="ltr"><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>' + CARD_CSS + '</style></head><body class="' + cls + '">' + body + '</body></html>';
+  const html = '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>' + CARD_CSS + '</style></head><body class="' + cls + '">' + body + '</body></html>';
   const f = document.createElement('iframe'); f.style.cssText = 'position:fixed;left:-9999px;width:900px;height:700px'; document.body.appendChild(f);
   f.contentDocument.open(); f.contentDocument.write(html); f.contentDocument.close();
   const go = () => { try { f.contentWindow.focus(); f.contentWindow.print(); } catch (x) { toast('تعذر فتح الطباعة', true); } setTimeout(() => f.remove(), 90000); };
@@ -602,158 +596,63 @@ function printHTML(body, cls, title) {
 const expTxt = () => new Date(Date.now() + 72 * 36e5).toLocaleString('ar-EG', { day: 'numeric', month: 'numeric', hour: 'numeric', minute: '2-digit' });
 function printSheet(list, per, course, grade) {
   const n = per === 8 ? 8 : 10, pages = []; for (let i = 0; i < list.length; i += n) pages.push(list.slice(i, i + n));
-  const e = expTxt();
-  printHTML(pages.map(pg => '<div class="page p' + n + '">' + pg.map(o => cardHTML(Object.assign({ course, grade, exp: e }, o))).join('') + '</div>').join(''), '', 'أكواد ' + course);
+  printHTML(pages.map(pg => '<div class="page p' + n + '">' + pg.map(o => cardHTML(Object.assign({ course, grade, exp: expTxt() }, o))).join('') + '</div>').join(''), '', 'أكواد ' + course);
 }
-// كود واحد كصورة (Canvas) — عربي فقط
+// كود واحد كصورة (Canvas)
 async function cardPNG(o) {
   try { await document.fonts.load('800 40px Cairo'); await document.fonts.load('700 40px Poppins'); } catch (e) {}
-  const W = 1500, H = 960, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
+  const W = 1500, H = 920, c = document.createElement('canvas'); c.width = W; c.height = H; const x = c.getContext('2d');
   const g = x.createLinearGradient(0, 0, W, H); g.addColorStop(.6, '#fff'); g.addColorStop(1, '#fef2f2'); x.fillStyle = g; x.fillRect(0, 0, W, H);
   x.strokeStyle = '#94a3b8'; x.lineWidth = 3; x.strokeRect(1.5, 1.5, W - 3, H - 3);
   const bg = x.createLinearGradient(0, 0, 0, H); bg.addColorStop(0, '#0f172a'); bg.addColorStop(1, '#ef4444'); x.fillStyle = bg; x.fillRect(0, 0, 34, H);
   x.textBaseline = 'alphabetic'; x.direction = 'ltr'; x.textAlign = 'left'; x.fillStyle = '#0f172a'; x.font = '700 70px Poppins, Arial'; x.fillText('The Leader In English', 90, 120);
   x.textAlign = 'right'; x.fillStyle = '#ef4444'; x.font = '500 42px Poppins, Arial'; x.fillText('Mr Sherif Khafagy', W - 70, 120);
   x.fillStyle = '#ef4444'; x.fillRect(90, 148, W - 160, 5);
-  x.fillStyle = '#fee2e2'; x.beginPath(); x.roundRect ? x.roundRect(90, 185, W - 180, 110, 18) : x.rect(90, 185, W - 180, 110); x.fill();
-  x.direction = 'rtl'; x.textAlign = 'center'; x.fillStyle = '#0f172a'; x.font = '800 66px Cairo, Tahoma, Arial'; x.fillText(o.course || '', W / 2, 265, W - 220);
+  x.fillStyle = '#fee2e2'; const bx = 90, bw = W - 160; x.beginPath(); x.roundRect ? x.roundRect(bx, 185, bw, 110, 18) : x.rect(bx, 185, bw, 110); x.fill();
+  x.direction = 'rtl'; x.textAlign = 'center'; x.fillStyle = '#0f172a'; x.font = '800 66px Cairo, Tahoma, Arial'; x.fillText(o.course || '', W / 2, 265, bw - 40);
   const row = (y, label, val, box) => {
-    x.direction = 'rtl'; x.textAlign = 'right'; x.fillStyle = '#0f172a'; x.font = '800 54px Cairo, Tahoma, Arial'; x.fillText(label, W - 90, y);
-    const l = 90, r = W - 90 - x.measureText(label).width - 30;
-    if (box) { x.strokeStyle = '#0f172a'; x.lineWidth = 4; x.fillStyle = '#fff'; x.beginPath(); x.roundRect ? x.roundRect(l, y - 78, r - l, 104, 16) : x.rect(l, y - 78, r - l, 104); x.fill(); x.stroke(); x.direction = 'ltr'; x.textAlign = 'center'; x.fillStyle = '#0f172a'; x.font = '700 78px Poppins, monospace'; x.fillText(String(val).split('').join(' '), (l + r) / 2, y + 2, r - l - 20); }
-    else { x.strokeStyle = '#64748b'; x.setLineDash([3, 9]); x.lineWidth = 4; x.beginPath(); x.moveTo(l, y + 8); x.lineTo(r, y + 8); x.stroke(); x.setLineDash([]); if (val) { x.direction = 'rtl'; x.textAlign = 'center'; x.fillStyle = '#111'; x.font = '800 52px Cairo, Tahoma, Arial'; x.fillText(val, (l + r) / 2, y - 6, r - l - 20); } }
+    x.direction = 'rtl'; x.textAlign = 'right'; x.fillStyle = '#0f172a'; x.font = '800 54px Cairo, Tahoma, Arial'; x.fillText(label, W - 70, y);
+    const l = 90, r = W - 70 - x.measureText(label).width - 30;
+    if (box) { x.strokeStyle = '#0f172a'; x.lineWidth = 4; x.fillStyle = '#fff'; x.beginPath(); x.roundRect ? x.roundRect(l, y - 78, r - l, 104, 16) : x.rect(l, y - 78, r - l, 104); x.fill(); x.stroke(); x.direction = 'ltr'; x.textAlign = 'center'; x.fillStyle = '#0f172a'; x.font = '700 78px Poppins, monospace'; x.fillText(String(val).split('').join(' '), (l + r) / 2, y + 2); }
+    else { x.strokeStyle = '#64748b'; x.setLineDash([3, 9]); x.lineWidth = 4; x.beginPath(); x.moveTo(l, y + 8); x.lineTo(r, y + 8); x.stroke(); x.setLineDash([]); if (val) { x.direction = 'rtl'; x.textAlign = 'center'; x.font = '800 52px Cairo, Tahoma, Arial'; x.fillText(val, (l + r) / 2, y - 6, r - l - 20); } }
   };
   row(400, 'اسم الطالب :', o.name || ''); row(510, 'الصف الدراسي :', o.grade || ''); row(650, 'الكود :', o.code, true);
   x.direction = 'rtl'; x.textAlign = 'center'; x.fillStyle = '#ef4444'; x.font = '800 34px Cairo, Tahoma, Arial'; x.fillText('⏳ الكود صالح 72 ساعة ويُستخدم مرة واحدة فقط' + (o.exp ? ' — ينتهي ' + o.exp : ''), W / 2, 716);
-  x.setLineDash([14, 10]); x.strokeStyle = '#94a3b8'; x.lineWidth = 3; x.strokeRect(90, 735, W - 180, 170); x.setLineDash([]);
+  x.setLineDash([14, 10]); x.strokeStyle = '#94a3b8'; x.lineWidth = 3; x.strokeRect(90, 735, W - 160, 150); x.setLineDash([]);
   x.direction = 'rtl'; x.textAlign = 'right'; x.fillStyle = '#64748b'; x.font = '800 40px Cairo, Tahoma, Arial'; x.fillText(o.note || 'ملاحظات :', W - 110, 790);
   return new Promise(r => c.toBlob(r, 'image/png'));
-}
-
-// ---- لوحة الطباعة: الصف → الكورس → الطلاب ----
-window.__ps = new Set();
-const psStudents = () => (S.students || []).filter(s => s.academic_year === ($('#pgr') ? $('#pgr').value : ''));
-function psDraw() {
-  const q = (($('#psq') || {}).value || '').trim().toLowerCase(), list = psStudents();
-  const box = $('#pst'); if (!box) return;
-  box.innerHTML = list.filter(s => !q || (fname(s) + ' ' + (s.phone_number || '')).toLowerCase().includes(q)).map(s => `<label class="psr" style="display:flex;gap:8px;align-items:center;padding:5px 4px;cursor:pointer"><input type="checkbox" data-act="psTog" data-id="${s.id}" ${window.__ps.has(s.id) ? 'checked' : ''} style="width:auto"><span>${esc(fname(s))}</span><small dir="ltr" style="color:var(--muted);margin-right:auto">${esc(s.phone_number || '')}</small></label>`).join('') || '<div class="empty">لا طلاب في الصف ده</div>';
-  psCount();
-}
-function psCount() {
-  const per = +($('#pl') || {}).value || 10, sel = window.__ps.size, manual = (($('#pnm') || {}).value || '').split('\n').map(x => x.trim()).filter(Boolean).length, extra = +($('#pn') || {}).value || 0;
-  const base = sel + manual || extra, total = base ? Math.ceil(base / per) * per : 0;
-  const el = $('#pcnt'); if (el) el.innerHTML = base ? `✅ مختار <b>${sel + manual}</b> اسم${sel + manual ? '' : ' (من غير أسماء — ' + base + ' كارت فاضي)'} • هيطلع <b>${total}</b> كارت في <b>${total / per}</b> ${total / per === 1 ? 'ورقة' : 'ورقات'}${total > base ? ' (منهم ' + (total - base) + ' كارت من غير اسم)' : ''}` : 'اختار طلاب أو اكتب عدد';
-}
-function psCourses() {
-  const y = $('#pgr').value, cs = (S.courses || []).filter(c => c.academic_year === y);
-  $('#pcs').innerHTML = cs.map(c => `<option value="${c.id}">${esc(c.title)}</option>`).join('') || '<option value="">— مفيش كورسات للصف ده —</option>';
 }
 const _vCodes0 = VIEWS.codes[1];
 VIEWS.codes = ['الأكواد', async () => {
   const html = await _vCodes0();
-  if (!S.courses || !S.courses.length) await loadCourses(); await loadStudents(); window.__ps = new Set();
+  await (S.courses || loadCourses());
   const panel = `<div class="card" style="margin-bottom:16px"><b>🖨 طباعة كروت الأكواد (A4)</b>
-  <p class="nt">اختار الصف ← الكورس ← الطلاب اللي هتطبع بأسمائهم. كل كود صالح 72 ساعة ويشتغل مرة واحدة.</p>
-  <div class="bar"><div><label>الصف</label><select id="pgr">${yopts('')}</select></div><div style="flex:1;min-width:200px"><label>الكورس</label><select id="pcs"></select></div><div><label>كروت في الورقة</label><select id="pl"><option value="10">10 كروت</option><option value="8">8 كروت (أكبر)</option></select></div></div>
-  <label>الطلاب (${'اختار اللي هتطبع بأسمائهم'})</label><div class="bar"><input id="psq" placeholder="بحث بالاسم أو الرقم" style="flex:1"><button class="btn s g" data-act="psAll">تحديد الكل</button><button class="btn s" data-act="psNone">إلغاء التحديد</button></div>
-  <div id="pst" style="max-height:240px;overflow:auto;border:1px solid var(--line,#2a3350);border-radius:10px;padding:6px;margin-top:6px"></div>
-  <label>أسماء إضافية (اختياري — سطر لكل اسم)</label><textarea id="pnm" style="min-height:60px"></textarea>
-  <label>أو عدد كروت من غير أسماء (لو ما اخترتش أسماء)</label><input type="number" id="pn" min="0" max="200" value="10" style="max-width:120px">
-  <p id="pcnt" class="nt" style="margin-top:10px;font-weight:700"></p>
-  <div class="bar" style="margin-top:6px"><button class="btn" data-act="pgen">🖨 توليد وطباعة PDF</button><button class="btn s" data-act="pagain">🖨 إعادة طباعة آخر دفعة</button><button class="btn s g" data-act="pone">🎫 كود واحد (صورة / PDF)</button></div></div>`;
-  setTimeout(() => {
-    psCourses(); psDraw();
-    $('#pgr').addEventListener('change', () => { window.__ps = new Set(); psCourses(); psDraw(); });
-    $('#psq').addEventListener('input', psDraw);
-    ['#pl', '#pn', '#pnm'].forEach(k => $(k).addEventListener('input', psCount));
-  });
+  <p class="nt">الكورس المختار فوق هو اللي بيتولّد له. اكتب أسماء الطلاب (اسم في كل سطر) لو عايز الاسم يتكتب على الكارت، أو سيبها فاضية والطالب يكتب بخط إيده. كل كود يشتغل مرة واحدة بس.</p>
+  <div class="bar"><div><label>الصف (يتكتب على الكارت)</label><select id="pg"><option value="">— سيبه فاضي —</option>${yopts('')}</select></div><div><label>عدد الأكواد</label><input type="number" id="pn" min="1" max="200" value="10" style="max-width:110px"></div><div><label>عدد الكروت في الورقة</label><select id="pl"><option value="10">10 كروت</option><option value="8">8 كروت (أكبر)</option></select></div></div>
+  <label>أسماء الطلاب (اختياري — سطر لكل طالب، ولو كتبت أسماء العدد بيتحدد تلقائي)</label><textarea id="pnm" style="min-height:80px" placeholder="أحمد محمد&#10;سارة علي"></textarea>
+  <div class="bar" style="margin-top:10px"><button class="btn" data-act="pgen">🖨 توليد وطباعة PDF</button><button class="btn s" data-act="pagain">🖨 إعادة طباعة آخر دفعة</button><button class="btn s g" data-act="pone">🎫 كود واحد (صورة / PDF)</button></div></div>`;
   return panel + html;
 }];
-async function pMake(cid, n, names, grade) {
-  if (!cid) throw new Error('اختار الكورس');
+async function pMake(n, names, grade) {
+  const cid = $('#cc').value; if (!cid) throw new Error('اختار الكورس');
   const { data, error } = await sb.rpc('generate_codes', { p_course: cid, p_count: n, p_names: names.length ? names : null, p_grade: grade || null });
   if (error) throw new Error((error.message || '').includes('function') ? 'شغّل ملف supabase_update_v8.sql في Supabase الأول' : error.message);
   const course = (S.courses.find(c => c.id === cid) || {}).title || '';
   return { codes: data, course, list: data.map((c, i) => ({ code: c, name: names[i] || '' })), grade };
 }
 Object.assign(ACT, {
-  psTog: (id, el) => { if (el.checked) window.__ps.add(id); else window.__ps.delete(id); psCount(); },
-  psAll: () => { psStudents().forEach(s => window.__ps.add(s.id)); psDraw(); },
-  psNone: () => { window.__ps.clear(); psDraw(); },
-  pgen: async () => {
-    const per = +$('#pl').value, picked = psStudents().filter(s => window.__ps.has(s.id)).map(fname), manual = ($('#pnm').value || '').split('\n').map(x => x.trim()).filter(Boolean);
-    const names = picked.concat(manual), base = names.length || (+$('#pn').value || 0);
-    if (!base) throw new Error('اختار طلاب أو اكتب عدد الكروت'); const total = Math.ceil(base / per) * per; if (total > 200) throw new Error('الحد الأقصى 200 كارت في المرة');
-    const grade = $('#pgr').value, r = await pMake($('#pcs').value, total, names, grade);   // الكروت الزيادة بتتطبع بكود من غير اسم
-    window.__lastCodes = { list: r.list, course: r.course, grade, per }; $('#co').value = r.codes.join('\n'); drawCodes(); printSheet(r.list, per, r.course, grade);
+  pgen: async el => {
+    const names = ($('#pnm').value || '').split('\n').map(s => s.trim()).filter(Boolean), n = names.length || (+$('#pn').value || 0);
+    if (n < 1 || n > 200) throw new Error('العدد من 1 لـ 200'); const grade = $('#pg').value;
+    const r = await pMake(n, names, grade); window.__lastCodes = { list: r.list, course: r.course, grade, per: +$('#pl').value };
+    $('#co').value = r.codes.join('\n'); drawCodes(); printSheet(r.list, +$('#pl').value, r.course, grade);
   },
   pagain: () => { const L = window.__lastCodes; if (!L) return toast('مفيش دفعة اتولّدت في الجلسة دي', true); printSheet(L.list, +$('#pl').value, L.course, L.grade); },
   pone: async () => {
-    const names = ($('#pnm').value || '').split('\n').map(x => x.trim()).filter(Boolean), picked = psStudents().filter(s => window.__ps.has(s.id)).map(fname), nm = (picked.concat(names))[0] || '', grade = $('#pgr').value;
-    const r = await pMake($('#pcs').value, 1, nm ? [nm] : [], grade); const o = { code: r.codes[0], course: r.course, name: nm, grade, exp: expTxt() }; window.__one = o; drawCodes();
-    modal('🎫 كود واحد', `<div style="direction:ltr;text-align:center;font:700 22px monospace;letter-spacing:3px;margin:10px 0">${esc(o.code)}</div><div class="bar"><button class="btn" data-act="pOnePng">🖼 تنزيل صورة PNG</button><button class="btn s" data-act="pOnePdf">🖨 طباعة / PDF</button></div>`, null);
+    const names = ($('#pnm').value || '').split('\n').map(s => s.trim()).filter(Boolean), grade = $('#pg').value, r = await pMake(1, names.slice(0, 1), grade);
+    const o = { code: r.codes[0], course: r.course, name: names[0] || '', grade, exp: expTxt() }; window.__one = o; drawCodes();
+    modal('🎫 كود واحد', `<div style="direction:ltr;text-align:center;font:700 22px monospace;letter-spacing:3px;margin:10px 0">${esc(o.code)}</div><div class="bar"><button class="btn" data-act="pOnePng">🖼 تنزيل صورة PNG</button><button class="btn s" data-act="pOnePdf">🖨 طباعة / PDF</button></div><p class="nt">الكارت بالعربي بس ومعاه مساحة للملاحظات.</p>`, null);
   },
   pOnePng: async () => { const o = window.__one; const b = await cardPNG(o), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'code-' + o.code + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); },
-  pOnePdf: () => { const o = window.__one; printHTML(oneHTML(o), '', 'كود ' + o.code); },
-  // حذف الأكواد غير المستخدمة
-  cdSel: (id, el) => { window.__cdel = window.__cdel || new Set(); if (el.checked) window.__cdel.add(id); else window.__cdel.delete(id); const b = $('#cdn'); if (b) b.textContent = window.__cdel.size; },
-  cdDel: async () => {
-    const codes = Array.from(window.__cdel || []); if (!codes.length) return toast('حدد أكواد الأول', true);
-    if (!confirm('حذف ' + codes.length + ' كود غير مستخدم نهائياً؟')) return;
-    const { error } = await sb.from('activation_codes').delete().in('code', codes).is('used_by', null); if (error) throw error;
-    window.__cdel = new Set(); toast('تم الحذف 🗑'); drawCodes();
-  },
-  cdAll: async () => {
-    const cid = $('#cc').value; if (!cid || !confirm('حذف كل الأكواد غير المستخدمة في الكورس ده؟')) return;
-    const { error } = await sb.from('activation_codes').delete().eq('course_id', cid).is('used_by', null); if (error) throw error;
-    window.__cdel = new Set(); toast('تم حذف كل الأكواد غير المستخدمة 🗑'); drawCodes();
-  }
+  pOnePdf: () => { const o = window.__one; printHTML(oneHTML(o), '', 'كود ' + o.code); }
 });
-(function () {
-  if (window.__lbInit) return; window.__lbInit = 1;
-  const st = document.createElement('style'); st.textContent = '#__lb{position:fixed;inset:0;z-index:2147483000;background:rgba(2,6,23,.92);display:none;align-items:center;justify-content:center;overflow:auto;cursor:zoom-out;-webkit-tap-highlight-color:transparent}#__lb.on{display:flex}#__lb img{max-width:96vw;max-height:92vh;border-radius:10px;transition:transform .25s cubic-bezier(.4,0,.2,1);cursor:zoom-in;user-select:none;-webkit-user-drag:none}#__lb img.z{transform:scale(2);cursor:zoom-out}#__lb b{position:fixed;top:12px;left:14px;color:#fff;font:700 26px sans-serif;cursor:pointer;padding:6px 12px}';
-  document.head.appendChild(st);
-  const d = document.createElement('div'); d.id = '__lb'; d.innerHTML = '<b>✕</b><img alt="">'; document.body.appendChild(d);
-  const im = d.querySelector('img');
-  d.addEventListener('click', e => { if (e.target === im) { im.classList.toggle('z'); e.stopPropagation(); return; } d.classList.remove('on'); im.classList.remove('z'); im.src = ''; });
-  document.addEventListener('click', e => { const a = e.target.closest('img[data-lb]'); if (!a) return; e.preventDefault(); e.stopPropagation(); im.src = a.getAttribute('src'); im.classList.remove('z'); d.classList.add('on'); }, true);
-  document.addEventListener('keydown', e => { if (e.key === 'Escape') d.click(); });
-})();
-
-// ---------- تقرير الطالب الكامل (PDF) — بيتعمل عند الضغط بس ومش بيتحفظ في أي حتة ----------
-async function buildStudentReport(sid, cid) {
-  const st = (S.students || []).find(x => x.id === sid) || {}, co = (S.courses || []).find(c => c.id === cid) || {};
-  const les = (await sb.from('lessons').select('id,title,position').eq('course_id', cid).order('position')).data || [], ids = les.map(l => l.id);
-  const [it, ip, qa, q1, q2] = await Promise.all([
-    ids.length ? sb.from('lesson_items').select('id,lesson_id,kind,title,position').in('lesson_id', ids).order('position') : { data: [] },
-    sb.from('item_progress').select('item_id,done_at').eq('student_id', sid),
-    sb.from('quiz_attempts').select('quiz_id,score,total,status,created_at').eq('student_id', sid).order('created_at'),
-    sb.from('quizzes').select('id,title,kind,lesson_id,is_homework,pass_percent').eq('course_id', cid),
-    st.academic_year ? sb.from('quizzes').select('id,title,kind,lesson_id,is_homework,pass_percent').eq('kind', 'comprehensive').eq('academic_year', st.academic_year) : { data: [] }
-  ]);
-  const done = {}; (ip.data || []).forEach(x => done[x.item_id] = x.done_at);
-  const att = {}; (qa.data || []).forEach(a => (att[a.quiz_id] = att[a.quiz_id] || []).push(a));
-  const quizzes = (q1.data || []).concat(q2.data || []);
-  const rows = quizzes.map(z => { const a = att[z.id] || [], best = a.slice().sort((x, y) => (y.total ? y.score / y.total : 0) - (x.total ? x.score / x.total : 0))[0];
-    const pct = best && best.total ? Math.round(best.score / best.total * 100) : null;
-    return { z, n: a.length, best, pct, res: !best ? 'لسه' : best.status === 'pending' ? 'تصحيح معلّق' : pct >= (z.pass_percent || 50) ? 'ناجح' : 'راسب' }; });
-  const taken = rows.filter(r => r.best && r.best.status !== 'pending'), avg = taken.length ? Math.round(taken.reduce((s, r) => s + r.pct, 0) / taken.length) : 0;
-  const items = it.data || [], doneN = items.filter(x => done[x.id]).length;
-  return { st, co, les, items, done, rows, avg, solved: rows.filter(r => r.n).length, doneN };
-}
-function studentReportHTML(R) {
-  const e = esc, st = R.st, d = new Date().toLocaleString('ar-EG', { dateStyle: 'medium', timeStyle: 'short' });
-  const pill = (t, c) => `<span class="pl ${c}">${e(t)}</span>`, bar = (p, c) => `<div class="pb"><i style="width:${Math.max(0, Math.min(100, p))}%;background:${c}"></i></div>`;
-  const kind = { video: 'فيديو', pdf: 'ملف PDF', link: 'رابط', file: 'ملف' };
-  const itemRows = R.les.map(l => { const its = R.items.filter(x => x.lesson_id === l.id); if (!its.length) return '';
-    return `<tr class="ls"><td colspan="3">📖 ${e(l.title)}</td></tr>` + its.map(x => `<tr><td>${e(x.title)}</td><td>${e(kind[x.kind] || x.kind || '')}</td><td>${R.done[x.id] ? pill('خلّصه', 'ok') + ' <small>' + new Date(R.done[x.id]).toLocaleDateString('ar-EG') + '</small>' : pill('لسه', 'no')}</td></tr>`).join(''); }).join('');
-  const grp = (title, list) => !list.length ? '' : `<div class="box"><div class="bh"><b>${e(title)}</b><span class="ct">${list.length} امتحان</span></div><table><tr><th>الامتحان</th><th>أعلى درجة</th><th>النتيجة</th><th>عدد المحاولات</th></tr>${list.map(r => `<tr><td>${e(r.z.title)}</td><td>${r.best ? (r.best.status === 'pending' ? '—' : r.best.score + ' / ' + r.best.total + ' (' + r.pct + '%)') : '—'}</td><td>${pill(r.res, r.res === 'ناجح' ? 'ok' : r.res === 'راسب' ? 'no' : r.res === 'لسه' ? 'gr' : 'wt')}</td><td>${r.n ? r.n + ' مرة' : '—'}</td></tr>`).join('')}</table></div>`;
-  const lq = R.rows.filter(r => r.z.lesson_id && !r.z.is_homework), hw = R.rows.filter(r => r.z.is_homework), cq = R.rows.filter(r => !r.z.lesson_id && !r.z.is_homework && r.z.kind !== 'comprehensive'), cm = R.rows.filter(r => r.z.kind === 'comprehensive');
-  return `<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>تقرير ${e(fname(st))}</title><link href="https://fonts.googleapis.com/css2?family=Cairo:wght@500;700;800&display=swap" rel="stylesheet"><style>
-@page{size:A4;margin:10mm 8mm 14mm;@bottom-center{content:"صفحة " counter(page) " من " counter(pages);font:600 8pt Cairo,sans-serif;color:#64748b}}
-*{box-sizing:border-box;margin:0}body{font-family:Cairo,Tahoma,sans-serif;color:#0f172a;font-size:10.5pt;-webkit-print-color-adjust:exact;print-color-adjust:exact;background:#fff}
-.hd{background:linear-gradient(135deg,#0f172a 0%,#1e293b 55%,#ef4444 140%);color:#fff;border-radius:14px;padding:16px 20px}
-.hd h1{font-size:22pt;font-weight:800}.hd p{opacity:.8;font-size:10pt;margin-top:2px}.br{font:700 9pt Cairo;letter-spacing:.5px;opacity:.9;direction:ltr;text-align:left;margin-bottom:6px}
-.chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.chips span{background:rgba(255,255,255,.14);border:1px solid rgba(255,255,255,.25);border-radius:9px;padding:4px 11px;font-size:9.5pt}.chips b{font-weight:800}
-.sc{display:flex;align-items:center;gap:16px;border:1px solid #e2e8f0;border-radius:14px;padding:12px 16px;margin-top:12px;background:#fff}
-.av{width:46px;height:46px;border-radius:50%;background:#fee2e2;color:#ef4444;d
