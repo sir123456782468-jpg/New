@@ -12,7 +12,7 @@ const blankQ = (type, pts, pick, n) => ({ uid: xuid(), id: '', type, pick: pick 
 function metaFrom(q) {
   return { title: q.title || '', kind: q.kind || 'course', course_id: q.course_id || (S.courses[0] && S.courses[0].id) || '', academic_year: q.academic_year || YEARS[0], lesson_id: q.lesson_id || '',
     pass: q.pass_percent == null ? 50 : q.pass_percent, time: q.time_limit_minutes || '', tries: q.max_attempts || 1, opens: loc(q.opens_at), closes: loc(q.closes_at),
-    shuffle: q.shuffle !== false, pub: !!q.is_published, notify: true, hw: !!q.is_homework, rmode: q.result_mode || 'now', rnote: q.result_note || '', instr: q.instructions || '' };
+    shuffle: q.shuffle !== false, pub: !!q.is_published, notify: true, hw: !!q.is_homework, rmode: q.result_mode || 'now', rnote: q.result_note || '', instr: q.instructions || '', desc: q.description || '' };
 }
 function metaHTML(m) {
   const cs = S.courses.map(c => `<option value="${c.id}"${c.id === m.course_id ? ' selected' : ''}>${esc(c.title)} — ${c.academic_year}</option>`).join('');
@@ -24,13 +24,14 @@ function metaHTML(m) {
   <div class="row2"><div><label>نسبة النجاح %</label><input type="number" name="pass" min="0" max="100" value="${esc(m.pass)}"></div><div><label>الوقت بالدقائق (فاضي = مفتوح)</label><input type="number" name="time" min="1" value="${esc(m.time)}"></div></div>
   <div class="row2"><div><label>عدد المحاولات</label><input type="number" name="tries" min="1" value="${esc(m.tries)}"></div><div><label>📊 ظهور النتيجة للطالب</label><select name="rmode">${RMODES.map(r => `<option value="${r[0]}"${r[0] === m.rmode ? ' selected' : ''}>${r[1]}</option>`).join('')}</select></div></div>
   <div class="row2"><div><label>⏰ يفتح في (اختياري)</label><input type="datetime-local" name="opens" value="${esc(m.opens)}"></div><div><label>🔒 يقفل ويتسلّم تلقائي في (اختياري)</label><input type="datetime-local" name="closes" value="${esc(m.closes)}"></div></div>
+  <label>ℹ️ وصف الامتحان / الواجب (اختياري — بيظهر للطالب جوه المحاضرة وقبل ما يبدأ)</label><textarea name="desc" dir="auto" style="min-height:56px">${esc(m.desc)}</textarea>
   <label>📌 تعليمات قبل البداية (اختياري، بتظهر للطالب قبل ما يبدأ)</label><textarea name="instr" dir="auto" style="min-height:56px">${esc(m.instr)}</textarea>
   <label>📝 ملاحظة تظهر مع النتيجة (اختياري)</label><textarea name="rnote" dir="auto" style="min-height:56px" placeholder="مثال: راجع المحاضرة التالتة قبل الامتحان الجاي">${esc(m.rnote)}</textarea>
   <label class="chk"><input type="checkbox" name="shuffle"${m.shuffle ? ' checked' : ''}> ترتيب عشوائي للأسئلة والاختيارات لكل طالب</label><label class="chk"><input type="checkbox" name="pub"${m.pub ? ' checked' : ''}> نشر الامتحان للطلاب</label><label class="chk"><input type="checkbox" name="notify"${m.notify ? ' checked' : ''}> 🔔 ابعت إشعار للطلاب لما الامتحان يتنشر</label>`;
 }
 function readMeta() {
   const f = $('#xbMeta'); if (!f) return XB.meta; const m = Object.assign({}, XB.meta);
-  ['title', 'kind', 'course_id', 'academic_year', 'lesson_id', 'pass', 'time', 'tries', 'opens', 'closes', 'shuffle', 'pub', 'rmode', 'rnote', 'instr', 'notify', 'hw'].forEach(n => { const e = f.querySelector('[name="' + n + '"]'); if (e) m[n] = e.type === 'checkbox' ? e.checked : e.value; });
+  ['title', 'kind', 'course_id', 'academic_year', 'lesson_id', 'pass', 'time', 'tries', 'opens', 'closes', 'shuffle', 'pub', 'rmode', 'rnote', 'instr', 'desc', 'notify', 'hw'].forEach(n => { const e = f.querySelector('[name="' + n + '"]'); if (e) m[n] = e.type === 'checkbox' ? e.checked : e.value; });
   return m;
 }
 function qCardHTML(q, i) {
@@ -40,7 +41,7 @@ function qCardHTML(q, i) {
     <span style="color:var(--muted);font-size:12.5px;font-weight:700">الدرجة</span><input type="number" data-f="pts" min="0" step="0.5" value="${esc(q.pts)}" style="max-width:80px;flex:none;min-width:0">
     <span style="margin-right:auto;display:flex;gap:6px;flex-wrap:wrap"><button type="button" class="btn s g" data-act="xqUp" data-id="${q.uid}"${i === 0 ? ' disabled' : ''}>↑</button><button type="button" class="btn s g" data-act="xqDown" data-id="${q.uid}"${last ? ' disabled' : ''}>↓</button><button type="button" class="btn s g" data-act="xqDup" data-id="${q.uid}">نسخ</button><button type="button" class="btn s r" data-act="xqDel" data-id="${q.uid}">حذف</button></span></div>
     <textarea data-f="text" dir="auto" placeholder="اكتب نص السؤال هنا..." style="min-height:80px">${esc(q.text)}</textarea>
-    <div class="bar" style="margin:8px 0 0"><label class="btn s g" style="margin:0;cursor:pointer;color:var(--ink)">🖼️ ${q.img ? 'تغيير الصورة' : 'إضافة صورة'}<input type="file" accept="image/*" data-f="img" hidden></label>${q.img ? `<img src="${esc(q.img)}" alt="" style="height:54px;border-radius:8px;border:1px solid var(--line)"><button type="button" class="btn s r" data-act="xqImgDel" data-id="${q.uid}">إزالة الصورة</button>` : ''}<span data-st="${q.uid}" style="font-size:12.5px;font-weight:700;color:${q.imgErr ? '#f87171' : 'var(--muted)'}">${esc(q.imgErr || q.imgMsg || '')}</span></div>`;
+    <div class="bar" style="margin:8px 0 0"><label class="btn s g" style="margin:0;cursor:pointer;color:var(--ink)">🖼️ ${q.img ? 'تغيير الصورة' : 'إضافة صورة'}<input type="file" accept="image/*" data-f="img" hidden></label>${q.img ? `<img class="zi" src="${esc(q.img)}" alt="" style="height:54px;border-radius:8px;border:1px solid var(--line)"><button type="button" class="btn s r" data-act="xqImgDel" data-id="${q.uid}">إزالة الصورة</button>` : ''}<span data-st="${q.uid}" style="font-size:12.5px;font-weight:700;color:${q.imgErr ? '#f87171' : 'var(--muted)'}">${esc(q.imgErr || q.imgMsg || '')}</span></div>`;
   if (q.type === 'mcq') {
     h += '<div style="margin-top:10px">' + q.opts.map((o, k) => `<div class="bar" style="margin:0 0 6px;flex-wrap:nowrap">${q.pick > 1 ? `<input type="checkbox" data-f="okm" value="${k}"${q.oks.includes(k) ? ' checked' : ''} class="ck" title="إجابة صحيحة">` : `<input type="radio" name="ok_${q.uid}" data-f="ok" value="${k}"${q.ok === k ? ' checked' : ''} class="ck" title="الإجابة الصحيحة">`}<b style="width:18px;flex:none">${LT[k]}</b><input data-f="opt" data-k="${k}" dir="auto" value="${esc(o)}" placeholder="الاختيار ${LT[k]}">${q.opts.length > 2 ? `<button type="button" class="btn s g" data-act="xoDel" data-id="${q.uid}" data-k="${k}" title="حذف الاختيار">✕</button>` : ''}</div>`).join('')
       + (q.opts.length < 8 ? `<button type="button" class="btn s g" data-act="xoAdd" data-id="${q.uid}">+ اختيار</button>` : '') + '<small class="nt" style="display:block;margin:6px 0 0">' + (q.pick > 1 ? '☑️ علّم ' + q.pick + ' إجابات صحيحة، وكل إجابة منهم بتاخد ' + (+((+q.pts || 0) / q.pick).toFixed(2)) + ' درجة.' : '🔘 علّم الدايرة اللي جنب الإجابة الصحيحة.') + '</small></div>';
@@ -102,11 +103,12 @@ async function vBuilder(arg) {
 }
 async function xqUpload(q, file) {
   if (!/^image\//.test(file.type)) { q.imgErr = '❌ الملف لازم يكون صورة'; return drawQs(); }
-  if (file.size > 8 * 1024 * 1024) { q.imgErr = '❌ حجم الصورة أكبر من 8MB'; return drawQs(); }
+  if (file.size > 12 * 1024 * 1024) { q.imgErr = '❌ حجم الصورة أكبر من 12MB'; return drawQs(); }
   q.imgErr = ''; q.imgMsg = '⏳ جاري الرفع...'; const st = document.querySelector('[data-st="' + q.uid + '"]'); if (st) { st.style.color = 'var(--muted)'; st.textContent = q.imgMsg; }
   try {
-    const ext = ((file.name.split('.').pop() || 'jpg').toLowerCase().replace(/[^a-z0-9]/g, '')) || 'jpg', path = 'questions/' + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '' + Math.random().toString(16).slice(2)) + '.' + ext;
-    const up = await sb.storage.from('course-media').upload(path, file, { contentType: file.type, upsert: false }); if (up.error) throw up.error;
+    if (window.UI) { const before = file.size; file = await UI.compress(file, { maxSide: 1400, maxKB: 220 }); if (file.size < before) q.imgMsg = '⏳ اتضغطت من ' + UI.fmtKB(before) + ' إلى ' + UI.fmtKB(file.size) + ' — جاري الرفع...'; }
+    const ext = file.type === 'image/jpeg' ? 'jpg' : ((file.name || 'x.png').split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '')) || 'jpg', path = 'questions/' + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '' + Math.random().toString(16).slice(2)) + '.' + ext;
+    const up = await sb.storage.from('course-media').upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false }); if (up.error) throw up.error;
     q.img = sb.storage.from('course-media').getPublicUrl(path).data.publicUrl; q.imgMsg = '✅ تم الرفع'; persist();
   } catch (e) {
     const m = (e && e.message) || String(e); q.imgMsg = ''; q.imgErr = '❌ فشل الرفع: ' + m + (/row-level|policy|not found|bucket|permission|unauthor|403|404/i.test(m) ? ' — شغّل ملف SQL الجديد في Supabase (جزء التخزين) وجرّب تاني' : '');
@@ -169,7 +171,7 @@ async function xbSave() {
   if (m.rmode === 'after_close' && !closes && !confirm('مفيش وقت إغلاق محدد، فالنتيجة هتظهر للطالب بعد ما يخلّص كل محاولاته. تكمل؟')) return;
   const keep = new Set(jobs.filter(j => j.q.id).map(j => j.q.id)), del = XB.orig.filter(x => !keep.has(x));
   if (del.length && !confirm('هيتم حذف ' + del.length + ' سؤال من الامتحان نهائياً (وإجابات الطلاب عليهم). تكمل؟')) return;
-  const row = { title: m.title.trim(), kind, pass_percent: +m.pass || 0, time_limit_minutes: +m.time || null, max_attempts: +m.tries || 1, opens_at: opens, closes_at: closes, shuffle: !!m.shuffle, is_published: !!m.pub, result_mode: m.rmode, result_note: m.rnote.trim() || null, instructions: m.instr.trim() || null, is_homework: kind === 'lesson' && !!m.hw };
+  const row = { title: m.title.trim(), kind, pass_percent: +m.pass || 0, time_limit_minutes: +m.time || null, max_attempts: +m.tries || 1, opens_at: opens, closes_at: closes, shuffle: !!m.shuffle, is_published: !!m.pub, result_mode: m.rmode, result_note: m.rnote.trim() || null, instructions: m.instr.trim() || null, description: (m.desc || '').trim() || null, is_homework: kind === 'lesson' && !!m.hw };
   if (kind === 'comprehensive') { row.academic_year = m.academic_year; row.course_id = null; row.lesson_id = null; } else { row.course_id = m.course_id; row.academic_year = null; row.lesson_id = kind === 'lesson' ? m.lesson_id : null; }
   let qid = XB.id;
   if (qid) { const { error } = await sb.from('quizzes').update(row).eq('id', qid); if (error) throw error; }
@@ -192,6 +194,8 @@ async function xbSave() {
 
 // ---------- محتوى الدرس: فيديوهات / PDF / كويزات / روابط ----------
 const IKIND = { video: ['🎬', 'فيديو'], pdf: ['📄', 'PDF'], link: ['🔗', 'رابط'] };
+const itDesc = x => x.description ? '<br><small style="color:var(--muted);display:block;margin-top:3px;white-space:pre-line">ℹ️ ' + esc(String(x.description).slice(0, 110)) + (String(x.description).length > 110 ? '…' : '') + '</small>' : '';
+const itUrl = u => /^bunny:/.test(u || '') ? '🔐 Bunny (فيديو محمي بتوقيع) — ' + esc(u) : esc((u || '').slice(0, 60));
 async function itemsModal(lid) {
   const l = (window.__L || []).find(x => x.id === lid) || {};
   const [it, qz] = await Promise.all([sb.from('lesson_items').select('*').eq('lesson_id', lid).order('position'), sb.from('quizzes').select('*,quiz_questions(count)').eq('lesson_id', lid)]);
@@ -201,14 +205,14 @@ async function itemsModal(lid) {
   const row = (r, i) => {
     const x = r.x, first = i === 0, last = i === all.length - 1, mv = `<button class="btn s g" data-act="itMv" data-t="${r.t}" data-id="${x.id}" data-d="-1" data-l="${lid}"${first ? ' disabled' : ''}>↑</button> <button class="btn s g" data-act="itMv" data-t="${r.t}" data-id="${x.id}" data-d="1" data-l="${lid}"${last ? ' disabled' : ''}>↓</button>`;
     const gate = `<label class="chk" style="margin-top:6px;font-size:12.5px"><input type="checkbox" data-act="itGate" data-t="${r.t}" data-id="${x.id}" data-l="${lid}"${x.gate ? ' checked' : ''}> 🔒 اللي بعده مايفتحش للطالب غير بعد ما يخلّص ده</label>`;
-    if (r.t === 'i') return `<tr data-t="i" data-id="${x.id}"><td style="width:1%;white-space:nowrap">${mv}</td><td>${(IKIND[x.kind] || ['•'])[0]} <b>${esc(x.title)}</b> <span class="pill">${(IKIND[x.kind] || [0, x.kind])[1]}</span><br><small dir="ltr" style="color:var(--muted)">${esc((x.url || '').slice(0, 60))}</small>${gate}</td><td style="white-space:nowrap"><button class="btn s g" data-act="itEdit" data-id="${x.id}" data-l="${lid}">تعديل</button> <button class="btn s r" data-act="delItem" data-id="${x.id}" data-l="${lid}">حذف</button></td></tr>`;
+    if (r.t === 'i') return `<tr data-t="i" data-id="${x.id}"><td style="width:1%;white-space:nowrap">${mv}</td><td>${(IKIND[x.kind] || ['•'])[0]} <b>${esc(x.title)}</b> <span class="pill">${(IKIND[x.kind] || [0, x.kind])[1]}</span><br><small dir="ltr" style="color:var(--muted)">${itUrl(x.url)}</small>${itDesc(x)}${gate}</td><td style="white-space:nowrap"><button class="btn s g" data-act="itEdit" data-id="${x.id}" data-l="${lid}">تعديل</button> <button class="btn s r" data-act="delItem" data-id="${x.id}" data-l="${lid}">حذف</button></td></tr>`;
     const n = (((x.quiz_questions || [])[0]) || {}).count || 0;
-    return `<tr data-t="q" data-id="${x.id}"><td style="width:1%;white-space:nowrap">${mv}</td><td>${x.is_homework ? '📚' : '📝'} <b>${esc(x.title)}</b> <span class="pill ${x.is_published ? 'ok' : 'no'}">${x.is_homework ? 'واجب' : 'امتحان'} • ${x.is_published ? 'منشور' : 'مخفي'}</span><br><small style="color:var(--muted)">${n} سؤال${x.time_limit_minutes ? ' • ' + x.time_limit_minutes + ' دقيقة' : ''}</small>${gate}</td><td style="white-space:nowrap"><button class="btn s" data-act="editExam" data-id="${x.id}">✏️ المحرر</button> <button class="btn s g" data-act="results" data-id="${x.id}">📊 التقرير</button></td></tr>`;
+    return `<tr data-t="q" data-id="${x.id}"><td style="width:1%;white-space:nowrap">${mv}</td><td>${x.is_homework ? '📚' : '📝'} <b>${esc(x.title)}</b> <span class="pill ${x.is_published ? 'ok' : 'no'}">${x.is_homework ? 'واجب' : 'امتحان'} • ${x.is_published ? 'منشور' : 'مخفي'}</span><br><small style="color:var(--muted)">${n} سؤال${x.time_limit_minutes ? ' • ' + x.time_limit_minutes + ' دقيقة' : ''}</small>${itDesc(x)}${gate}</td><td style="white-space:nowrap"><button class="btn s" data-act="editExam" data-id="${x.id}">✏️ المحرر</button> <button class="btn s g" data-act="results" data-id="${x.id}">📊 التقرير</button></td></tr>`;
   };
   modal('محتوى المحاضرة: ' + (l.title || ''),
     `<p class="nt" style="margin:0 0 10px;line-height:1.9">ده ترتيب ما يشوفه الطالب بالظبط (فوق ← تحت). رتّبهم بالأسهم. علّم 🔒 على أي عنصر لو عايز اللي بعده يتقفل لحد ما الطالب يخلّصه (PDF/رابط = يفتحه، فيديو = يضغط «أنهيت»، امتحان/واجب = يسلّمه).</p>`
     + `<div class="tw" style="margin-bottom:12px"><table>${all.map(row).join('') || '<tr><td class="empty">لسه مفيش محتوى — ضيف من تحت</td></tr>'}</table></div>`
-    + `<div class="card"><b>➕ إضافة محتوى</b><div class="row2" style="margin-top:8px"><select id="ni_k"><option value="video">🎬 فيديو (YouTube / Drive / Vimeo)</option><option value="pdf">📄 PDF (رابط Google Drive أو غيره)</option><option value="link">🔗 رابط</option></select><input id="ni_t" placeholder="الاسم (يظهر للطالب)"></div><input id="ni_u" dir="ltr" placeholder="https://..." style="margin-top:8px"><button class="btn s" style="margin-top:8px" data-act="itAdd" data-l="${lid}">+ إضافة</button>`
+    + `<div class="card"><b>➕ إضافة محتوى</b><div class="row2" style="margin-top:8px"><select id="ni_k"><option value="video">🎬 فيديو (YouTube / Drive / Vimeo / Bunny)</option><option value="pdf">📄 PDF (رابط Google Drive أو غيره)</option><option value="link">🔗 رابط</option></select><input id="ni_t" placeholder="الاسم (يظهر للطالب)"></div><input id="ni_u" dir="ltr" placeholder="https://...  (أو رابط Bunny: https://iframe.mediadelivery.net/embed/123/xxxxxxxx-...)" style="margin-top:8px"><textarea id="ni_d" dir="auto" placeholder="وصف العنصر (اختياري) — بيظهر للطالب تحت الفيديو/الملف" style="margin-top:8px;min-height:60px"></textarea><button class="btn s" style="margin-top:8px" data-act="itAdd" data-l="${lid}">+ إضافة</button>`
     + `<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn s" data-act="itNewQuiz" data-id="${lid}">+ كويز جديد</button><button class="btn s" data-act="itNewHw" data-id="${lid}">+ 📚 واجب جديد</button></div></div>`);
   $('#modal .mbox').classList.add('wide');
 }
@@ -331,7 +335,8 @@ Object.assign(ACT, {
     if (!t) throw new Error('اكتب اسم العنصر'); if (!u) throw new Error('الرابط لازم يبدأ بـ https://');
     const [a1, a2] = await Promise.all([sb.from('lesson_items').select('position').eq('lesson_id', lid).order('position', { ascending: false }).limit(1), sb.from('quizzes').select('lesson_pos').eq('lesson_id', lid).order('lesson_pos', { ascending: false }).limit(1)]);
     const mx = Math.max((a1.data && a1.data[0] && a1.data[0].position) || 0, (a2.data && a2.data[0] && a2.data[0].lesson_pos) || 0, 0);
-    const { error } = await sb.from('lesson_items').insert({ lesson_id: lid, kind: k, title: t, url: u, position: mx + 1 }); if (error) throw error;
+    const dsc = ($('#ni_d') ? $('#ni_d').value.trim() : '') || null;
+    const { error } = await sb.from('lesson_items').insert({ lesson_id: lid, kind: k, title: t, url: u, description: dsc, position: mx + 1 }); if (error) throw error;
     toast('تمت الإضافة ✅'); itRefresh(lid);
   },
   itMv: async (id, el) => {
@@ -432,7 +437,7 @@ async function vSupport() {
 const spListHTML = d => (d || []).map(t => '<div class="card sprow" data-act="spOpen" data-id="' + t.id + '" style="margin-bottom:8px;cursor:pointer"><b>' + esc(t.name || 'طالب') + '</b>' + (t.verified === false ? ' <span class="pill no" title="كتب رقمه من غير تسجيل دخول">⚠️ غير موثّق</span>' : '') + (t.unread ? ' <span class="pill no">' + t.unread + ' جديد</span>' : '') + (t.status === 'closed' ? ' <span class="pill">منتهية</span>' : '') + '<br><small dir="ltr" style="color:var(--muted)">' + esc(t.phone) + ' • ' + tfmt(t.last_at) + '</small><br><small>' + esc((t.last || '').slice(0, 70)) + '</small></div>').join('') || '<div class="empty">لا توجد محادثات</div>';
 async function spRefreshList() { const { data } = await sb.rpc('support_admin_list', { p_status: window.__spStatus || 'open' }); const el = document.querySelector('#spList'); if (el && data) el.innerHTML = spListHTML(data); }
 let spSeen = null;
-function spMsgHTML(m) { return '<div class="spm ' + (m.sender === 'staff' ? 'me' : 'th') + '">' + (m.image_url ? '<a href="' + esc(m.image_url) + '" target="_blank" rel="noopener"><img src="' + esc(m.image_url) + '" alt="صورة" loading="lazy"></a>' : '') + (m.body ? '<div dir="auto">' + esc(m.body) + '</div>' : '') + '<small>' + tfmt(m.created_at) + (m.sender === 'staff' ? (spSeen && new Date(m.created_at) <= new Date(spSeen) ? ' • <span style="color:#16a34a">👁 شافها الطالب</span>' : ' • ✓ اتبعتت') : '') + '</small></div>'; }
+function spMsgHTML(m) { return '<div class="spm ' + (m.sender === 'staff' ? 'me' : 'th') + '">' + (m.image_url ? '<img class="zi" src="' + esc(m.image_url) + '" alt="صورة" loading="lazy">' : '') + (m.body ? '<div dir="auto">' + esc(m.body) + '</div>' : '') + '<small>' + tfmt(m.created_at) + (m.sender === 'staff' ? (spSeen && new Date(m.created_at) <= new Date(spSeen) ? ' • <span style="color:#16a34a">👁 شافها الطالب</span>' : ' • ✓ اتبعتت') : '') + '</small></div>'; }
 async function spThread(id, quiet) {
   sp.id = id; const { data, error } = await sb.rpc('support_admin_thread', { p_thread: id }); if (error) throw error;
   spSeen = data.student_seen_at || null;
@@ -554,36 +559,38 @@ VIEWS.access = ['المحاولات والقفل', vAccess];
 if (typeof NAV !== 'undefined' && !NAV.some(n => n[0] === 'access')) NAV.splice(NAV.findIndex(n => n[0] === 'students') + 1, 0, ['access', '🔁', 'المحاولات والقفل']);
 
 // ---------- طباعة كروت الأكواد (A4: 8 أو 10 في الورقة) + كود واحد ----------
+// كل الكتابة على الكارت بالعربي (ما عدا اسم المنصة والمدرس)، والصف يتحدد من الأول ثم الكورس ثم الطلاب.
 const CARD_CSS = `@import url('https://fonts.googleapis.com/css2?family=Cairo:wght@600;800&family=Poppins:wght@500;700&display=swap');
 @page{size:A4;margin:0}*{box-sizing:border-box;margin:0}:root{--navy:#0f172a;--red:#ef4444;--mut:#64748b}
+html,body{direction:rtl}
 body{font-family:'Cairo','DejaVu Sans',sans-serif;background:#fff;-webkit-print-color-adjust:exact;print-color-adjust:exact}
-.page{width:210mm;height:297mm;padding:10mm 13mm;display:grid;grid-template-columns:repeat(2,92mm);page-break-after:always;overflow:hidden}
+.page{width:210mm;height:297mm;padding:10mm 13mm;display:grid;grid-template-columns:repeat(2,92mm);justify-content:center;column-gap:0;page-break-after:always;overflow:hidden;direction:ltr}
 .page:last-child{page-break-after:auto}
-.card{position:relative;width:92mm;border:.3mm solid #94a3b8;padding:3.5mm 5.5mm 3mm;background:linear-gradient(135deg,#fff 60%,#fef2f2);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
+.card{position:relative;width:92mm;direction:rtl;border:.3mm solid #94a3b8;padding:3.5mm 5.5mm 3mm 5.5mm;background:linear-gradient(135deg,#fff 60%,#fef2f2);overflow:hidden;display:flex;flex-direction:column;justify-content:space-between}
 .bar{position:absolute;left:0;top:0;bottom:0;width:2.4mm;background:linear-gradient(var(--navy),var(--red))}
-.hd{display:flex;align-items:baseline;justify-content:space-between;gap:2mm;border-bottom:.45mm solid var(--red);padding:0 0 1.3mm 1.2mm}
+.hd{direction:ltr;display:flex;align-items:baseline;justify-content:space-between;gap:2mm;border-bottom:.45mm solid var(--red);padding:0 0 1.3mm 2.2mm;unicode-bidi:isolate}
 .t{font:700 13pt 'Poppins','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap}.s{font:500 8.5pt 'Poppins','DejaVu Sans',sans-serif;color:var(--red);white-space:nowrap}
 .cn{font:800 12.5pt 'Cairo','DejaVu Sans',sans-serif;color:var(--navy);direction:rtl;text-align:center;background:#fee2e2;border-radius:1.5mm;padding:.6mm 2mm;line-height:1.3;overflow:hidden;display:flex;align-items:center;justify-content:center;min-height:8mm}
-.row{display:flex;align-items:flex-end;gap:2mm;padding-left:1.2mm;min-height:8mm}
-.en{font:500 8pt 'Poppins','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap;padding-bottom:.6mm}
-.ar{font:800 9.5pt 'Cairo','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap;direction:rtl;padding-bottom:.2mm}
-.ln{flex:1;border-bottom:.25mm dotted var(--mut);min-height:6mm;font:800 10.5pt 'Cairo',sans-serif;direction:rtl;text-align:center;color:#111;line-height:1.5;overflow:hidden;white-space:nowrap}
+.row{direction:rtl;display:flex;align-items:flex-end;gap:2.5mm;padding-left:2.2mm;min-height:8mm}
+.ar{flex:none;font:800 10pt 'Cairo','DejaVu Sans',sans-serif;color:var(--navy);white-space:nowrap;padding-bottom:.2mm}
+.ln{flex:1;border-bottom:.25mm dotted var(--mut);min-height:6mm;font:800 10.5pt 'Cairo',sans-serif;text-align:center;color:#111;line-height:1.5;overflow:hidden;white-space:nowrap}
 .code{align-items:center;min-height:11mm}
 .ln.box{border:.4mm solid var(--navy);border-radius:1.4mm;background:#fff;min-height:9.5mm;display:flex;align-items:center;justify-content:center;font:700 13pt 'Poppins','DejaVu Sans',monospace;letter-spacing:.5mm;direction:ltr;padding-left:.5mm;white-space:nowrap;overflow:hidden}
 .exp{font:600 7pt Cairo,sans-serif;color:var(--red);text-align:center;direction:rtl}.p8 .card{height:69mm}.p10 .card{height:55mm}.p10 .t{font-size:12pt}.p10 .cn{font-size:11.5pt}.p10 .row{min-height:6.8mm}.p10 .ln.box{min-height:8.5mm;font-size:12.5pt}
 .one{width:150mm;margin:12mm auto}.one .card{width:150mm;height:112mm;padding:6mm 9mm;gap:2mm}.one .t{font-size:19pt}.one .s{font-size:11pt}.one .cn{font-size:17pt;padding:1.2mm 3mm}
 .one .row{min-height:11mm}.one .ar{font-size:13pt}.one .ln{font-size:14pt}.one .ln.box{min-height:14mm;font-size:22pt;letter-spacing:1.2mm}.one .bar{width:3.4mm}
 .one .notes{border:.3mm dashed #94a3b8;border-radius:1.5mm;flex:1;min-height:14mm;padding:1.5mm 3mm;direction:rtl;font:800 10pt Cairo,sans-serif;color:var(--mut)}`;
+const cZoom = o => (o.course || '').length > 34 ? '.75' : (o.course || '').length > 24 ? '.88' : '1';
 const cardHTML = (o) => `<div class="card"><div class="bar"></div><div class="hd"><div class="t">The Leader In English</div><div class="s">Mr Sherif Khafagy</div></div>
-<div class="cn" style="zoom:${(o.course || '').length > 34 ? '.75' : (o.course || '').length > 24 ? '.88' : '1'}">${esc(o.course || '')}</div>
-<div class="row"><span class="en">Student Name :</span><span class="ln">${esc(o.name || '')}</span><span class="ar">اسم الطالب :</span></div>
-<div class="row"><span class="en">Grade :</span><span class="ln">${esc(o.grade || '')}</span><span class="ar">الصف الدراسي :</span></div>
-<div class="row code"><span class="en">Code :</span><span class="ln box">${esc(o.code)}</span><span class="ar">الكود :</span></div><div class="exp">⏳ الكود صالح 72 ساعة ويُستخدم مرة واحدة فقط${o.exp ? ' — ينتهي ' + esc(o.exp) : ''}</div></div>`;
+<div class="cn" style="zoom:${cZoom(o)}">${esc(o.course || '')}</div>
+<div class="row"><span class="ar">اسم الطالب :</span><span class="ln">${esc(o.name || '')}</span></div>
+<div class="row"><span class="ar">الصف الدراسي :</span><span class="ln">${esc(o.grade || '')}</span></div>
+<div class="row code"><span class="ar">الكود :</span><span class="ln box">${esc(o.code)}</span></div><div class="exp">⏳ الكود صالح 72 ساعة ويُستخدم مرة واحدة فقط${o.exp ? ' — ينتهي ' + esc(o.exp) : ''}</div></div>`;
 const oneHTML = (o) => `<div class="one"><div class="card"><div class="bar"></div><div class="hd"><div class="t">The Leader In English</div><div class="s">Mr Sherif Khafagy</div></div>
-<div class="cn" style="zoom:${(o.course || '').length > 34 ? '.75' : (o.course || '').length > 24 ? '.88' : '1'}">${esc(o.course || '')}</div>
-<div class="row"><span class="ln">${esc(o.name || '')}</span><span class="ar">اسم الطالب :</span></div>
-<div class="row"><span class="ln">${esc(o.grade || '')}</span><span class="ar">الصف الدراسي :</span></div>
-<div class="row code"><span class="ln box">${esc(o.code)}</span><span class="ar">الكود :</span></div>
+<div class="cn" style="zoom:${cZoom(o)}">${esc(o.course || '')}</div>
+<div class="row"><span class="ar">اسم الطالب :</span><span class="ln">${esc(o.name || '')}</span></div>
+<div class="row"><span class="ar">الصف الدراسي :</span><span class="ln">${esc(o.grade || '')}</span></div>
+<div class="row code"><span class="ar">الكود :</span><span class="ln box">${esc(o.code)}</span></div>
 <div class="exp">⏳ الكود صالح 72 ساعة ويُستخدم مرة واحدة فقط${o.exp ? ' — ينتهي ' + esc(o.exp) : ''}</div><div class="notes">${esc(o.note || 'ملاحظات :')}</div></div></div>`;
 function printHTML(body, cls, title) {
   const html = '<!doctype html><html lang="ar" dir="rtl"><head><meta charset="utf-8"><title>' + esc(title) + '</title><style>' + CARD_CSS + '</style></head><body class="' + cls + '">' + body + '</body></html>';
@@ -622,37 +629,101 @@ async function cardPNG(o) {
   x.direction = 'rtl'; x.textAlign = 'right'; x.fillStyle = '#64748b'; x.font = '800 40px Cairo, Tahoma, Arial'; x.fillText(o.note || 'ملاحظات :', W - 110, 790);
   return new Promise(r => c.toBlob(r, 'image/png'));
 }
+
+// ---- لوحة الطباعة: الصف ← الكورس ← الطلاب ← كروت إضافية فاضية ----
+const PR = { sel: new Set(), q: '' };
 const _vCodes0 = VIEWS.codes[1];
 VIEWS.codes = ['الأكواد', async () => {
   const html = await _vCodes0();
-  await (S.courses || loadCourses());
+  await (S.courses && S.courses.length ? 0 : loadCourses());
+  try { await loadStudents(); } catch (e) {}
+  PR.sel = new Set(); PR.q = '';
+  setTimeout(pInit);
   const panel = `<div class="card" style="margin-bottom:16px"><b>🖨 طباعة كروت الأكواد (A4)</b>
-  <p class="nt">الكورس المختار فوق هو اللي بيتولّد له. اكتب أسماء الطلاب (اسم في كل سطر) لو عايز الاسم يتكتب على الكارت، أو سيبها فاضية والطالب يكتب بخط إيده. كل كود يشتغل مرة واحدة بس.</p>
-  <div class="bar"><div><label>الصف (يتكتب على الكارت)</label><select id="pg"><option value="">— سيبه فاضي —</option>${yopts('')}</select></div><div><label>عدد الأكواد</label><input type="number" id="pn" min="1" max="200" value="10" style="max-width:110px"></div><div><label>عدد الكروت في الورقة</label><select id="pl"><option value="10">10 كروت</option><option value="8">8 كروت (أكبر)</option></select></div></div>
-  <label>أسماء الطلاب (اختياري — سطر لكل طالب، ولو كتبت أسماء العدد بيتحدد تلقائي)</label><textarea id="pnm" style="min-height:80px" placeholder="أحمد محمد&#10;سارة علي"></textarea>
-  <div class="bar" style="margin-top:10px"><button class="btn" data-act="pgen">🖨 توليد وطباعة PDF</button><button class="btn s" data-act="pagain">🖨 إعادة طباعة آخر دفعة</button><button class="btn s g" data-act="pone">🎫 كود واحد (صورة / PDF)</button></div></div>`;
+  <p class="nt">اختار الصف، بعدين الكورس، بعدين علّم الطلاب اللي عايز كروتهم (الاسم بيتكتب على الكارت). تقدر كمان تضيف كروت إضافية فاضية (من غير اسم) والطالب يكتب اسمه بإيده. كل كود يشتغل مرة واحدة بس وصالح 72 ساعة.</p>
+  <div class="bar"><div><label>١) الصف الدراسي</label><select id="pgr"><option value="">— اختار الصف —</option>${yopts('')}</select></div><div><label>٢) الكورس</label><select id="pcs"><option value="">— اختار الصف الأول —</option></select></div></div>
+  <label>٣) الطلاب <span id="pcnt" class="pill ok" style="margin-right:8px">المحدد: 0 طالب</span></label>
+  <div class="bar" style="margin:6px 0"><input id="pq" placeholder="🔍 بحث بالاسم أو الرقم"><button type="button" class="btn s g" data-act="pAll">تحديد الكل</button><button type="button" class="btn s g" data-act="pNone">إلغاء التحديد</button><button type="button" class="btn s g" data-act="pNew" title="الطلاب اللي مش مشتركين في الكورس المختار">غير المشتركين فقط</button></div>
+  <div id="pstu" class="tw" style="max-height:260px;overflow:auto;padding:6px 10px"><div class="empty" style="padding:18px">اختار الصف عشان تظهر أسماء الطلاب</div></div>
+  <div class="bar" style="margin-top:12px"><div><label>٤) كروت إضافية فاضية (من غير اسم)</label><input type="number" id="pex" min="0" max="200" value="0" style="max-width:130px"></div><div><label>٥) عدد الكروت في الورقة</label><select id="pl"><option value="10">10 كروت</option><option value="8">8 كروت (أكبر)</option></select></div><div><label>الإجمالي</label><span id="ptot" class="pill" style="font-size:14px;padding:8px 16px">0 كارت</span></div></div>
+  <div class="bar" style="margin-top:12px"><button class="btn" data-act="pgen">🖨 توليد وطباعة PDF</button><button class="btn s" data-act="pagain">🖨 إعادة طباعة آخر دفعة</button><button class="btn s g" data-act="pone">🎫 كود واحد (صورة / PDF)</button></div></div>`;
   return panel + html;
 }];
-async function pMake(n, names, grade) {
-  const cid = $('#cc').value; if (!cid) throw new Error('اختار الكورس');
-  const { data, error } = await sb.rpc('generate_codes', { p_course: cid, p_count: n, p_names: names.length ? names : null, p_grade: grade || null });
-  if (error) throw new Error((error.message || '').includes('function') ? 'شغّل ملف supabase_update_v8.sql في Supabase الأول' : error.message);
+function pCourses() { const y = $('#pgr') ? $('#pgr').value : ''; return S.courses.filter(c => !y || c.academic_year === y); }
+function pEnrolled(cid) { return new Set((S.enr || []).filter(e => e.course_id === cid).map(e => e.student_id)); }
+function pCount() {
+  const x = Math.max(0, Math.min(200, +($('#pex') && $('#pex').value) || 0)), n = PR.sel.size;
+  const c = $('#pcnt'); if (c) c.textContent = 'المحدد: ' + n + ' طالب'; const t = $('#ptot'); if (t) { t.textContent = (n + x) + ' كارت'; t.className = 'pill ' + (n + x > 200 ? 'no' : n + x ? 'ok' : ''); }
+}
+function pDrawStu() {
+  const box = $('#pstu'); if (!box) return; const y = $('#pgr').value, q = PR.q.trim().toLowerCase(), cid = $('#pcs').value, en = cid ? pEnrolled(cid) : new Set();
+  if (!y) { box.innerHTML = '<div class="empty" style="padding:18px">اختار الصف عشان تظهر أسماء الطلاب</div>'; return pCount(); }
+  const l = (S.students || []).filter(s => s.academic_year === y && (!q || (fname(s) + ' ' + (s.phone_number || '')).toLowerCase().includes(q))).sort((a, b) => fname(a).localeCompare(fname(b), 'ar'));
+  box.innerHTML = l.map(s => '<label class="chk" style="margin:0;padding:6px 0;border-bottom:1px solid var(--line)"><input type="checkbox" class="ck pst" value="' + s.id + '"' + (PR.sel.has(s.id) ? ' checked' : '') + '> <span>' + esc(fname(s)) + '</span><small dir="ltr" style="color:var(--muted);margin-right:auto">' + esc(s.phone_number || '') + '</small>' + (en.has(s.id) ? '<span class="pill ok">مشترك</span>' : '') + '</label>').join('') || '<div class="empty" style="padding:18px">لا يوجد طلاب في الصف ده</div>';
+  pCount();
+}
+function pInit() {
+  const g = $('#pgr'); if (!g) return;
+  const fillC = () => { const cur = $('#pcs').value, cs = pCourses(); $('#pcs').innerHTML = '<option value="">' + (g.value ? '— اختار الكورس —' : '— اختار الصف الأول —') + '</option>' + cs.map(c => '<option value="' + c.id + '"' + (c.id === cur ? ' selected' : '') + '>' + esc(c.title) + '</option>').join(''); };
+  g.addEventListener('change', () => { PR.sel.clear(); fillC(); pDrawStu(); });
+  $('#pcs').addEventListener('change', pDrawStu);
+  $('#pq').addEventListener('input', e => { PR.q = e.target.value; pDrawStu(); });
+  $('#pex').addEventListener('input', pCount);
+  $('#pstu').addEventListener('change', e => { const c = e.target.closest('.pst'); if (!c) return; c.checked ? PR.sel.add(c.value) : PR.sel.delete(c.value); pCount(); });
+  pCount();
+}
+async function pMake(cid, n, names, grade) {
+  const { data, error } = await sb.rpc('generate_codes', { p_course: cid, p_count: n, p_names: names.some(x => x) ? names : null, p_grade: grade || null });
+  if (error) throw new Error((error.message || '').includes('function') ? 'شغّل ملف supabase_update_v9.sql في Supabase الأول' : error.message);
   const course = (S.courses.find(c => c.id === cid) || {}).title || '';
   return { codes: data, course, list: data.map((c, i) => ({ code: c, name: names[i] || '' })), grade };
 }
 Object.assign(ACT, {
-  pgen: async el => {
-    const names = ($('#pnm').value || '').split('\n').map(s => s.trim()).filter(Boolean), n = names.length || (+$('#pn').value || 0);
-    if (n < 1 || n > 200) throw new Error('العدد من 1 لـ 200'); const grade = $('#pg').value;
-    const r = await pMake(n, names, grade); window.__lastCodes = { list: r.list, course: r.course, grade, per: +$('#pl').value };
-    $('#co').value = r.codes.join('\n'); drawCodes(); printSheet(r.list, +$('#pl').value, r.course, grade);
+  pAll: () => { document.querySelectorAll('#pstu .pst').forEach(c => { c.checked = true; PR.sel.add(c.value); }); pCount(); },
+  pNone: () => { PR.sel.clear(); document.querySelectorAll('#pstu .pst').forEach(c => c.checked = false); pCount(); },
+  pNew: () => { const cid = $('#pcs').value; if (!cid) return toast('اختار الكورس الأول', true); const en = pEnrolled(cid); PR.sel.clear(); document.querySelectorAll('#pstu .pst').forEach(c => { c.checked = !en.has(c.value); if (c.checked) PR.sel.add(c.value); }); pCount(); },
+  pgen: async () => {
+    const grade = $('#pgr').value, cid = $('#pcs').value; if (!grade) throw new Error('اختار الصف'); if (!cid) throw new Error('اختار الكورس');
+    const names = (S.students || []).filter(s => PR.sel.has(s.id)).sort((a, b) => fname(a).localeCompare(fname(b), 'ar')).map(fname), extra = Math.max(0, Math.min(200, +$('#pex').value || 0)), n = names.length + extra;
+    if (n < 1) throw new Error('علّم طالب واحد على الأقل أو اكتب عدد الكروت الإضافية'); if (n > 200) throw new Error('الحد الأقصى 200 كارت في المرة (حالياً ' + n + ')');
+    if (!confirm('هيتولّد ' + n + ' كود (' + names.length + ' باسم الطالب + ' + extra + ' فاضي) للكورس المختار. تكمل؟')) return;
+    const all = names.concat(Array(extra).fill('')), r = await pMake(cid, n, all, grade); window.__lastCodes = { list: r.list, course: r.course, grade, per: +$('#pl').value };
+    drawCodes(); printSheet(r.list, +$('#pl').value, r.course, grade);
   },
   pagain: () => { const L = window.__lastCodes; if (!L) return toast('مفيش دفعة اتولّدت في الجلسة دي', true); printSheet(L.list, +$('#pl').value, L.course, L.grade); },
   pone: async () => {
-    const names = ($('#pnm').value || '').split('\n').map(s => s.trim()).filter(Boolean), grade = $('#pg').value, r = await pMake(1, names.slice(0, 1), grade);
-    const o = { code: r.codes[0], course: r.course, name: names[0] || '', grade, exp: expTxt() }; window.__one = o; drawCodes();
-    modal('🎫 كود واحد', `<div style="direction:ltr;text-align:center;font:700 22px monospace;letter-spacing:3px;margin:10px 0">${esc(o.code)}</div><div class="bar"><button class="btn" data-act="pOnePng">🖼 تنزيل صورة PNG</button><button class="btn s" data-act="pOnePdf">🖨 طباعة / PDF</button></div><p class="nt">الكارت بالعربي بس ومعاه مساحة للملاحظات.</p>`, null);
+    const cid = $('#pcs').value || ($('#cc') && $('#cc').value); if (!cid) throw new Error('اختار الكورس'); const grade = $('#pgr').value, one = (S.students || []).filter(s => PR.sel.has(s.id)).map(fname)[0] || '';
+    const r = await pMake(cid, 1, [one], grade), o = { code: r.codes[0], course: r.course, name: one, grade, exp: expTxt() }; window.__one = o; drawCodes();
+    modal('🎫 كود واحد', `<div style="direction:ltr;text-align:center;font:700 22px monospace;letter-spacing:3px;margin:10px 0">${esc(o.code)}</div><div class="bar"><button class="btn" data-act="pOnePng">🖼 تنزيل صورة PNG</button><button class="btn s" data-act="pOnePdf">🖨 طباعة / PDF</button></div><p class="nt">الكارت بالعربي ومعاه مساحة للملاحظات.</p>`, null);
   },
   pOnePng: async () => { const o = window.__one; const b = await cardPNG(o), a = document.createElement('a'); a.href = URL.createObjectURL(b); a.download = 'code-' + o.code + '.png'; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 3000); },
   pOnePdf: () => { const o = window.__one; printHTML(oneHTML(o), '', 'كود ' + o.code); }
+});
+
+// ---- قايمة الأكواد + حذف ----
+drawCodes = async function () {
+  const sel = $('#cc'); if (!sel) return; const cid = sel.value; if (!cid) { $('#cl').innerHTML = '<div class="empty">أضف كورساً أولاً</div>'; return; }
+  try { await loadStudents(); } catch (e) {}
+  try { await sb.rpc('purge_expired_codes'); } catch (e) {}   // مسح المنتهي غير المستخدم
+  let r0 = null;
+  for (const c of ['code,student_name,grade,used_by,used_at,created_at,expires_at', 'code,used_by,used_at,created_at,expires_at', 'code,used_by,used_at,created_at']) { r0 = await sb.from('activation_codes').select(c).eq('course_id', cid).order('created_at', { ascending: false }).limit(600); if (!r0.error) break; }
+  if (r0.error) return fail(r0.error);
+  const data = r0.data || [], used = data.filter(x => x.used_by).length, free = data.length - used;
+  window.__codesList = data;
+  const canDel = can('codes.delete');
+  $('#cl').innerHTML = '<div class="bar"><b>المستخدم: ' + used + ' • المتاح: ' + free + '</b>' + (canDel && free ? '<button class="btn s r" data-act="cdDelSel" style="margin-right:auto">🗑 حذف المحدد (<span id="cdn">0</span>)</button><button class="btn s g" data-act="cdDelUnused">🗑 حذف كل غير المستخدم (' + free + ')</button>' : '') + '</div>'
+    + '<div class="tw"><table><tr>' + (canDel ? '<th style="width:1%"><input type="checkbox" class="ck" id="cdAll" title="تحديد كل غير المستخدم"></th>' : '') + '<th>الكود</th><th>الاسم</th><th>الحالة</th><th>ينتهي</th><th>استخدمه</th></tr>'
+    + data.map(x => { const s = (S.students || []).find(t => t.id === x.used_by); return '<tr>' + (canDel ? '<td>' + (x.used_by ? '' : '<input type="checkbox" class="ck cdk" value="' + esc(x.code) + '">') + '</td>' : '') + '<td dir="ltr" style="font-weight:800;letter-spacing:1px">' + esc(x.code) + '</td><td>' + esc(x.student_name || '—') + '</td><td><span class="pill ' + (x.used_by ? 'no' : 'ok') + '">' + (x.used_by ? 'مستخدم' : 'متاح') + '</span></td><td>' + (x.used_by ? '—' : x.expires_at ? fdate(x.expires_at) : 'بدون') + '</td><td>' + (s ? esc(fname(s)) + ' • ' + fdate(x.used_at) : '—') + '</td></tr>'; }).join('') + '</table></div>';
+  const upd = () => { const n = document.querySelectorAll('#cl .cdk:checked').length, e = $('#cdn'); if (e) e.textContent = n; };
+  const all = $('#cdAll'); if (all) all.onchange = () => { document.querySelectorAll('#cl .cdk').forEach(c => c.checked = all.checked); upd(); };
+  $('#cl').onchange = e => { if (e.target.classList.contains('cdk')) upd(); };
+  applyActGate($('#cl'));
+};
+async function delCodes(codes) {
+  let n = 0; for (let i = 0; i < codes.length; i += 100) { const { data, error } = await sb.rpc('delete_codes', { p_codes: codes.slice(i, i + 100) }); if (error) throw error; n += data || 0; }
+  toast('تم حذف ' + n + ' كود ✅'); drawCodes();
+}
+Object.assign(ACT, {
+  cdDelSel: async () => { const c = Array.from(document.querySelectorAll('#cl .cdk:checked')).map(x => x.value); if (!c.length) return toast('علّم الأكواد اللي عايز تحذفها الأول', true); if (!confirm('حذف ' + c.length + ' كود غير مستخدم نهائياً؟')) return; await delCodes(c); },
+  cdDelUnused: async () => { const c = (window.__codesList || []).filter(x => !x.used_by).map(x => x.code); if (!c.length) return; if (!confirm('هيتحذف كل الأكواد غير المستخدمة (' + c.length + ') للكورس ده. الأكواد المستخدمة بتفضل للسجل. تكمل؟')) return; await delCodes(c); }
 });
