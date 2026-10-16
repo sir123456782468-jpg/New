@@ -1,0 +1,22 @@
+# بيبعت طلب خفيف لـ Supabase كل 3 أيام عشان المشروع المجاني مايتوقفش بسبب عدم النشاط (بعد أسبوع تقريباً)
+# الإعداد: GitHub → Settings → Secrets and variables → Actions → New repository secret
+#   SUPABASE_URL      = https://xxxx.supabase.co
+#   SUPABASE_ANON_KEY = الـ anon public key (نفس اللي في الموقع)
+name: keepalive
+on:
+  schedule:
+    - cron: '17 6 */3 * *'
+  workflow_dispatch:
+jobs:
+  ping:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Ping Supabase
+        env:
+          URL: ${{ secrets.SUPABASE_URL }}
+          KEY: ${{ secrets.SUPABASE_ANON_KEY }}
+        run: |
+          test -n "$URL" && test -n "$KEY" || { echo "missing secrets"; exit 1; }
+          code=$(curl -s -o /dev/null -w '%{http_code}' "$URL/rest/v1/courses?select=id&limit=1" -H "apikey: $KEY" -H "Authorization: Bearer $KEY")
+          echo "status: $code"
+          test "$code" -lt 500
