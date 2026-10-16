@@ -107,7 +107,7 @@
 <header class="hdr">
     <a class="brand" href="#home"><svg><use href="#logo"/></svg><div><b>The Leader</b><small>IN ENGLISH</small></div></a>
     <div class="tools">
-        <button class="sw" type="button" onclick="toggleTheme()" aria-label="تغيير الوضع"><i id="swi">☀️</i></button>
+        <button class="uit" type="button"></button>
         <div class="dd" id="ddBell"><button class="ib" type="button" onclick="dd('ddBell')" aria-label="الإشعارات">🔔<span class="dot" id="bellDot"></span></button>
             <div class="menu" id="bellList"><div class="nt">لا توجد إشعارات جديدة 👌</div></div></div>
         <div class="dd" id="ddUser"><button class="av" type="button" id="avatar" onclick="dd('ddUser')">؟</button>
@@ -313,9 +313,8 @@
     const lessonsOf = c => (c.lessons && c.lessons[0] && c.lessons[0].count) || 0;
     let YEAR = '';
 
-    function applyTheme(t) { document.body.setAttribute('data-theme', t); $('#swi').textContent = t === 'dark' ? '🌙' : '☀️'; }
-    function toggleTheme() { const t = document.body.getAttribute('data-theme') === 'light' ? 'dark' : 'light'; localStorage.setItem('platform_theme', t); applyTheme(t); }
-    applyTheme(localStorage.getItem('platform_theme') || 'light');
+    function applyTheme(t) { document.body.setAttribute('data-theme', t); if (window.UI) UI.setTheme(t, false); }
+    (function () { let t = 'light'; try { t = localStorage.getItem('platform_theme') || 'light'; } catch (e) {} applyTheme(t === 'dark' ? 'dark' : 'light'); })();
 
     function dd(id) { const el = document.getElementById(id), was = el.classList.contains('open'); $$('.dd').forEach(x => x.classList.remove('open')); if (!was) el.classList.add('open'); }
     document.addEventListener('click', e => { if (!e.target.closest('.dd')) $$('.dd').forEach(x => x.classList.remove('open')); });
@@ -510,6 +509,7 @@
         $('#hiName').textContent = first + ' ' + (p.middle_name || ''); $('#hiYear').textContent = p.academic_year;
         $('#greet').textContent = (h < 12 ? 'صباح الخير ☀️ ' : h < 18 ? 'نهارك سعيد 🌤️ ' : 'مساء الخير 🌙 ') + first;
         renderAccount(p); renderFooter(); rotate(); route();
+        try { if (window.UI) UI.banners.init(supabaseClient, 'home', null); else window.addEventListener('load', () => window.UI && UI.banners.init(supabaseClient, 'home', null)); } catch (e) {}
 
         try { await supabaseClient.rpc('finalize_expired', { p_mine: true }); } catch (e) {}   // تسليم أي امتحان انتهى وقته
         const [c, e, pr, at, qz, an] = await Promise.all([
@@ -565,6 +565,7 @@
     $('#redeemForm').addEventListener('submit', redeem);
     if (window.currentProfile) init(); else document.addEventListener('auth-ready', init);
 </script>
+<script src="/ui.js" defer></script>
 <script src="/support-widget.js" defer></script>
 </body>
 </html>
