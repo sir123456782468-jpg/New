@@ -130,7 +130,7 @@ textarea{width:100%;min-height:170px;padding:14px;border-radius:16px;border:2px 
 <header class="hdr">
   <div class="brand"><svg><use href="#logo"/></svg><div><b>The Leader In English</b><small>Mr. Sherif Khafagy</small></div></div>
   <span class="url" id="url">🌐</span>
-  <div class="hr"><span class="pill" id="who"></span><button class="sw" id="th" type="button" aria-label="تغيير الوضع">☀️</button></div>
+  <div class="hr"><span class="pill" id="who"></span><button class="uit" id="th" type="button"></button></div>
 </header>
 <main class="wrap" id="stage"><div class="card c"><div class="big">⏳</div><p>جاري تجهيز الامتحان...</p></div></main>
 
@@ -218,7 +218,7 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
 
 </script>
 <script>
-const P = new URLSearchParams(location.search), RID = P.get('review'), MODE = P.get('mode') === 'mistakes' ? 'mistakes' : RID ? 'review' : 'exam', MAXV = 2, QNUM = (decodeURIComponent(location.pathname).match(/^\/exam\/(\d+)/) || [])[1];
+const P = new URLSearchParams(location.search), RID = P.get('review'), MODE = P.get('mode') === 'mistakes' ? 'mistakes' : RID ? 'review' : 'exam', MAXV = 2, QNUM = ((() => { try { return decodeURIComponent(location.pathname); } catch (e) { return location.pathname; } })().match(/^\/exam\/(\d+)/) || [])[1] || P.get('n');
 let QID = P.get('id');
 const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
@@ -226,13 +226,9 @@ const AR = /[؀-ۿ]/, LET = 'ABCDEF', pad = n => String(n).padStart(2, '0');
 let E = null, running = false, finished = false, timer = null, lastV = 0, KEY = '', WMV = '', bc = null;
 
 // ===== الوضع (فاتح / داكن) =====
-function applyTheme(t) { document.body.setAttribute('data-theme', t); const b = $('#th'); if (b) b.textContent = t === 'dark' ? '🌙' : '☀️'; }
-(function () { let t = 'light'; try { t = localStorage.getItem('platform_theme') || 'light'; } catch (e) {} applyTheme(t); })();
-$('#th').addEventListener('click', () => {
-  const t = document.body.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-  try { localStorage.setItem('platform_theme', t); } catch (e) {}
-  applyTheme(t); if (running && E && E.qs[E.idx] && $('#qc')) drawQ(E.qs[E.idx].text);
-});
+function applyTheme(t) { document.body.setAttribute('data-theme', t); }
+(function () { let t = 'light'; try { t = localStorage.getItem('platform_theme') || 'light'; } catch (e) {} applyTheme(t === 'dark' ? 'dark' : 'light'); })();
+window.onThemeChange = () => { try { if (running && E && E.qs[E.idx] && $('#qc')) drawQ(E.qs[E.idx].text); } catch (e) {} };
 
 function rng(seed) { let a = 0; for (let i = 0; i < seed.length; i++) a = (a * 31 + seed.charCodeAt(i)) | 0; return () => { a |= 0; a = a + 0x6D2B79F5 | 0; let t = Math.imul(a ^ a >>> 15, 1 | a); t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t; return ((t ^ t >>> 14) >>> 0) / 4294967296; }; }
 function shuffle(arr, r) { const a = arr.slice(); for (let i = a.length - 1; i > 0; i--) { const j = Math.floor(r() * (i + 1)); [a[i], a[j]] = [a[j], a[i]]; } return a; }
@@ -240,9 +236,9 @@ function msg(icon, title, text, btn) { $('#stage').innerHTML = '<div class="card
 function answersMap() { const m = {}; E.qs.forEach(q => { if (E.ans[q.id] != null && !(q.type === 'essay' && String(E.ans[q.id]).trim() === '') && !(Array.isArray(E.ans[q.id]) && !E.ans[q.id].length)) m[q.id] = q.type === 'essay' ? String(E.ans[q.id]) : E.ans[q.id]; }); return m; }
 let svT = null;
 function srvSave(now) {
-  if (!E || E.practice || !QID || !E.stAt || finished) return; clearTimeout(svT);
+  if (!E || E.practice || !QID || !E.stAt || finished) return;
   const f = () => supabaseClient.rpc('draft_save', { p_quiz: QID, p_answers: answersMap(), p_state: { idx: E.idx, seen: Array.from(E.seen), flag: Array.from(E.flag) }, p_violations: E.viol, p_started: new Date(E.stAt).toISOString(), p_ends: E.endAt != null ? new Date(E.endAt).toISOString() : null }).then(() => {}, () => {});
-  if (now) f(); else svT = setTimeout(f, 1200);
+  if (now) { clearTimeout(svT); svT = null; f(); } else if (!svT) svT = setTimeout(() => { svT = null; f(); }, 5000);     // حفظ المسودة كل 5 ثواني كحد أقصى
 }
 function save() { try { if (E && !E.practice) { localStorage.setItem(KEY, JSON.stringify({ st: E.stAt, ans: E.ans, idx: E.idx, viol: E.viol, seen: Array.from(E.seen), flag: Array.from(E.flag) })); srvSave(); } } catch (e) {} }
 async function latestAttempt() { try { const r = await supabaseClient.rpc('my_attempts_basic'); if (!r.error && Array.isArray(r.data)) { const x = r.data.find(z => z.quiz_id === QID); return x && x.id; } } catch (e) {} const { data } = await supabaseClient.from('quiz_attempts').select('id').eq('quiz_id', QID).eq('student_id', currentUser.id).order('created_at', { ascending: false }).limit(1); return data && data[0] && data[0].id; }
@@ -263,7 +259,7 @@ async function loadExam() {
   if (!QID) return msg('⚠️', 'رابط غير صحيح');
   try { await supabaseClient.rpc('finalize_expired', { p_mine: true }); } catch (e) {}      // لو في امتحان سابق انتهى وقته يتسلّم الأول
   const [a, m, c] = await Promise.all([
-    supabaseClient.from('quizzes').select('id,title,kind,pass_percent,time_limit_minutes,max_attempts,shuffle,opens_at,closes_at,result_mode,instructions').eq('id', QID).maybeSingle(),
+    (async () => { const C0 = 'id,title,kind,pass_percent,time_limit_minutes,max_attempts,shuffle,opens_at,closes_at,result_mode,instructions'; let r = await supabaseClient.from('quizzes').select(C0 + ',description').eq('id', QID).maybeSingle(); if (r.error) r = await supabaseClient.from('quizzes').select(C0).eq('id', QID).maybeSingle(); return r; })(),
     supabaseClient.rpc('quiz_meta', { p_quiz: QID }),
     (async () => { const r = await supabaseClient.rpc('my_attempts_basic'); if (!r.error && Array.isArray(r.data)) return { count: r.data.filter(x => x.quiz_id === QID).length }; return supabaseClient.from('quiz_attempts').select('id', { count: 'exact', head: true }).eq('quiz_id', QID); })()
   ]);
@@ -276,6 +272,7 @@ async function loadExam() {
   E = { qz, meta, qs: [], ans: {}, idx: 0, viol: 0, endAt: null, off: 0, seen: new Set(), flag: new Set(), used: c.count || 0 };
   try { supabaseClient.from('quizzes').select('num').eq('id', QID).maybeSingle().then(r => { const n = r && r.data && r.data.num, t = String(qz.title || '').trim().replace(/[^\p{L}\p{N}]+/gu, '-').replace(/^-+|-+$/g, '').slice(0, 60); if (n && MODE === 'exam') { try { history.replaceState(history.state, '', '/exam/' + n + (t ? '-' + t : '')); } catch (e) {} } }); } catch (e) {}
   intro();
+  try { const bn = () => UI.banners.init(supabaseClient, 'quiz', E.qz.course_id || null); if (window.UI) bn(); else window.addEventListener('load', bn); } catch (e) {}
 }
 async function loadMistakes() {
   const { data } = await supabaseClient.rpc('my_mistakes');
@@ -293,6 +290,7 @@ function intro() {
   $('#stage').innerHTML = '<div class="card c"><div class="big">' + (E.practice ? '🎯' : '📝') + '</div><h2>' + esc(q.title) + '</h2><p class="sub" style="margin-bottom:4px">تفاصيل الامتحان</p>'
     + '<div class="kp">' + k('عدد الأسئلة', n, 'سؤال') + k('الدرجة النهائية', pts, 'درجة') + (q.time_limit_minutes ? k('مدة الامتحان', q.time_limit_minutes, 'دقيقة') : k('مدة الامتحان', '∞', 'مفتوح')) + (left != null ? k('المحاولات المتاحة', left, 'محاولة') : '') + '</div>'
     + (!E.practice && q.opens_at ? '<p style="margin:0">⏰ يفتح: ' + fd(q.opens_at) + '</p>' : '') + (!E.practice && q.closes_at ? '<p>🔒 يقفل ويتسلّم تلقائياً: ' + fd(q.closes_at) + '</p>' : '')
+    + (!E.practice && q.description ? '<div class="nb" style="text-align:start;white-space:pre-line">ℹ️ ' + esc(q.description) + '</div>' : '')
     + (!E.practice && q.instructions ? '<div class="nb" style="text-align:start">📌 ' + esc(q.instructions) + '</div>' : '')
     + '<ul class="rules">' + (E.practice
       ? '<li>🔒 تدريب خاص بك: نتيجته لا تُسجَّل ولا تظهر لأي حد، ولا تأثير لها على درجاتك.</li><li>🎯 الأسئلة من الأخطاء اللي غلطت فيها قبل كده.</li>'
@@ -334,7 +332,8 @@ async function start() {
     if (E.endAt != null && E.endAt <= Date.now() + (E.off || 0)) { running = true; E.qs = list; return submit(true); }
     srvSave(true);
   }
-  running = true; if (!E.practice) { arm(); liveWM(); }
+  running = true; try { if (window.UI) UI.banners.hideAll(); } catch (e) {}
+  if (!E.practice) { arm(); liveWM(); }
   $('#stage').innerHTML = ''; 
   render(); if (E.endAt != null) timer = setInterval(tick, 1000);
 }
@@ -579,5 +578,6 @@ function detailsHTML(R) {
 
 if (window.currentProfile) init(); else document.addEventListener('auth-ready', init);
 </script>
+<script src="/ui.js" defer></script>
 </body>
 </html>
