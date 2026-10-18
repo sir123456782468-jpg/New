@@ -489,6 +489,12 @@ Object.assign(ACT, {
 // ---------- ترتيب القايمة الجانبية ----------
 (function () {
   const ADD = [['report', '🧾', 'تقرير الطالب PDF'], ['banners', '🎨', 'اللافتات'], ['audit', '🕵️', 'سجل العمليات'], ['settings', '⚙️', 'إعدادات المنصة']];
+  // لو admin-v2.js اتحمّل ناقص أو قديم، نضمن إن التبويبات اللي بتعتمد عليه تفضل ظاهرة، ونعرّفك لو الملف نفسه ناقص
+  [['support', '💬', 'الدعم الفني', 'vSupport'], ['staff', '👷', 'فريق العمل', 'vStaff'], ['access', '🔁', 'المحاولات والقفل', 'vAccess']].forEach(a => {
+    let fn = null; try { fn = (0, eval)('typeof ' + a[3] + " === 'function' ? " + a[3] + ' : null'); } catch (e) {}
+    if (fn) { if (!VIEWS[a[0]]) VIEWS[a[0]] = [a[2], fn]; ADD.push(a.slice(0, 3)); }
+    else setTimeout(() => { try { toast('⚠️ ملف admin-v2.js ناقص أو قديم — تبويب «' + a[2] + '» مش محمّل. ارفع الملف كامل وحدّث الصفحة.', true); } catch (e) {} }, 4000);
+  });
   ADD.forEach(a => { if (!NAV.some(n => n[0] === a[0])) NAV.push(a); });
   const ORDER = ['overview', 'courses', 'students', 'access', 'codes', 'exams', 'essay', 'sres', 'report', 'ann', 'banners', 'support', 'devices', 'audit', 'settings', 'admins', 'staff'];
   NAV.sort((a, b) => { const x = ORDER.indexOf(a[0]), y = ORDER.indexOf(b[0]); return (x < 0 ? 99 : x) - (y < 0 ? 99 : y); });
