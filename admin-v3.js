@@ -457,8 +457,8 @@ function bnForm(b, isNew) {
 function clearBnPv() { const p = $('#bnPv'); if (!p) return; Array.from(p.children).forEach(c => (c._t || []).forEach(clearInterval)); p.innerHTML = ''; }
 function bnRead(f) {
   const g = n => f.elements[n], v = n => g(n) ? g(n).value : '', c = n => !!(g(n) && g(n).checked), iso = n => v(n) ? new Date(v(n)).toISOString() : null;
-  return { name: v('name').trim(), icon: v('icon').trim(), body: v('body').trim(), layout: v('layout'), size: v('size'), position: v('position') || 'br', bg: v('bg'), bg2: c('grad') ? v('bg2') : null, fg: v('fg'), accent: v('accent'), radius: +v('radius') || 0, shadow: c('shadow'), animation: v('animation'),
-    btn_text: v('btn_text').trim(), btn_url: v('btn_url').trim(), countdown_to: iso('countdown_to'), countdown_label: v('countdown_label').trim(), countdown_done: v('countdown_done').trim(), after_zero: v('after_zero'),
+  return { name: v('name').trim(), icon: v('icon').trim() || null, body: v('body').trim() || null, layout: v('layout'), size: v('size'), position: v('position') || 'br', bg: v('bg'), bg2: c('grad') ? v('bg2') : null, fg: v('fg'), accent: v('accent'), radius: +v('radius') || 0, shadow: c('shadow'), animation: v('animation'),
+    btn_text: v('btn_text').trim() || null, btn_url: v('btn_url').trim() || null, countdown_to: iso('countdown_to'), countdown_label: v('countdown_label').trim() || null, countdown_done: v('countdown_done').trim() || null, after_zero: v('after_zero'),
     starts_at: iso('starts_at'), ends_at: iso('ends_at'), auto_close: v('auto_close') ? Math.round(+v('auto_close')) : null, dismissible: c('dismissible'), dismiss_mode: v('dismiss_mode'), academic_year: v('academic_year') || null, course_id: v('course_id') || null,
     pages: ['home', 'course', 'quiz'].filter(p => c('pg_' + p)), priority: Math.round(+v('priority') || 0), is_active: c('is_active') };
 }
@@ -471,7 +471,7 @@ async function bnSave(old, isNew) {
   if (row.btn_text && !row.btn_url) throw new Error('اكتب رابط الزرار'); if (row.btn_url && !/^(\/|https:\/\/)/.test(row.btn_url)) throw new Error('رابط الزرار لازم يبدأ بـ / أو https://');
   if (row.layout === 'popup' && !row.dismissible && !row.auto_close && !row.countdown_to) throw new Error('النافذة المنبثقة لازم يكون ليها مخرج: خلّيها قابلة للإغلاق، أو حدّد وقت اختفاء، أو حط عداد');
   if (row.auto_close && (row.auto_close < 1 || row.auto_close > 3600)) throw new Error('مدة الاختفاء من 1 لـ 3600 ثانية');
-  row.name = row.name || row.body.slice(0, 40);
+  row.name = row.name || (row.body || row.countdown_label || 'لافتة').slice(0, 40);
   let r; if (isNew) r = await sb.from('site_banners').insert(row); else r = await sb.from('site_banners').update(row).eq('id', old.id);
   if (r.error) throw r.error; toast('تم حفظ اللافتة ✅ — بتظهر للطلاب خلال دقيقة'); go('banners');
 }
@@ -492,4 +492,50 @@ Object.assign(ACT, {
   ADD.forEach(a => { if (!NAV.some(n => n[0] === a[0])) NAV.push(a); });
   const ORDER = ['overview', 'courses', 'students', 'access', 'codes', 'exams', 'essay', 'sres', 'report', 'ann', 'banners', 'support', 'devices', 'audit', 'settings', 'admins', 'staff'];
   NAV.sort((a, b) => { const x = ORDER.indexOf(a[0]), y = ORDER.indexOf(b[0]); return (x < 0 ? 99 : x) - (y < 0 ? 99 : y); });
+})();
+
+// ---------- النقط الحمراء + تنبيهات الشغل المعلّق ----------
+(function () {
+  const st = document.createElement('style');
+  st.textContent = '.nbd{margin-right:auto;min-width:20px;height:20px;padding:0 6px;border-radius:50px;background:#dc2626;color:#fff;font-size:11px;line-height:20px;text-align:center;font-weight:800;box-shadow:0 0 0 2px var(--card);animation:nbp 1.6s infinite}.nbd.dot{min-width:10px;width:10px;height:10px;padding:0;margin-top:5px}.side a.on .nbd{box-shadow:0 0 0 2px #fff}'
+    + '@keyframes nbp{0%,100%{transform:scale(1)}50%{transform:scale(1.18)}}'
+    + '.rdot{position:absolute;top:10px;left:10px;width:11px;height:11px;border-radius:50%;background:#dc2626;box-shadow:0 0 0 3px rgba(220,38,38,.25)}.sprow{position:relative}'
+    + '.spinfo{display:grid;grid-template-columns:repeat(auto-fit,minmax(150px,1fr));gap:8px;margin:0 0 10px;padding:10px;border-radius:12px;background:var(--bg);border:1px solid var(--line)}.spinfo>div{display:flex;flex-direction:column;gap:2px}.spinfo small{color:var(--muted);font-weight:600;font-size:12px}.spinfo b{font-size:14px}'
+    + '#alBtn{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:50px;padding:4px 10px;cursor:pointer;font:700 12px Cairo,sans-serif;margin-right:8px}';
+  document.head.appendChild(st);
+  const VIEW_OF = { support: 'support', essay: 'essay', release: 'sres' };
+  const LABEL = { support: '💬 الدعم الفني', essay: '✍️ تصحيح المقالي', release: '🎓 نتائج محتاجة اعتماد' };
+  let prev = null, baseTitle = document.title, snd = null;
+  function beep() { try { snd = snd || new (window.AudioContext || window.webkitAudioContext)(); const o = snd.createOscillator(), g = snd.createGain(); o.connect(g); g.connect(snd.destination); o.type = 'sine'; o.frequency.value = 880; g.gain.setValueAtTime(.0001, snd.currentTime); g.gain.exponentialRampToValueAtTime(.25, snd.currentTime + .02); g.gain.exponentialRampToValueAtTime(.0001, snd.currentTime + .5); o.start(); o.stop(snd.currentTime + .55); } catch (e) {} }
+  function paint(c) {
+    document.querySelectorAll('#nav a[data-go] .nbd').forEach(b => b.remove());
+    Object.keys(VIEW_OF).forEach(k => {
+      const n = +c[k] || 0; if (!n) return;
+      const a = document.querySelector('#nav a[data-go="' + VIEW_OF[k] + '"]'); if (!a) return;
+      const b = document.createElement('b'); b.className = 'nbd' + (k === 'release' ? ' dot' : ''); b.title = LABEL[k] + ': ' + n; if (k !== 'release') b.textContent = n > 99 ? '99+' : n; a.appendChild(b);
+    });
+    const tot = (+c.support || 0) + (+c.essay || 0); document.title = (tot ? '(' + tot + ') ' : '') + baseTitle;
+  }
+  function alertNew(c) {
+    if (!prev) return;
+    const out = [];
+    if ((+c.support_msgs || 0) > (+prev.support_msgs || 0)) out.push(['💬 رسالة جديدة من طالب في الدعم الفني', 'support']);
+    if ((+c.essay || 0) > (+prev.essay || 0)) out.push(['✍️ فيه إجابات مقالية جديدة مستنية تصحيحك', 'essay']);
+    out.forEach(o => {
+      toast(o[0]); beep();
+      try { if (window.Notification && Notification.permission === 'granted' && document.hidden) { const n = new Notification('لوحة التحكم', { body: o[0], tag: o[1] }); n.onclick = () => { window.focus(); go(o[1]); n.close(); }; } } catch (e) {}
+    });
+  }
+  async function poll() {
+    if (document.hidden && prev) return;
+    const app = document.querySelector('#app'); if (!app || app.hidden || !document.querySelector('#nav a[data-go]')) return;
+    try { const { data, error } = await sb.rpc('admin_pending_counts'); if (error || !data) return; paint(data); alertNew(data); prev = data; } catch (e) {}
+    const bar = document.querySelector('#who'); if (bar && !document.querySelector('#alBtn') && window.Notification && Notification.permission === 'default') {
+      const b = document.createElement('button'); b.id = 'alBtn'; b.type = 'button'; b.textContent = '🔔 فعّل تنبيهات المتصفح'; b.onclick = async () => { try { await Notification.requestPermission(); } catch (e) {} b.remove(); beep(); };
+      bar.parentNode.insertBefore(b, bar.nextSibling);
+    }
+  }
+  window.__pollAlerts = poll; setInterval(poll, 20000); setTimeout(poll, 1500);
+  document.addEventListener('visibilitychange', () => { if (!document.hidden) poll(); });
+  const g0 = window.go; if (typeof g0 === 'function') window.go = async function () { const r = await g0.apply(this, arguments); setTimeout(poll, 600); return r; };
 })();
