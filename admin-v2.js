@@ -120,7 +120,7 @@ async function xqUpload(q, file) {
   if (file.size > 12 * 1024 * 1024) { q.imgErr = '❌ حجم الصورة أكبر من 12MB'; return drawQs(); }
   q.imgErr = ''; q.imgMsg = '⏳ جاري الرفع...'; const st = document.querySelector('[data-st="' + q.uid + '"]'); if (st) { st.style.color = 'var(--muted)'; st.textContent = q.imgMsg; }
   try {
-    if (window.UI) { const before = file.size; file = await UI.compress(file, { maxSide: 1400, maxKB: 220 }); if (file.size < before) q.imgMsg = '⏳ اتضغطت من ' + UI.fmtKB(before) + ' إلى ' + UI.fmtKB(file.size) + ' — جاري الرفع...'; }
+    if (window.UI) { const before = file.size; file = await UI.compress(file, 'question'); if (file.size < before) q.imgMsg = '⏳ اتضغطت من ' + UI.fmtKB(before) + ' إلى ' + UI.fmtKB(file.size) + ' — جاري الرفع...'; }
     const ext = file.type === 'image/jpeg' ? 'jpg' : ((file.name || 'x.png').split('.').pop().toLowerCase().replace(/[^a-z0-9]/g, '')) || 'jpg', path = 'questions/' + (crypto.randomUUID ? crypto.randomUUID() : Date.now() + '' + Math.random().toString(16).slice(2)) + '.' + ext;
     const up = await sb.storage.from('course-media').upload(path, file, { contentType: file.type || 'image/jpeg', upsert: false }); if (up.error) throw up.error;
     q.img = sb.storage.from('course-media').getPublicUrl(path).data.publicUrl; q.imgMsg = '✅ تم الرفع'; persist();
@@ -487,20 +487,15 @@ async function spThread(id, quiet) {
   if (!quiet) spRefreshList();
   if (window.__pollAlerts) setTimeout(window.__pollAlerts, 400);
 }
-async function __cmp(img) {
-  let side = 1024, q = .72, blob;
-  for (let i = 0; i < 6; i++) {
-    const k = Math.min(1, side / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
-    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
-    blob = await new Promise(r => c.toBlob(r, 'image/jpeg', q));
-    if (blob.size <= 150 * 1024) break;
-    if (i % 2 === 0) q = Math.max(.45, q - .12); else side = Math.max(640, side - 160);
-  }
-  return blob;
+// يمسح صور المحادثة من التخزين (قبل مسح المحادثة نفسها) عشان ماتفضلش ملفات يتيمة بتاخد مساحة
+async function spPurgeImages(id) {
+  const { data: paths, error } = await sb.rpc('support_thread_images', { p_thread: id });
+  if (error) { if (/forbidden/.test(error.message || '')) throw new Error('مفيش صلاحية حذف المحادثات'); return; }   // لو الدالة لسه متركبتش (db_46) نكمّل مسح عادي
+  if (paths && paths.length) { const rm = await sb.storage.from('support-files').remove(paths); if (rm.error) throw new Error('تعذر مسح صور المحادثة من التخزين: ' + rm.error.message); }
 }
 async function spUpload(file) {
-  const img = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('الملف مش صورة')); i.src = r.result; }; r.onerror = rej; r.readAsDataURL(file); });
-  const blob = await __cmp(img); const path = 'u/s-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+  if (!/^image\//.test(file.type || '')) throw new Error('الملف مش صورة');
+  const blob = window.UI ? await UI.compress(file, 'chat') : file; const path = 'a/' + crypto.randomUUID() + '.jpg';
   const { error } = await sb.storage.from('support-files').upload(path, blob, { contentType: 'image/jpeg' }); if (error) throw error;
   return sb.storage.from('support-files').getPublicUrl(path).data.publicUrl;
 }
@@ -513,7 +508,7 @@ Object.assign(ACT, {
     const { error } = await sb.rpc('support_admin_reply', { p_thread: id, p_body: t || null, p_image: sp.img || null }); el.disabled = false; if (error) throw error;
     sp.img = null; $('#spTxt').value = ''; await spThread(id);
   },
-  spDel: async id => { if (!confirm('مسح المحادثة نهائياً بكل رسائلها؟ مش هتقدر ترجعها.')) return; const { error } = await sb.rpc('support_admin_delete', { p_thread: id }); if (error) throw error; sp.id = null; go('support'); },
+  spDel: async id => { if (!confirm('مسح المحادثة نهائياً بكل رسائلها وصورها؟ مش هتقدر ترجعها.')) return; await spPurgeImages(id); const { error } = await sb.rpc('support_admin_delete', { p_thread: id }); if (error) throw error; sp.id = null; go('support'); },
   spClose: async (id, el) => { if (el.dataset.c === '1' && !confirm('إنهاء المحادثة؟ السجل هيفضل محفوظ.')) return; const { error } = await sb.rpc('support_admin_close', { p_thread: id, p_close: el.dataset.c === '1' }); if (error) throw error; await spThread(id); }
 });
 VIEWS.support = ['الدعم الفني', vSupport];

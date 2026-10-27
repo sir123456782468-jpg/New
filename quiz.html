@@ -225,8 +225,10 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
     };
 
     window.logout = async function () {
-        await supabaseClient.auth.signOut({ scope: 'local' });
-        location.replace('/signin.html');
+        window.__leaving = true;
+        try { await supabaseClient.auth.signOut({ scope: 'local' }); } catch (e) {}
+        try { sessionStorage.clear(); for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (/^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); } } catch (e) {}
+        location.replace('/?out=1');                     // الخروج بيرجّع للصفحة الرئيسية (index) مش لصفحة الدخول
     };
 })();
 
@@ -497,14 +499,19 @@ function render() {
 // ===== مقالي بصورة: اختيار → إرسال الصورة (رفع + تأكيد) → بتوصل للمدرس بعد تسليم الامتحان بس =====
 function pickGrace(ms) { if (!E) return; E.picks = (E.picks || 0) + 1; E.pickUntil = E.picks > 20 ? 0 : Date.now() + (ms || 90000); }
 async function cmpImg(file) {
-  const img = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('bad_image')); i.src = r.result; }; r.onerror = () => rej(new Error('bad_image')); r.readAsDataURL(file); });
-  let side = 1700, qlt = .82, blob;
-  for (let i = 0; i < 6; i++) {
-    const k = Math.min(1, side / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
-    const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
-    blob = await new Promise(r => c.toBlob(r, 'image/jpeg', qlt));
-    if (blob && blob.size <= 600 * 1024) break;
-    if (i % 2 === 0) qlt = Math.max(.5, qlt - .1); else side = Math.max(1100, side - 200);
+  if (!file || !/^image\//.test(file.type || '')) throw new Error('bad_image');
+  let blob = null;
+  try { if (window.UI && UI.compress) blob = await UI.compress(file, 'essay'); } catch (e) { blob = null; }
+  if (!blob || blob === file) {                                   // احتياطي لو ui.js ما اتحمّلش: نفس الفكرة بضغط شديد
+    const img = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('bad_image')); i.src = r.result; }; r.onerror = () => rej(new Error('bad_image')); r.readAsDataURL(file); });
+    let side = 1500, qlt = .7;
+    for (let i = 0; i < 10; i++) {
+      const k = Math.min(1, side / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+      const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
+      blob = await new Promise(r => c.toBlob(r, 'image/jpeg', qlt));
+      if (blob && blob.size <= 150 * 1024) break;
+      if (qlt > .42) qlt -= .08; else side = Math.max(950, Math.round(side * .88));
+    }
   }
   if (!blob) throw new Error('bad_image');
   return blob;

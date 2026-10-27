@@ -219,7 +219,11 @@ document.addEventListener('click', async e => {
   const a = e.target.closest('[data-act]'); if (!a) return;
   if (!ACT[a.dataset.act]) return;
   if (!actAllowed(a.dataset.act)) return toast('🔒 مفيش عندك صلاحية للإجراء ده', true);
-  try { await ACT[a.dataset.act](a.dataset.id, a); } catch (x) { fail(x); }
+  try {
+    // أي إجراء بيشتغل على طالب لازم قايمة الطلاب تكون متحمّلة (ممكن التبويب اتفتح لوحده من غير ما تتحمّل)
+    if (!S.students && /^(student|st[A-Z]|stu[A-Z]|block|kick|grStudent|devLog|dv[A-Z]|rp[A-Z]|ac[A-Z]|pr[A-Z])/.test(a.dataset.act)) { try { await loadStudents(); } catch (e) {} }
+    await ACT[a.dataset.act](a.dataset.id, a);
+  } catch (x) { fail(x); }
 });
 
 // ===== نظرة عامة =====
@@ -249,7 +253,7 @@ function courseForm(c) {
       const row = { title: f.get('title').trim(), description: f.get('description').trim() || null, academic_year: f.get('year'), price: +f.get('price') || 0, sort_order: +f.get('sort') || 0, is_published: f.get('pub') === 'on' };
       let file = f.get('thumb');
       if (file && file.size) {
-        if (window.UI) { try { file = await UI.compress(file, { maxSide: 1200, maxKB: 180 }); } catch (e) {} }      // ضغط الصورة قبل الرفع (توفير مساحة)
+        if (window.UI) { try { file = await UI.compress(file, 'thumb'); } catch (e) {} }      // ضغط الصورة قبل الرفع (توفير مساحة)
         const path = 'thumbs/' + crypto.randomUUID() + '.' + (file.type === 'image/jpeg' ? 'jpg' : ((file.name || 'x.png').split('.').pop().toLowerCase() || 'png'));
         const up = await sb.storage.from('course-media').upload(path, file, { contentType: file.type }); if (up.error) throw up.error;
         row.thumbnail_url = sb.storage.from('course-media').getPublicUrl(path).data.publicUrl;
@@ -385,7 +389,7 @@ function questionForm(eid) {
         correct = raw.slice(0, ok).filter(Boolean).length;
       }
       let image_url = null; const file = f.get('img');
-      if (file && file.size) { const path = 'questions/' + crypto.randomUUID() + '.' + file.name.split('.').pop().toLowerCase(); const up = await sb.storage.from('course-media').upload(path, file, { contentType: file.type }); if (up.error) throw up.error; image_url = sb.storage.from('course-media').getPublicUrl(path).data.publicUrl; }
+      if (file && file.size) { let fl = file; if (window.UI) { try { fl = await UI.compress(file, 'question'); } catch (e) { fl = file; } } const path = 'questions/' + crypto.randomUUID() + '.' + (fl.type === 'image/jpeg' ? 'jpg' : (file.name.split('.').pop().toLowerCase())); const up = await sb.storage.from('course-media').upload(path, fl, { contentType: fl.type || file.type }); if (up.error) throw up.error; image_url = sb.storage.from('course-media').getPublicUrl(path).data.publicUrl; }
       const { count } = await sb.from('quiz_questions').select('id', { count: 'exact', head: true }).eq('quiz_id', eid);
       const { data: q, error } = await sb.from('quiz_questions').insert({ quiz_id: eid, position: (count || 0) + 1, question: f.get('q').trim(), options, qtype: type, points: +f.get('pts') || 1, image_url }).select('id').single(); if (error) throw error;
       if (type === 'mcq') { const r = await sb.from('quiz_answers').insert({ question_id: q.id, correct_index: correct }); if (r.error) { await sb.from('quiz_questions').delete().eq('id', q.id); throw r.error; } }
@@ -470,7 +474,7 @@ async function saveBulk() {
   if (!jobs.length) throw new Error('مفيش أسئلة مكتوبة للحفظ');
   for (const j of jobs) {
     const row = { quiz_id: eid, position: j.pos, question: j.text, options: j.options, qtype: j.t, points: j.pts }, f = j.c.querySelector('.im').files[0];
-    if (f) { const path = 'questions/' + crypto.randomUUID() + '.' + f.name.split('.').pop().toLowerCase(), up = await sb.storage.from('course-media').upload(path, f, { contentType: f.type }); if (up.error) throw up.error; row.image_url = sb.storage.from('course-media').getPublicUrl(path).data.publicUrl; }
+    if (f) { let fl = f; if (window.UI) { try { fl = await UI.compress(f, 'question'); } catch (e) { fl = f; } } const path = 'questions/' + crypto.randomUUID() + '.' + (fl.type === 'image/jpeg' ? 'jpg' : f.name.split('.').pop().toLowerCase()), up = await sb.storage.from('course-media').upload(path, fl, { contentType: fl.type || f.type }); if (up.error) throw up.error; row.image_url = sb.storage.from('course-media').getPublicUrl(path).data.publicUrl; }
     let id = j.id;
     if (id) { const { error } = await sb.from('quiz_questions').update(row).eq('id', id); if (error) throw error; } else { const { data, error } = await sb.from('quiz_questions').insert(row).select('id').single(); if (error) throw error; id = data.id; }
     if (j.t === 'mcq') { const { error } = await sb.from('quiz_answers').upsert({ question_id: id, correct_index: j.correct }); if (error) throw error; }

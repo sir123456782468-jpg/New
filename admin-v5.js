@@ -128,7 +128,7 @@ Object.assign(ACT, {
     SP.img = null; $('#spTxt').value = ''; await thread(id);
   },
   s5Solve: async (id, el) => { const { error } = await sb.rpc('support_admin_solved', { p_thread: id, p_solved: el.dataset.v === '1' }); if (error) throw new Error(errMsg(error)); toast(el.dataset.v === '1' ? 'اتعلّمت «تم الحل» ✅' : 'رجعت للمتابعة'); await thread(id); },
-  s5Del: async id => { if (!confirm('مسح المحادثة نهائياً بكل رسائلها؟ مش هتقدر ترجعها.')) return; const { error } = await sb.rpc('support_admin_delete', { p_thread: id }); if (error) throw error; SP.id = null; go(window.__cur || 'support'); },
+  s5Del: async id => { if (!confirm('مسح المحادثة نهائياً بكل رسائلها وصورها؟ مش هتقدر ترجعها.')) return; await spPurgeImages(id); const { error } = await sb.rpc('support_admin_delete', { p_thread: id }); if (error) throw error; SP.id = null; go(window.__cur || 'support'); },
   s5Close: async (id, el) => { if (el.dataset.c === '1' && !confirm('إنهاء المحادثة؟ السجل هيفضل محفوظ.')) return; const { error } = await sb.rpc('support_admin_close', { p_thread: id, p_close: el.dataset.c === '1' }); if (error) throw error; await thread(id); },
   s5Canned: async () => { await loadCan(); canModal(); },
   s5CanDel: async id => { if (!confirm('حذف الرد الجاهز؟')) return; const { error } = await sb.from('support_canned').delete().eq('id', id); if (error) throw error; SP.can = null; await loadCan(); canModal(); }
@@ -201,8 +201,9 @@ const gauge = (used, lim) => { const p = Math.min(100, used / lim * 100); return
 const gaugeN = (used, lim) => { const p = Math.min(100, used / lim * 100); return '<div class="v5g' + (p > 85 ? ' d' : p > 65 ? ' w' : '') + '"><i style="width:' + p.toFixed(1) + '%"></i></div><div class="v5s"><span>' + nf(used) + ' من ' + nf(lim) + '</span><b>' + p.toFixed(2) + '%</b></div>'; };
 const CK = [
   ['essay_images', '🖼️', 'صور إجابات المقالي (المصحّحة)', 'img', 'الدرجة بتفضل محفوظة، بس صورة إجابة الطالب بتتشال من التخزين. (بتتحذف اللي اتصححت بس).', 90],
-  ['support_images', '📎', 'صور الدعم الفني', 'img', 'بتتشال الصور من المحادثات القديمة وبيفضل نص الرسالة.', 60],
-  ['support_closed', '💬', 'محادثات الدعم المنتهية', 'row', 'بتتمسح المحادثات المنتهية بالكامل بما فيها رسايلها.', 90],
+  ['support_images', '📎', 'صور الدعم الفني (احذفها بعد يوم أو يومين براحتك)', 'img', 'بتتشال الصور من التخزين وبيفضل نص الرسالة. اختار «1 يوم» أو «2 يوم» لو عايز تحذف أول بأول.', 2],
+  ['support_orphans', '🧹', 'ملفات صور يتيمة في التخزين', 'img', 'صور فضلت في التخزين ومفيش رسالة بتستخدمها (مثلاً من محادثات اتمسحت قبل التحديث). آمنة تماماً.', 1],
+  ['support_closed', '💬', 'محادثات الدعم المنتهية', 'row', 'بتتمسح المحادثات المنتهية بالكامل بما فيها رسايلها وصورها.', 90],
   ['login_events', '🔑', 'سجل تسجيلات الدخول', 'row', '', 90],
   ['audit', '🕵️', 'سجل العمليات (Audit)', 'row', '', 180],
   ['archive', '🗄️', 'أرشيف المحاولات القديمة (بعد فتح محاولة جديدة)', 'row', '', 180],
@@ -230,13 +231,13 @@ async function vMaint() {
     + '<div class="card"><b>🌐 حاجات مش بتتقاس من هنا</b><p class="nt" style="margin:6px 0 0">استهلاك <b>الإنترنت (Egress — 5 جيجا/شهر مجاناً)</b> بيتشاف من Supabase ← Reports ← Egress. الموقع متظبط يقلّل الطلبات (تجميع + كاش)، لكن الرقم الفعلي مصدره Supabase بس. أرقام النظام فوق (حجم القاعدة، التخزين، عدد الصفوف، النشطين) <b>فعلية مش تقديرية</b> — اتقاست الساعة ' + new Date(U.at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' }) + '.</p></div></div>'
     + '<div class="v5k" style="margin-top:14px">' + Object.keys(COUNT_L).map(k => '<div class="kk"><b>' + nf(U.counts[k]) + '</b><span>' + COUNT_L[k] + '</span></div>').join('') + '<div class="kk"><b>' + nf(U.auth_users) + '</b><span>إجمالي حسابات الدخول</span></div></div>'
     + '<h3 class="v5h">📊 أكبر الجداول حجماً</h3><div class="card">' + (U.tables || []).map(t => '<div class="v5row"><span class="nm">' + esc(TBL_L[t.name] || t.name) + ' <small dir="ltr">' + esc(t.name) + '</small></span><small>' + nf(t.rows) + ' صف' + (+t.dead > 0 ? ' (' + nf(t.dead) + ' محذوف مستني تنضيف)' : '') + '</small><div style="flex:1 1 160px;min-width:120px"><div class="v5g" style="margin:0"><i style="width:' + Math.max(2, t.bytes / tmax * 100) + '%"></i></div></div><b style="min-width:70px;text-align:left">' + fmtB(t.bytes) + '</b></div>').join('') + '</div>'
-    + '<h3 class="v5h">🧹 تنظيف آمن (للمالك فقط) — بيوريك العدد قبل ما يحذف</h3><div class="v5grid2">' + CK.map(c => '<div class="card" data-ck="' + c[0] + '"><b>' + c[1] + ' ' + c[2] + '</b><p class="nt" style="margin:4px 0 8px">' + esc(c[4]) + '</p><div class="bar" style="margin:0"><span class="nt" style="margin:0">أقدم من</span><select data-ckd style="max-width:120px;min-width:0;flex:none">' + [7, 14, 30, 60, 90, 180, 365].map(d => '<option value="' + d + '"' + (d === c[5] ? ' selected' : '') + '>' + d + ' يوم</option>').join('') + '</select><button class="btn s g" data-act="mtPrev" data-id="' + c[0] + '">👁 معاينة</button></div><div class="mtOut" style="margin-top:8px;font-weight:700"></div></div>').join('') + '</div>'
+    + '<h3 class="v5h">🧹 تنظيف آمن (للمالك فقط) — بيوريك العدد قبل ما يحذف</h3><div class="v5grid2">' + CK.map(c => '<div class="card" data-ck="' + c[0] + '"><b>' + c[1] + ' ' + c[2] + '</b><p class="nt" style="margin:4px 0 8px">' + esc(c[4]) + '</p><div class="bar" style="margin:0"><span class="nt" style="margin:0">أقدم من</span><select data-ckd style="max-width:120px;min-width:0;flex:none">' + [1, 2, 3, 7, 14, 30, 60, 90, 180, 365].map(d => '<option value="' + d + '"' + (d === c[5] ? ' selected' : '') + '>' + d + ' يوم</option>').join('') + '</select><button class="btn s g" data-act="mtPrev" data-id="' + c[0] + '">👁 معاينة</button></div><div class="mtOut" style="margin-top:8px;font-weight:700"></div></div>').join('') + '</div>'
     + '<h3 class="v5h">💾 نسخة احتياطية (الخطة المجانية مفيهاش نسخ تلقائي!)</h3><div class="card"><p class="nt">نزّل نسخة على جهازك كل أسبوع تقريباً. الملفات دي بتتولّد في المتصفح وما بتتخزّنش في أي مكان.</p><div class="bar" style="margin:0"><button class="btn s" data-act="bkStudents">👥 الطلاب (CSV)</button><button class="btn s" data-act="bkResults">📊 النتائج (CSV)</button><button class="btn s g" data-act="bkAll">📦 نسخة كاملة (JSON)</button></div><div id="bkSt" class="nt" style="margin:10px 0 0"></div></div>';
 }
 document.addEventListener('change', e => { const t = e.target; if (t && t.id === 'plSel') { try { localStorage.setItem('adm_plan', t.value); } catch (x) {} go('maint'); } });
 const ckOf = id => CK.find(c => c[0] === id);
 async function mtRemove(kind, days, out) {
-  const bucket = kind === 'essay_images' ? 'essay-files' : 'support-files'; let done = 0, rows = 0, guard = 0;
+  const bucket = kind === 'essay_images' ? 'essay-files' : 'support-files'; let done = 0, rows = 0, guard = 0, last = '';
   for (;;) {
     if (++guard > 80) break;
     const { data: paths, error } = await sb.rpc('cleanup_list', { p_kind: kind, p_days: days, p_limit: 100 }); if (error) throw new Error(errMsg(error));
@@ -244,6 +245,7 @@ async function mtRemove(kind, days, out) {
     out.textContent = '⏳ جاري حذف الملفات… (' + done + ')';
     const rm = await sb.storage.from(bucket).remove(paths); if (rm.error) throw new Error('تعذر حذف الملفات من التخزين: ' + rm.error.message + ' — شغّل db_26 تاني وتأكد إنك مالك');
     const { data: n, error: e2 } = await sb.rpc('cleanup_mark', { p_kind: kind, p_paths: paths }); if (e2) throw new Error(errMsg(e2));
+    const sig = paths.join('|'); if (sig === last) break; last = sig;
     done += paths.length; rows += +n || 0; if (!(+n > 0)) break;
   }
   return { files: done, rows };
@@ -267,6 +269,7 @@ Object.assign(ACT, {
     if (!confirm('تأكيد: ' + c[2] + ' الأقدم من ' + days + ' يوم هيتحذف نهائياً ومش هتقدر ترجّعه. تكمل؟')) return;
     el.disabled = true;
     try {
+      if (id === 'support_closed') { await mtRemove('support_closed_files', days, out); }
       if (c[3] === 'img') { const r = await mtRemove(id, days, out); toast('تم حذف ' + r.files + ' ملف ✅'); }
       else { const { data, error } = await sb.rpc('cleanup_run', { p_kind: id, p_days: days }); if (error) throw new Error(errMsg(error)); toast('تم حذف ' + data + ' عنصر ✅'); }
       go('maint');
@@ -493,7 +496,7 @@ Object.assign(ACT, {
 });
 Object.assign(ACTPERM, { grY: ['students.view'], grS: ['students.view'], grC: ['students.view'], grMore: ['students.view'], grCsv: ['students.view'], grRefresh: ['students.view'] });
 VIEWS.grades = ['الصفوف', async () => {
-  GR.y = GR.y || YEARS[0]; setTimeout(() => grLoad(true));
+  GR.y = GR.y || YEARS[0]; try { await loadStudents(); } catch (e) {} setTimeout(() => grLoad(true));
   return '<div class="note" style="margin:0 0 14px">🏫 اختار الصف ← هتلاقي طلابه ← افتح الطالب ← كورساته ← افتح الكورس ← دروسه وكل فيديو سمع منه قد إيه (مدة السماع الفعلية، حتى لو شغّل بسرعة x2).</div>'
     + '<div class="bar" style="margin-bottom:12px;flex-wrap:wrap">' + YEARS.map(y => '<button class="yt' + (y === GR.y ? ' on' : '') + '" data-act="grY" data-id="' + y + '">' + y + '</button>').join('') + '</div><div id="grBody"></div>';
 }];
@@ -1484,7 +1487,8 @@ const GROUPS = [
   { id: 'cards', ico: '🧩', t: 'كروت المميزات', sec: 'cards', f: [B('show_cards', 'إظهار القسم'), T('cards_title', 'عنوان (فاضي = من غير عنوان)'), T('cards_sub', 'وصف'), { t: 'list', k: 'cards' }] },
   { id: 'grades', ico: '🎓', t: 'الصفوف', sec: 'grades', f: [B('show_grades', 'إظهار القسم'), T('grades_title', 'العنوان'), T('grades_sub', 'الوصف'), { t: 'list', k: 'grades' }] },
   { id: 'cta', ico: '🚀', t: 'الدعوة للتسجيل (آخر الصفحة)', sec: 'cta', f: [B('show_cta', 'إظهار القسم'), T('cta_title', 'العنوان'), T('cta_sub', 'الوصف'), T('cta_btn', 'نص الزر'), T('cta_url', 'رابط الزر', { url: 1 })] },
-  { id: 'foot', ico: '📞', t: 'الفوتر والتواصل والدعم', sec: 'bottom', f: [{ t: 'site', k: 'pn', l: 'اسم المنصة (بيظهر في الفوتر والتقارير)' }, T('footer_text', 'سطر إضافي في الفوتر'), T('copyright', 'حقوق النشر'), T('dev_sign', 'التوقيع أسفل الصفحة (فاضي = يتخفّى)'), B('show_social', 'إظهار روابط التواصل'), T('whatsapp', 'واتساب (رقم 01xxxxxxxxx أو رابط)'), T('facebook', 'فيسبوك (رابط https)', { url: 1 }), T('instagram', 'إنستجرام (رابط https)', { url: 1 }), T('youtube', 'يوتيوب (رابط https)', { url: 1 }), T('tiktok', 'تيك توك (رابط https)', { url: 1 }), T('telegram', 'تيليجرام (رابط https)', { url: 1 }), B('show_support', 'فقاعة الدعم الفني (برّه المنصة: فني بس)')] },
+  { id: 'foot', ico: '📞', t: 'الفوتر والتواصل والدعم', sec: 'bottom', f: [{ t: 'site', k: 'pn', l: 'اسم المنصة (بيظهر في الفوتر والتقارير)' }, T('footer_text', 'سطر إضافي في الفوتر'), T('copyright', 'حقوق النشر'), T('dev_sign', 'التوقيع أسفل الصفحة (فاضي = يتخفّى)'), B('show_foot_pages', 'إظهار عمود «الصفحات» في الفوتر'), T('foot_pages_title', 'عنوان عمود الصفحات'), T('foot_contact_title', 'عنوان عمود التواصل'), B('show_social', 'إظهار روابط التواصل (كل رابط تضيفه بيظهر باسمه وأيقونته)'), T('whatsapp', 'واتساب (رقم 01xxxxxxxxx أو رابط)'), T('facebook', 'فيسبوك (رابط https)', { url: 1 }), T('instagram', 'إنستجرام (رابط https)', { url: 1 }), T('youtube', 'يوتيوب (رابط https)', { url: 1 }), T('tiktok', 'تيك توك (رابط https)', { url: 1 }), T('telegram', 'تيليجرام (رابط https)', { url: 1 }), B('show_support', 'فقاعة الدعم الفني (برّه المنصة: فني بس)')] },
+  { id: 'auth', ico: '🔐', t: 'صفحات الدخول والتسجيل والتحقق', sec: 'top', f: [{ t: 'authlinks' }, SL('auth_design', 'التصميم المعروض للطلاب', [['1', '١ — نظيف وهادي (كارت أبيض)'], ['2', '٢ — شاشة منقسمة (صورة المستر + المميزات)'], ['3', '٣ — بوستر زجاجي (خلفية بتدرّج المنصة)']]), B('auth_show_help', 'إظهار «محتاج مساعدة؟ كلّم الدعم الفني»'), B('auth_show_points', '(تصميم ٢) إظهار نقاط المميزات'), T('auth_signin_title', 'الدخول — العنوان'), T('auth_signin_sub', 'الدخول — الوصف'), T('auth_signin_btn', 'الدخول — نص الزر'), T('auth_signin_alt_p', 'الدخول — جملة «معندكش حساب»'), T('auth_signin_alt_btn', 'الدخول — زر الانتقال للتسجيل'), T('auth_signup_title', 'التسجيل — العنوان'), T('auth_signup_sub', 'التسجيل — الوصف'), T('auth_signup_btn', 'التسجيل — نص الزر'), T('auth_signup_alt_p', 'التسجيل — جملة «عندك حساب»'), T('auth_signup_alt_btn', 'التسجيل — زر الانتقال للدخول'), T('auth_verify_title', 'تأكيد البريد — العنوان'), T('auth_recover_title', 'استعادة الحساب — العنوان'), T('auth_help_text', 'جملة المساعدة'), T('auth_help_btn', 'زر الدعم الفني'), T('auth_side_title', '(تصميم ٢) العنوان الكبير'), AR('auth_side_text', '(تصميم ٢) الفقرة'), T('auth_p1', '(تصميم ٢) ميزة ١'), T('auth_p2', '(تصميم ٢) ميزة ٢'), T('auth_p3', '(تصميم ٢) ميزة ٣')] },
   { id: 'order', ico: '🔀', t: 'ترتيب الأقسام وإظهارها', sec: 'courses', f: [{ t: 'order' }] },
   { id: 'seo', ico: '🔎', t: 'محركات البحث (جوجل)', sec: 'top', f: [T('seo_title', 'عنوان الصفحة'), AR('seo_desc', 'وصف الصفحة')] }
 ];
@@ -1527,6 +1531,7 @@ function field(f) {
     case 'site': return '<div class="lf">' + lbl(f.l) + '<input data-site="' + f.k + '" value="' + esc(L[f.k]) + '"></div>';
     case 'presets': return '<div class="lf"><label>ألوان جاهزة (بتغيّر الألوان بس وتقدر تعدّلها بعدها)</label><div class="lpre">' + PRESETS.map((p, i) => '<button type="button" class="btn s g" data-act="lpPre" data-id="' + i + '">' + esc(p[0]) + '</button>').join('') + '</div></div>';
     case 'photo': return '<div class="lf"><label>صورة المستر</label><div class="lph"><div class="lpv">' + (L.photo ? '<img src="' + esc(L.photo) + '" alt="">' : '<span>👤</span>') + '</div><div style="display:flex;flex-direction:column;gap:8px;flex:1;min-width:180px"><label class="btn s" style="cursor:pointer;margin:0;color:#fff;text-align:center">📷 ' + (L.photo ? 'تغيير الصورة' : 'رفع صورة') + '<input type="file" id="lpFile" accept="image/png,image/jpeg,image/webp" hidden></label>' + (L.photo ? '<button type="button" class="btn s r" data-act="lpPhotoDel">🗑 إزالة الصورة</button>' : '') + '</div></div><p class="nt" style="margin:8px 0 0;line-height:1.9">الأفضل <b>صورة PNG بخلفية شفافة</b> (المستر من غير خلفية) وجودة عالية، وبيتضغط تلقائياً. لو صورتك بخلفية عادية اختار «داخل إطار» من طريقة العرض. لو ما فيش صورة بيظهر لوجو المنصة مكانها.</p></div>';
+    case 'authlinks': return '<div class="lf"><p class="nt" style="margin:0 0 8px">الألوان بتتاخد من «الألوان والشكل العام» (نفس ألوان الصفحة الرئيسية)، وصورة المستر في التصميم ٢ هي نفس صورة الصفحة الرئيسية. التعديل بيظهر بعد «حفظ ونشر». معاينة سريعة للتصميمات (بالإعدادات المنشورة):</p><div class="lpre">' + [1, 2, 3].map(n => '<a class="btn s g" target="_blank" rel="noopener" href="/signin.html?d=' + n + '">تصميم ' + n + ' — دخول</a><a class="btn s g" target="_blank" rel="noopener" href="/signup.html?d=' + n + '">تصميم ' + n + ' — تسجيل</a>').join('') + '</div></div>';
     case 'courses': return coursesField();
     case 'order': return orderField();
     case 'list': return listField(f.k);

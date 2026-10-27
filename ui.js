@@ -156,21 +156,27 @@ img.zi,.zoomable img,img[data-zoom]{cursor:zoom-in}
   }, true);
 
   /* ---------------------------------------------------------------- ضغط الصور */
-  // UI.compress(file, {maxSide, maxKB}) → Promise<Blob>  (JPEG). الـGIF/SVG بيرجعوا زي ما هم.
+  // UI.compress(file, {maxSide, maxKB, minSide, qMin}) → Promise<Blob>  (JPEG، بيشيل بيانات الصورة EXIF/الموقع). الـGIF/SVG بيرجعوا زي ما هم.
+  // ضغط شديد: بيبدأ بجودة معقولة وينزل بالأبعاد والجودة لحد ما يوصل للحجم المطلوب (حد أدنى للقراءة).
+  UI.PROFILES = { chat: { maxSide: 800, minSide: 460, maxKB: 40, q0: .6, qMin: .3 }, essay: { maxSide: 1500, minSide: 950, maxKB: 150, q0: .72, qMin: .4 }, question: { maxSide: 1200, minSide: 640, maxKB: 100, q0: .72, qMin: .35 }, thumb: { maxSide: 900, minSide: 480, maxKB: 70, q0: .72, qMin: .35 } };
   UI.compress = async function (file, o) {
-    o = Object.assign({ maxSide: 1400, maxKB: 300, minSide: 600 }, o || {});
+    o = Object.assign({ maxSide: 1200, maxKB: 100, minSide: 500, q0: .72, qMin: .35 }, typeof o === 'string' ? UI.PROFILES[o] : (o || {}));
     if (!file || !/^image\//.test(file.type) || /gif|svg/.test(file.type)) return file;
-    const bmp = await new Promise((res, rej) => { const u = URL.createObjectURL(file), i = new Image(); i.onload = () => { URL.revokeObjectURL(u); res(i); }; i.onerror = () => { URL.revokeObjectURL(u); rej(new Error('الملف مش صورة صالحة')); }; i.src = u; });
-    let side = o.maxSide, q = .86, blob = null;
-    for (let i = 0; i < 8; i++) {
-      const k = Math.min(1, side / Math.max(bmp.width, bmp.height)), c = document.createElement('canvas');
-      c.width = Math.max(1, Math.round(bmp.width * k)); c.height = Math.max(1, Math.round(bmp.height * k));
+    let bmp = null;
+    try { if (window.createImageBitmap) bmp = await createImageBitmap(file, { imageOrientation: 'from-image' }); } catch (e) { bmp = null; }
+    if (!bmp) bmp = await new Promise((res, rej) => { const u = URL.createObjectURL(file), i = new Image(); i.onload = () => { URL.revokeObjectURL(u); res(i); }; i.onerror = () => { URL.revokeObjectURL(u); rej(new Error('الملف مش صورة صالحة')); }; i.src = u; });
+    const W = bmp.width, H = bmp.height; let side = o.maxSide, q = o.q0, blob = null, best = null;
+    for (let i = 0; i < 14; i++) {
+      const k = Math.min(1, side / Math.max(W, H)), c = document.createElement('canvas');
+      c.width = Math.max(1, Math.round(W * k)); c.height = Math.max(1, Math.round(H * k));
       const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.imageSmoothingQuality = 'high'; x.drawImage(bmp, 0, 0, c.width, c.height);
       blob = await new Promise(r => c.toBlob(r, 'image/jpeg', q));
+      if (blob && (!best || blob.size < best.size)) best = blob;
       if (!blob || blob.size <= o.maxKB * 1024) break;
-      if (i % 2 === 0) q = Math.max(.5, q - .1); else side = Math.max(o.minSide, Math.round(side * .85));
+      if (q > o.qMin + .001) q = Math.max(o.qMin, +(q - .08).toFixed(2)); else if (side > o.minSide) { side = Math.max(o.minSide, Math.round(side * .88)); q = Math.min(o.q0, o.qMin + .12); } else break;
     }
-    return blob && blob.size < file.size ? blob : (blob && file.size > o.maxKB * 1024 ? blob : file);
+    try { if (bmp.close) bmp.close(); } catch (e) {}
+    return best || file;
   };
   UI.fmtKB = n => n > 1048576 ? (n / 1048576).toFixed(1) + ' MB' : Math.round(n / 1024) + ' KB';
 

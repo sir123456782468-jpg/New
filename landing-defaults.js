@@ -46,7 +46,14 @@
     // —— الدعوة للتسجيل
     cta_title: 'جاهز تبقى Leader؟', cta_sub: 'سجّل حسابك وفعّل كورسك وابدأ أول درس النهارده.', cta_btn: 'إنشاء حساب ←', cta_url: '/signup.html',
     // —— الفوتر والتواصل
-    footer_text: '', copyright: '© 2026 The Leader In English', dev_sign: 'Developer / Mohamed Sherif Khafagy', whatsapp: '', facebook: '', instagram: '', youtube: '', tiktok: '', telegram: '',
+    footer_text: '', foot_pages_title: 'الصفحات', foot_contact_title: 'تواصل معنا', show_foot_pages: true, copyright: '© 2026 The Leader In English', dev_sign: 'Developer / Mohamed Sherif Khafagy', whatsapp: '', facebook: '', instagram: '', youtube: '', tiktok: '', telegram: '',
+    // —— صفحات الدخول والتسجيل والتحقق
+    auth_design: '1', auth_show_help: true, auth_show_points: true,
+    auth_signin_title: 'أهلاً بعودتك', auth_signin_sub: 'سجّل دخولك وكمّل من حيث وقفت في دروسك.', auth_signin_btn: 'دخول', auth_signin_alt_p: 'لسه معندكش حساب؟', auth_signin_alt_btn: 'أنشئ حسابك دلوقتي 🚀',
+    auth_signup_title: 'أنشئ حسابك الجديد', auth_signup_sub: 'دقيقة واحدة وتبدأ رحلتك معانا — اكتب بياناتك بشكل صحيح.', auth_signup_btn: 'إرسال كود التحقق', auth_signup_alt_p: 'عندك حساب بالفعل؟', auth_signup_alt_btn: 'سجّل دخولك من هنا ➔',
+    auth_verify_title: 'أكّد بريدك الإلكتروني', auth_recover_title: 'كود استعادة الحساب', auth_help_text: 'محتاج مساعدة؟', auth_help_btn: 'كلّم الدعم الفني',
+    auth_side_title: 'منصتك لتتفوّق في اللغة الإنجليزية', auth_side_text: 'شرح مبسّط، امتحانات تفاعلية، ومتابعة لمستواك خطوة بخطوة.',
+    auth_p1: 'فيديوهات شرح محمية وواضحة', auth_p2: 'امتحانات وواجبات بتصحيح فوري', auth_p3: 'متابعة مستواك ونتايجك أول بأول',
     // —— محركات البحث
     seo_title: 'The Leader In English — منصة تعلّم اللغة الإنجليزية مع Mr. Sherif Khafagy', seo_desc: 'منصة متكاملة لتعلّم اللغة الإنجليزية: فيديوهات، امتحانات بنتيجة فورية، ومتابعة لمستواك مع Mr. Sherif Khafagy.'
   };

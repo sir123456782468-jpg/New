@@ -1,12 +1,12 @@
 /* الدعم الفني — قايمة شاتات الطالب + بدء شات جديد (اسم ثلاثي + تأكيد الرقم) + دردشة بالصور.
-   بيشتغل في home / course / support. الطالب المسجّل بيشوف شاتاته، وغير المسجّل بيكتب رقمه المسجّل على المنصة. */
+   بيشتغل في home / course / support / صفحات الدخول والتسجيل. الطالب المسجّل بيشوف شاتاته، والزائر (بيسجّل أو عنده مشكلة في الدخول) بيكتب اسمه ورقمه بس. */
 (function () {
   if (window.__spw) return; window.__spw = 1;
   const $ = (s, r) => (r || document).querySelector(s);
   const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
   const sbc = () => window.supabaseClient;
   const KEY = 'sp_thread_v1';
-  const ERR = { not_registered: 'الرقم ده مش مسجّل على المنصة. اكتب الرقم اللي سجّلت بيه.', bad_phone: 'اكتب رقم موبايل صحيح (11 رقم بيبدأ بـ 01).', bad_name: 'اكتب اسمك الثلاثي بالحروف (3 كلمات على الأقل، من غير أرقام أو رموز).', too_many: 'فتحت محادثات كتير النهاردة، كمّل في محادثتك الحالية أو حاول بكرة.', closed: 'المحادثة اتقفلت من الدعم.', rate_limited: 'رسائل كتير في وقت قصير، استنى شوية.', too_long: 'الرسالة طويلة جداً.', bad_thread: 'المحادثة دي مش متاحة، ابدأ واحدة جديدة.', no_profile: 'مش لاقيين بياناتك على المنصة.', login_required: 'الدعم العلمي لازم تكون مسجّل دخولك الأول.' };
+  const ERR = { not_registered: 'الرقم ده مش مسجّل على المنصة. اكتب الرقم اللي سجّلت بيه.', bad_phone: 'اكتب رقم موبايل صحيح (11 رقم بيبدأ بـ 01).', bad_name: 'اكتب اسمك الثلاثي بالحروف (3 كلمات على الأقل، من غير أرقام أو رموز).', too_many: 'فتحت محادثات كتير النهاردة، كمّل في محادثتك الحالية أو حاول بكرة.', closed: 'المحادثة اتقفلت من الدعم.', rate_limited: 'محاولات كتير في وقت قصير، استنى شوية وحاول تاني.', too_long: 'الرسالة طويلة جداً.', bad_thread: 'المحادثة دي مش متاحة، ابدأ واحدة جديدة.', no_profile: 'مش لاقيين بياناتك على المنصة.', login_required: 'الدعم العلمي لازم تكون مسجّل دخولك الأول.' };
   const msgOf = e => { const m = (e && e.message) || ''; for (const k in ERR) if (m.includes(k)) return ERR[k]; return /schema cache|does not exist|could not find/.test(m) ? 'خدمة الدعم لسه مش متفعّلة.' : 'حصلت مشكلة في الاتصال، حاول تاني.'; };
   const tfmt = d => { try { return new Date(d).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }); } catch (e) { return ''; } };
   const css = document.createElement('style');
@@ -63,7 +63,7 @@
     head(kind === 'academic' ? '📘 سؤال علمي' : '➕ شات جديد', li ? home : (load() ? () => { const t = load(); T = t; chatScreen(); refresh(true); startPoll(); } : null));
     const ac = kind === 'academic';
     if (ac && !courses) { try { const r = await sbc().from('courses').select('id,title').order('sort_order'); courses = (r.data || []).filter(c => c.title); } catch (e) { courses = []; } }
-    body.innerHTML = '<div class="pn"><div class="rm">' + (ac ? '📘 أهلاً بك في الدعم العلمي لمنصة The Leader In English\nاسأل في أي نقطة في المادة (قاعدة، درس، سؤال امتحان).\n١) اكتب اسمك الثلاثي\n٢) حدّد الكورس والموضوع (اختياري بس بيسرّع الرد)\n٣) اكتب سؤالك وابعت صورة لو محتاج.' : '👋 أهلاً بك في الدعم الفني لمنصة The Leader In English\nعشان نساعدك بسرعة:\n١) اكتب اسمك الثلاثي هنا تحت\n٢) هنتأكد من رقم موبايلك المسجّل عندنا\n٣) وبعدها تكتب مشكلتك وهنرد عليك.') + '</div>'
+    body.innerHTML = '<div class="pn"><div class="rm">' + (ac ? '📘 أهلاً بك في الدعم العلمي لمنصة The Leader In English\nاسأل في أي نقطة في المادة (قاعدة، درس، سؤال امتحان).\n١) اكتب اسمك الثلاثي\n٢) حدّد الكورس والموضوع (اختياري بس بيسرّع الرد)\n٣) اكتب سؤالك وابعت صورة لو محتاج.' : '👋 أهلاً بك في الدعم الفني لمنصة The Leader In English\nعشان نساعدك بسرعة:\n١) اكتب اسمك الثلاثي هنا تحت\n٢) ' + (li ? 'هنتأكد من رقم موبايلك المسجّل عندنا' : 'اكتب رقم موبايلك عشان نتواصل معاك (مش لازم يكون مسجّل)') + '\n٣) وبعدها تكتب مشكلتك وهنرد عليك.') + '</div>'
       + '<input id="spw-nm" placeholder="اكتب اسمك الثلاثي (مثال: أحمد محمد علي)" maxlength="80" autocomplete="name" value="' + esc(nameDraft) + '">'
       + (ac ? '<select id="spw-co" style="padding:12px;border:1px solid var(--line,#ddd);border-radius:12px;font:700 14px Cairo,sans-serif;background:var(--card,#fff);color:var(--ink,#111)"><option value="">📚 الكورس (اختياري)</option>' + (courses || []).map(c => '<option value="' + esc(c.id) + '"' + (ctx && ctx.course_id === c.id ? ' selected' : '') + '>' + esc(c.title) + '</option>').join('') + '</select><input id="spw-tp" placeholder="الدرس / السؤال (مثال: درس Passive Voice — سؤال 5)" maxlength="160" value="' + esc((ctx && (ctx.topic || ctx.lesson)) || '') + '">' : '')
       + '<div class="er" id="spw-er">' + esc(err || '') + '</div><button type="button" class="bt" id="spw-go" style="min-height:44px">التالي ←</button></div>';
@@ -83,15 +83,15 @@
     };
   }
   function stepPhone(name) {                   // مش مسجّل دخول: يكتب رقمه المسجّل على المنصة
-    head('📱 رقمك على المنصة', () => step1());
-    body.innerHTML = '<div class="pn"><div class="nt">اكتب رقم موبايلك المسجّل على المنصة عشان نتأكد إنك طالب عندنا:</div><input id="spw-ph" class="ph" inputmode="tel" placeholder="01XXXXXXXXX" maxlength="15"><div class="er" id="spw-er"></div><button type="button" class="bt" id="spw-go" style="min-height:44px">فتح المحادثة</button></div>';
-    const go = () => { const v = $('#spw-ph').value.replace(/\D/g, ''); if (v.length < 8) { $('#spw-er').textContent = ERR.bad_phone; return; } begin(name, true, v); };
+    head('📱 رقم موبايلك', () => step1());
+    body.innerHTML = '<div class="pn"><div class="nt">اكتب رقم موبايلك عشان نقدر نتواصل معاك (مش لازم يكون مسجّل على المنصة):</div><input id="spw-ph" class="ph" inputmode="tel" placeholder="01XXXXXXXXX" maxlength="15"><div class="er" id="spw-er"></div><button type="button" class="bt" id="spw-go" style="min-height:44px">فتح المحادثة</button></div>';
+    const go = () => { const v = $('#spw-ph').value.replace(/\D/g, ''); if (!/^01[0-9]{9}$/.test(v)) { $('#spw-er').textContent = ERR.bad_phone; return; } begin(name, true, v); };
     $('#spw-go').onclick = go; $('#spw-ph').onkeydown = e => { if (e.key === 'Enter') go(); };
   }
   async function begin(name, ok, phone) {
     body.innerHTML = wait('⏳ بنفتح المحادثة...');
     const { data, error } = await sbc().rpc('support_begin', { p_name: name, p_phone_ok: !!ok, p_phone: phone || null, p_kind: kind, p_context: kind === 'academic' ? (ctx || null) : null });
-    if (error) { const m = msgOf(error); if (/bad_name/.test(error.message || '')) return step1(m); if (/not_registered|bad_phone/.test(error.message || '') && !(await uidOf())) { stepPhone(name); const e = $('#spw-er'); if (e) e.textContent = m; return; } body.innerHTML = errBox(m, false) + '<div class="ft"><button type="button" class="bt g" id="spw-bk2">رجوع</button></div>'; $('#spw-bk2').onclick = () => step1(); return; }
+    if (error) { const m = msgOf(error); if (/bad_name/.test(error.message || '')) return step1(m); if (/bad_phone/.test(error.message || '') && !(await uidOf())) { stepPhone(name); const e = $('#spw-er'); if (e) e.textContent = m; return; } body.innerHTML = errBox(m, false) + '<div class="ft"><button type="button" class="bt g" id="spw-bk2">رجوع</button></div>'; $('#spw-bk2').onclick = () => step1(); return; }
     if (!data || !data.thread_id) { body.innerHTML = errBox('تعذر بدء المحادثة — جرّب تاني بعد شوية', false); return; }
     const uid = await uidOf(); T = { id: data.thread_id, token: data.token, uid }; if (!uid) save(T);
     nameDraft = ''; cache = []; pending = []; closed = false; chatScreen(); await refresh(true); startPoll();
@@ -135,20 +135,21 @@
       dot(false);
     } finally { busy = false; }
   }
+  /* ضغط شديد جداً للقاعدة: الصورة بتنزل لحوالي 40KB (أبعاد 800 → 460 وجودة 60% → 30% عند اللزوم) وبيتشال منها أي بيانات موقع/كاميرا */
   async function __cmp(img) {
-    let side = 1024, q = .72, blob;
-    for (let i = 0; i < 6; i++) {
-      const k = Math.min(1, side / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
+    const STEPS = [[800, .6], [800, .5], [720, .45], [640, .4], [560, .36], [500, .32], [460, .3]]; let blob = null, best = null;
+    for (let i = 0; i < STEPS.length; i++) {
+      const side = STEPS[i][0], q = STEPS[i][1], k = Math.min(1, side / Math.max(img.width, img.height)), c = document.createElement('canvas'); c.width = Math.max(1, Math.round(img.width * k)); c.height = Math.max(1, Math.round(img.height * k));
       const x = c.getContext('2d'); x.fillStyle = '#fff'; x.fillRect(0, 0, c.width, c.height); x.drawImage(img, 0, 0, c.width, c.height);
       blob = await new Promise(r => c.toBlob(r, 'image/jpeg', q));
-      if (blob.size <= 150 * 1024) break;
-      if (i % 2 === 0) q = Math.max(.45, q - .12); else side = Math.max(640, side - 160);
+      if (blob && (!best || blob.size < best.size)) best = blob;
+      if (blob && blob.size <= 40 * 1024) break;
     }
-    return blob;
+    return best;
   }
   async function upImage(file) {
     const img = await new Promise((res, rej) => { const r = new FileReader(); r.onload = () => { const i = new Image(); i.onload = () => res(i); i.onerror = () => rej(new Error('x')); i.src = r.result; }; r.onerror = rej; r.readAsDataURL(file); });
-    const blob = await __cmp(img); const path = 'u/' + T.id + '-' + Date.now() + '-' + Math.random().toString(36).slice(2, 8) + '.jpg';
+    const blob = await __cmp(img); const rid = (window.crypto && crypto.randomUUID) ? crypto.randomUUID() : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.floor(Math.random() * 16); return (c === 'x' ? r : (r & 3) | 8).toString(16); }); const path = 'u/' + T.id + '/' + rid + '.jpg';
     const up = await sbc().storage.from('support-files').upload(path, blob, { contentType: 'image/jpeg' }); if (up.error) throw up.error;
     return sbc().storage.from('support-files').getPublicUrl(path).data.publicUrl;
   }
