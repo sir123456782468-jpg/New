@@ -85,7 +85,13 @@ async function thread(id, quiet) {
   SP.seen = data.student_seen_at || null;
   const box = document.querySelector('#spBox'); if (!box) return;
   const feed = box.querySelector('#spFeed'), near = feed ? feed.scrollHeight - feed.scrollTop - feed.clientHeight < 80 : true;
-  if (quiet && feed && feed.dataset.n === String(data.messages.length) && feed.dataset.s === data.status + data.solved && feed.dataset.v === String(data.student_seen_at || '')) return;
+  if (quiet && feed && feed.dataset.s === data.status + data.solved) {
+    // التحديث الهادي (كل 6 ثواني) ما بيلمسش خانة الكتابة أبداً — ده اللي كان بيعلّق الكيبورد ويقفله
+    if (feed.dataset.n === String(data.messages.length) && feed.dataset.v === String(data.student_seen_at || '')) return;
+    feed.innerHTML = data.messages.map(msgHTML).join(''); feed.dataset.n = String(data.messages.length); feed.dataset.v = String(data.student_seen_at || '');
+    if (near) feed.scrollTop = feed.scrollHeight; if (window.__pollAlerts) setTimeout(window.__pollAlerts, 400); return;
+  }
+  const ae = document.activeElement, hadFocus = !!(ae && ae.id === 'spTxt' && box.contains(ae)), selS = hadFocus ? ae.selectionStart : 0, selE = hadFocus ? ae.selectionEnd : 0;
   const draft = box.querySelector('#spTxt') ? box.querySelector('#spTxt').value : '', cans = (await loadCan()).filter(c => c.kind === 'all' || c.kind === data.kind), k = KB[data.kind] || KB.tech, cx = data.context || {};
   box.innerHTML = '<div class="bar" style="margin-bottom:8px"><b>' + esc(data.name || 'طالب') + '</b><span class="spk ' + k[2] + '">' + k[0] + ' ' + k[1] + '</span><span dir="ltr" style="color:var(--muted)">' + esc(data.phone) + '</span>'
     + (data.verified === false ? '<span class="pill no" title="الطالب كتب الرقم من غير تسجيل دخول، اتأكد من هويته قبل ما تشاركه أي بيانات">⚠️ غير موثّق</span>' : '')
@@ -99,6 +105,7 @@ async function thread(id, quiet) {
       + '<div class="spin"><textarea id="spTxt" dir="auto" placeholder="اكتب ردك..." rows="2">' + esc(draft) + '</textarea><input type="file" id="spImg" accept="image/*" hidden><button class="btn s g" data-act="s5Pick" title="إرفاق صورة">📎</button><button class="btn" data-act="s5Send" data-id="' + id + '">إرسال</button></div><small id="spInfo" style="color:var(--muted)"></small>'
       : '<p class="nt" style="margin-top:10px">المحادثة منتهية — الطالب لو راسل تاني هيبدأ محادثة جديدة، وده السجل محفوظ هنا.</p>');
   const f2 = box.querySelector('#spFeed'); if (f2 && (near || !quiet)) f2.scrollTop = f2.scrollHeight;
+  if (hadFocus) { const t2 = box.querySelector('#spTxt'); if (t2) { try { t2.focus({ preventScroll: true }); t2.setSelectionRange(selS, selE); } catch (e) {} } }
   if (!quiet) refreshList();
   if (window.__pollAlerts) setTimeout(window.__pollAlerts, 400);
 }
@@ -1461,7 +1468,7 @@ Object.assign(ACTPERM, { ocSet: ['students.enroll'], ocOne: ['students.enroll'] 
 // ---------------------------------------------------------------- تبويب «الصفحة الرئيسية»: تحكم كامل في index + معاينة حيّة
 (function () {
 'use strict';
-const L = { cfg: {}, saved: '{}', photo: null, savedPhoto: null, photoDirty: false, photoSent: false, tn: '', pn: '', savedTn: '', savedPn: '', dev: 'desktop', ready: false, loaded: false, timer: null };
+const L = { cfg: {}, saved: '{}', photo: null, savedPhoto: null, photoDirty: false, photoSent: false, tn: '', pn: '', savedTn: '', savedPn: '', dev: 'desktop', page: 'index', ready: false, loaded: false, timer: null };
 const DEF = () => window.LP_DEFAULTS || {}, MG = () => window.LP_merge(L.cfg);
 const lErr = e => { const m = (e && e.message) || String(e || ''); const T = [['does not exist', 'شغّل ملف db_44_landing.sql في Supabase الأول'], ['schema cache', 'شغّل ملف db_44_landing.sql في Supabase الأول'], ['forbidden', 'الصفحة دي للمالك/المسؤول فقط'], ['too_big', 'الحجم كبير — قلّل النصوص أو الصورة'], ['bad_image', 'صيغة الصورة غير مدعومة']]; for (const [k, v] of T) if (m.includes(k)) return v; return m; };
 const YEARS6 = ['أولى إعدادي', 'ثانية إعدادي', 'ثالثة إعدادي', 'أولى ثانوي', 'ثانية ثانوي', 'ثالثة ثانوي'];
@@ -1531,7 +1538,7 @@ function field(f) {
     case 'site': return '<div class="lf">' + lbl(f.l) + '<input data-site="' + f.k + '" value="' + esc(L[f.k]) + '"></div>';
     case 'presets': return '<div class="lf"><label>ألوان جاهزة (بتغيّر الألوان بس وتقدر تعدّلها بعدها)</label><div class="lpre">' + PRESETS.map((p, i) => '<button type="button" class="btn s g" data-act="lpPre" data-id="' + i + '">' + esc(p[0]) + '</button>').join('') + '</div></div>';
     case 'photo': return '<div class="lf"><label>صورة المستر</label><div class="lph"><div class="lpv">' + (L.photo ? '<img src="' + esc(L.photo) + '" alt="">' : '<span>👤</span>') + '</div><div style="display:flex;flex-direction:column;gap:8px;flex:1;min-width:180px"><label class="btn s" style="cursor:pointer;margin:0;color:#fff;text-align:center">📷 ' + (L.photo ? 'تغيير الصورة' : 'رفع صورة') + '<input type="file" id="lpFile" accept="image/png,image/jpeg,image/webp" hidden></label>' + (L.photo ? '<button type="button" class="btn s r" data-act="lpPhotoDel">🗑 إزالة الصورة</button>' : '') + '</div></div><p class="nt" style="margin:8px 0 0;line-height:1.9">الأفضل <b>صورة PNG بخلفية شفافة</b> (المستر من غير خلفية) وجودة عالية، وبيتضغط تلقائياً. لو صورتك بخلفية عادية اختار «داخل إطار» من طريقة العرض. لو ما فيش صورة بيظهر لوجو المنصة مكانها.</p></div>';
-    case 'authlinks': return '<div class="lf"><p class="nt" style="margin:0 0 8px">الألوان بتتاخد من «الألوان والشكل العام» (نفس ألوان الصفحة الرئيسية)، وصورة المستر في التصميم ٢ هي نفس صورة الصفحة الرئيسية. التعديل بيظهر بعد «حفظ ونشر». معاينة سريعة للتصميمات (بالإعدادات المنشورة):</p><div class="lpre">' + [1, 2, 3].map(n => '<a class="btn s g" target="_blank" rel="noopener" href="/signin.html?d=' + n + '">تصميم ' + n + ' — دخول</a><a class="btn s g" target="_blank" rel="noopener" href="/signup.html?d=' + n + '">تصميم ' + n + ' — تسجيل</a>').join('') + '</div></div>';
+    case 'authlinks': return '<div class="lf"><p class="nt" style="margin:0 0 8px">الألوان بتتاخد من «الألوان والشكل العام» (نفس ألوان الصفحة الرئيسية)، وصورة المستر في التصميم ٢ هي نفس صورة الصفحة الرئيسية. التعديل بيظهر بعد «حفظ ونشر». المعاينة الحيّة على اليمين/فوق بتبيّن الصفحة الحقيقية وبتتغيّر لحظياً مع أي تعديل — بدّل بين الصفحات من القايمة اللي فوق المعاينة. (لو عايز تشوف الإعدادات المنشورة فعلاً:)</p><div class="lpre">' + [1, 2, 3].map(n => '<a class="btn s g" target="_blank" rel="noopener" href="/signin.html?d=' + n + '">تصميم ' + n + ' — دخول</a><a class="btn s g" target="_blank" rel="noopener" href="/signup.html?d=' + n + '">تصميم ' + n + ' — تسجيل</a>').join('') + '</div></div>';
     case 'courses': return coursesField();
     case 'order': return orderField();
     case 'list': return listField(f.k);
@@ -1579,10 +1586,11 @@ VIEWS.xlanding = ['الصفحة الرئيسية', async () => {
   const st = await sb.rpc('get_site_settings'); const ss = (st && st.data) || {};
   L.cfg = r.data.cfg || {}; L.saved = JSON.stringify(L.cfg); L.photo = r.data.photo || null; L.savedPhoto = L.photo; L.photoDirty = false; L.photoSent = false; L.ready = false;
   L.tn = L.savedTn = ss.teacher_name || 'Mr. Sherif Khafagy'; L.pn = L.savedPn = ss.platform_name || 'The Leader In English'; L.open = L.open || 'photo';
-  setTimeout(() => { fit(); mark(); }, 30);
+  L.page = L.open === 'auth' ? (L.page === 'index' ? 'signin' : L.page) : 'index';
+  setTimeout(() => { fit(); mark(); const sl = $('#lpPg'); if (sl) sl.value = L.page; }, 30);
   return CSS + '<div class="note" style="margin:0 0 12px">🏠 هنا بتتحكم في <b>صفحة الموقع الرئيسية</b> (اللي بتظهر للزوّار قبل تسجيل الدخول): الألوان، كل نص، صورة المستر، الكورسات اللي تظهر، ترتيب الأقسام، وروابط التواصل. أي تعديل بتشوفه فوراً في المعاينة، وما بيظهر للزوّار غير لما تدوس <b>💾 حفظ ونشر</b>.</div>'
     + '<div class="card" style="margin-bottom:12px"><div class="bar" style="flex-wrap:wrap;gap:8px;margin:0"><button class="btn" data-act="lpSave">💾 حفظ ونشر</button><button class="btn s g" data-act="lpOpen">↗ فتح الصفحة الحقيقية</button><button class="btn s r" data-act="lpReset">↩ رجوع كل حاجة للافتراضي</button><span id="lpDirty" style="font-weight:800;font-size:13.5px"></span></div></div>'
-    + '<div class="lpw"><div class="lpside" id="lpForm">' + formHtml() + '</div><div class="lpprev"><div class="lpbar"><b>👁 معاينة حيّة</b><button class="btn s g lpdev on" data-act="lpDev" data-id="desktop">💻 كمبيوتر</button><button class="btn s g lpdev" data-act="lpDev" data-id="mobile">📱 موبايل</button></div><div id="lpBox"><iframe id="lpFrame" src="/index.html?preview=1" title="معاينة"></iframe></div></div></div>';
+    + '<div class="lpw"><div class="lpside" id="lpForm">' + formHtml() + '</div><div class="lpprev"><div class="lpbar"><b>👁 معاينة حيّة</b><select id="lpPg" data-pg="1" title="الصفحة اللي بتتعاين"><option value="index">🏠 الرئيسية</option><option value="signin">🔑 تسجيل الدخول</option><option value="signup">📝 إنشاء حساب</option><option value="verify-code">📧 تأكيد البريد</option><option value="verify-recovery">🔁 استعادة الحساب</option></select><button class="btn s g lpdev on" data-act="lpDev" data-id="desktop">💻 كمبيوتر</button><button class="btn s g lpdev" data-act="lpDev" data-id="mobile">📱 موبايل</button></div><div id="lpBox"><iframe id="lpFrame" src="/' + L.page + '.html?preview=1" title="معاينة"></iframe></div></div></div>';
 }];
 VPERM.xlanding = ['@admin'];
 
@@ -1607,6 +1615,7 @@ document.addEventListener('input', e => {
 });
 document.addEventListener('change', e => {
   const t = e.target; if (!t.closest) return;
+  if (t.dataset && t.dataset.pg) return ACT.lpPage(t.value);
   if (t.id === 'lpFile' && t.files[0]) return lpPhotoPick(t.files[0]);
   if (!t.closest('#lpForm')) return;
   if (t.dataset.cid) { const ids = (val('courses_ids') || []).slice(); const i = ids.indexOf(t.dataset.cid); if (t.checked && i < 0) ids.push(t.dataset.cid); if (!t.checked && i >= 0) ids.splice(i, 1); setKey('courses_ids', ids); redrawGroup('courses'); return push('courses'); }
@@ -1616,7 +1625,9 @@ document.addEventListener('change', e => {
 document.addEventListener('toggle', e => {
   const d = e.target; if (!d.classList || !d.classList.contains('lg') || !d.open) return;
   document.querySelectorAll('#lpForm details.lg[open]').forEach(x => { if (x !== d) x.open = false; });
-  L.open = d.dataset.g; const g = GROUPS.find(x => x.id === L.open); push(g && g.sec);
+  L.open = d.dataset.g; const g = GROUPS.find(x => x.id === L.open);
+  if (L.open === 'auth' && L.page === 'index') ACT.lpPage('signin'); else if (L.open !== 'auth' && L.page !== 'index') ACT.lpPage('index');
+  push(g && g.sec);
 }, true);
 
 // ——— الصورة: ضغط في المتصفح (بيحافظ على الشفافية) قبل الحفظ
@@ -1645,7 +1656,11 @@ Object.assign(ACT, {
     if (L.pn !== L.savedPn) { const e = await sb.rpc('set_site_setting', { p_key: 'platform_name', p_value: L.pn.trim() }); if (e.error) throw e.error; L.savedPn = L.pn; }
     L.cfg = r.data || L.cfg; L.saved = JSON.stringify(L.cfg); try { localStorage.removeItem('lp_cache_v1'); } catch (e) {} mark(); toast('✅ تم الحفظ والنشر — الصفحة الرئيسية اتحدّثت');
   },
-  lpOpen: () => { window.open('/index.html', '_blank', 'noopener'); },
+  lpOpen: () => { window.open(L.page === 'index' ? '/index.html' : '/' + L.page + '.html', '_blank', 'noopener'); },
+  lpPage: id => {
+    if (!/^(index|signin|signup|verify-code|verify-recovery)$/.test(id)) return; L.page = id; L.ready = false; L.photoSent = false;
+    const sel = $('#lpPg'); if (sel) sel.value = id; const f = $('#lpFrame'); if (f) f.src = '/' + id + '.html?preview=1';
+  },
   lpReset: async () => {
     if (!confirm('ترجّع كل إعدادات الصفحة الرئيسية للشكل الافتراضي؟ (صورة المستر هتفضل زي ما هي)')) return;
     const r = await sb.rpc('landing_reset'); if (r.error) throw new Error(lErr(r.error)); L.cfg = {}; L.saved = '{}'; toast('اتعمل رجوع للافتراضي'); go('xlanding');
@@ -1661,6 +1676,107 @@ Object.assign(ACT, {
   lpOMv: id => { const [i, d] = id.split('|').map(Number), o = (val('order') || []).slice(), j = i + d; if (j < 0 || j >= o.length) return; [o[i], o[j]] = [o[j], o[i]]; setKey('order', o); redrawGroup('order'); push(SEC[o[j]] && SEC[o[j]][3]); }
 });
 const gId = n => ({ nav: 'nav', strip: 'strip', cards: 'cards', grades: 'grades' }[n]);
-Object.assign(ACTPERM, { lpSave: ['@admin'], lpOpen: ['@admin'], lpReset: ['@admin'], lpDev: ['@admin'], lpRs: ['@admin'], lpPre: ['@admin'], lpPhotoDel: ['@admin'], lpLAdd: ['@admin'], lpLDel: ['@admin'], lpLMv: ['@admin'], lpCMv: ['@admin'], lpOMv: ['@admin'] });
+Object.assign(ACTPERM, { lpSave: ['@admin'], lpOpen: ['@admin'], lpPage: ['@admin'], lpReset: ['@admin'], lpDev: ['@admin'], lpRs: ['@admin'], lpPre: ['@admin'], lpPhotoDel: ['@admin'], lpLAdd: ['@admin'], lpLDel: ['@admin'], lpLMv: ['@admin'], lpCMv: ['@admin'], lpOMv: ['@admin'] });
 (function () { if (!NAV.some(n => n[0] === 'xlanding')) { const i = NAV.findIndex(n => n[0] === 'overview'); NAV.splice(i >= 0 ? i + 1 : 0, 0, ['xlanding', '🏠', 'الصفحة الرئيسية']); } })();
+})();
+// ---------------------------------------------------------------- تبويب «شكل المحاضرات»: اختيار شكل صفحة الكورس والمحاضرة + معاينة حيّة
+(function () {
+'use strict';
+const U = { cfg: {}, saved: '{}', page: 'course', dev: 'desktop', ready: false, timer: null };
+const KEYS_COLOR = [['c1', 'اللون الأساسي (الأزرار والتمييز)'], ['c2', 'اللون الثاني (التدرّج)'], ['c3', 'لون التقدّم والإبراز'], ['bg', 'خلفية الصفحة'], ['ink', 'لون النص']];
+const FLAGS = [['desc_top', 'وصف المحاضرة فوق الفيديو (لو مقفول بيظهر تحته)'], ['item_desc', 'وصف كل فيديو/ملف تحت اسمه في القايمة'], ['stats', 'إحصائيات الفيديو: مدة الفيديو • عدد المشاهدات • إجمالي وقت المشاهدة'], ['progress', 'خط التقدّم الأحمر/الملوّن تحت كل عنصر'], ['numbers', 'ترقيم العناصر بدل الأيقونات'], ['sticky_player', 'تثبيت الفيديو فوق في الموبايل أثناء النزول'], ['confetti', '🎉 احتفال (قصاصات ملوّنة) لما الطالب يخلّص المحاضرة']];
+const LABELS = [['lbl_watch', 'زر الفيديو'], ['lbl_file', 'زر الملف / الرابط'], ['lbl_quiz', 'زر الامتحان'], ['lbl_hw', 'زر الواجب'], ['lbl_side', 'عنوان القايمة الجانبية'], ['lbl_desc', 'عنوان وصف المحاضرة']];
+const SKINS = [
+  ['classic', '🌹', 'الشكل القديم', 'زي ما هو دلوقتي بالظبط — قايمة جنبية بسيطة وفيديو.'],
+  ['sakr', '📚', 'شكل القوائم الجانبية', 'صفحة كورس بأسابيع قابلة للطيّ + كارت «ابدأ الكورس» وفي المحاضرة قايمة جانبية بعدّاد n/N وخط تقدّم.'],
+  ['gohary', '🧾', 'شكل الصفوف التفصيلية', 'كل عنصر في صف بوصفه ومدة الفيديو وعدد المشاهدات وإجمالي وقت المشاهدة وزرار أخضر.'],
+  ['nova', '🚀', 'نوفا — داكن زجاجي', 'داكن زجاجي بتوهّج، خريطة رحلة بخط زمني، حلقة تقدّم، فيديو سينمائي واحتفال عند الإنجاز.'],
+  ['cinema', '🎬', 'سينما', 'غلاف كبير وصفوف أفقية من كروت المحاضرات (بوسترات)، وفي المحاضرة الفيديو بعرض الشاشة وتحته شريط الحلقات.'],
+  ['paper', '📓', 'الكراسة', 'ورق دفتر دافي: فهرس كتاب بنقط وأرقام صفحات، ملاحظة لاصقة للوصف، وحدود خطّ اليد.'],
+  ['quest', '🏆', 'التحدّي', 'ألعاب تعليمية: مستويات ونقاط XP، مسار متعرّج بدوائر ونجوم، وأزرار «ملموسة» وتصفيق عند الإنجاز.'],
+  ['bento', '🧩', 'بنتو (ألوان المنصة)', 'مربعات بنتو عصرية: كارت كبير بتدرّج المنصة + حلقة تقدّم وإحصائيات، ومحاضرات كبطاقات بأرقام متدرّجة، وفي المحاضرة الفيديو فوق وتحته بطاقات العناصر.'],
+  ['mag', '📰', 'مجلة (ألوان المنصة)', 'تصميم مجلة أنيق: عناوين ضخمة وأرقام مفرّغة وخطوط رفيعة، وفي المحاضرة عمود قراءة في النص والوصف كاقتباس والفيديو بظل أحمر.']
+];
+const E = window.esc || (s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c])));
+const eff = () => window.LSK ? LSK.clean(U.cfg, false) : {};
+const dirty = () => JSON.stringify(U.cfg) !== U.saved;
+const uErr = e => { const m = (e && e.message) || String(e || ''); if (/does not exist|schema cache/.test(m)) return 'شغّل ملف db_47_lesson_skin.sql في Supabase الأول'; return m; };
+function mark() { const b = document.getElementById('luDirty'); if (b) { const d = dirty(); b.textContent = d ? '● فيه تعديلات لسه ما اتحفظتش' : '✓ كل التعديلات محفوظة ومنشورة'; b.style.color = d ? '#d97706' : '#16a34a'; } }
+function push() {
+  clearTimeout(U.timer); U.timer = setTimeout(() => { const f = document.getElementById('luFrame'); if (f && f.contentWindow && U.ready) f.contentWindow.postMessage({ type: 'lk-preview', cfg: U.cfg, page: U.page }, location.origin); }, 70); mark();
+}
+function fit() {
+  const box = document.getElementById('luBox'), f = document.getElementById('luFrame'); if (!box || !f) return;
+  const w = U.dev === 'mobile' ? 390 : 1280, sc = Math.min(1, box.clientWidth / w);
+  f.style.width = w + 'px'; f.style.transform = 'scale(' + sc + ')'; f.style.transformOrigin = 'top right';
+  const h = Math.max(540, Math.round(innerHeight * 0.8)); box.style.height = h + 'px'; f.style.height = Math.round(h / sc) + 'px';
+}
+window.addEventListener('resize', () => { try { fit(); } catch (e) {} });
+window.addEventListener('message', e => { if (e.origin === location.origin && e.data && e.data.type === 'lk-ready') { U.ready = true; push(); } });
+
+const CSS = '<style>.luw{display:grid;grid-template-columns:minmax(330px,440px) 1fr;gap:16px;align-items:start}@media(max-width:1000px){.luw{grid-template-columns:1fr}.luprev{order:-1;position:static!important}}'
+  + '.luside{display:flex;flex-direction:column;gap:10px}.lub{background:var(--card);border:1px solid var(--line);border-radius:16px;padding:14px 16px}.lub>b{display:block;margin-bottom:10px;font-size:15px}'
+  + '.luskins{display:grid;grid-template-columns:1fr 1fr;gap:10px}.lusk{border:2px solid var(--line);border-radius:14px;padding:11px;cursor:pointer;background:var(--bg);text-align:start;font:inherit;color:inherit}.lusk.on{border-color:var(--brand,#ef4444);background:rgba(239,68,68,.08)}.lusk b{display:block;font-size:14px}.lusk small{display:block;color:var(--muted);font-weight:600;line-height:1.7;margin-top:3px;font-size:12px}'
+  + '.lcr2{display:flex;gap:8px;align-items:center;margin-bottom:8px}.lcr2 label{flex:1;font-weight:700;font-size:13.5px}.lcr2 input[type=color]{width:46px;height:38px;padding:2px;border-radius:10px;border:1px solid var(--line);background:var(--card);flex:none}.lcr2 input[data-ch]{width:92px;direction:ltr}'
+  + '.luck{display:flex;gap:9px;align-items:flex-start;margin-bottom:9px;font-weight:700;font-size:13.5px;cursor:pointer;line-height:1.7}.luck input{width:auto;margin-top:5px}.lulb{display:grid;grid-template-columns:1fr 1fr;gap:8px}.lulb label{font-weight:700;font-size:12.5px;display:block;margin-bottom:3px}.lulb input{width:100%}'
+  + '.luprev{position:sticky;top:76px}.lubar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}#luBox{position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#e5e7eb}#luFrame{border:0;background:#fff;position:absolute;top:0;right:0;display:block}.lubt.on{background:var(--brand,#ef4444)!important;color:#fff!important}</style>';
+
+function formHtml() {
+  const c = eff(), sk = c.skin, classic = sk === 'classic';
+  const skins = '<div class="lub"><b>🎨 اختار الشكل</b><div class="luskins">' + SKINS.map(s => '<button type="button" class="lusk' + (sk === s[0] ? ' on' : '') + '" data-act="luSkin" data-id="' + s[0] + '"><b>' + s[1] + ' ' + s[2] + '</b><small>' + s[3] + '</small></button>').join('') + '</div></div>';
+  if (classic) return skins + '<div class="lub"><p class="nt" style="margin:0">الشكل القديم مالوش إعدادات إضافية — هو نفس الصفحة اللي الطلاب بيشوفوها دلوقتي. اختار شكل تاني عشان تتحكم في الألوان والتفاصيل.</p></div>' + labelsBox(c);
+  const cols = '<div class="lub"><b>🌈 الألوان</b>' + KEYS_COLOR.map(k => '<div class="lcr2"><label>' + k[1] + '</label><input type="color" data-uk="' + k[0] + '" value="' + E(c[k[0]]) + '"><input data-uk="' + k[0] + '" data-ch="1" value="' + E(c[k[0]]) + '" maxlength="7"></div>').join('')
+    + '<button type="button" class="btn s g" data-act="luColorsRs">↺ ألوان الشكل الأصلية</button></div>';
+  const fl = '<div class="lub"><b>⚙️ التفاصيل</b>' + FLAGS.map(f => '<label class="luck"><input type="checkbox" data-uf="' + f[0] + '"' + (c[f[0]] ? ' checked' : '') + '><span>' + f[1] + '</span></label>').join('')
+    + '<label style="font-weight:700;font-size:13.5px;display:block;margin-top:6px">استدارة الأركان: <b class="lrv" id="luRv">' + c.radius + 'px</b></label><input type="range" data-ur="1" min="4" max="34" value="' + c.radius + '" style="width:100%"></div>';
+  return skins + cols + fl + labelsBox(c);
+}
+function labelsBox(c) {
+  return '<div class="lub"><b>✍️ النصوص (سيبها زي ما هي أو غيّرها)</b><div class="lulb">' + LABELS.map(l => '<div><label>' + l[1] + '</label><input data-ul="' + l[0] + '" maxlength="40" value="' + E(c[l[0]]) + '"></div>').join('') + '</div></div>';
+}
+function redraw() { const f = document.getElementById('luForm'); if (f) f.innerHTML = formHtml(); }
+
+VIEWS.xlessonui = ['شكل المحاضرات', async () => {
+  if (!window.LSK) throw new Error('ملف lesson-skins.js مش متحمّل — ارفعه مع باقي الملفات');
+  const r = await sb.rpc('lesson_ui_get'); if (r.error) throw new Error(uErr(r.error));
+  U.cfg = r.data && typeof r.data === 'object' ? r.data : {}; U.saved = JSON.stringify(U.cfg); U.ready = false; U.page = 'course';
+  setTimeout(() => { fit(); mark(); }, 30);
+  return CSS + '<div class="note" style="margin:0 0 12px">🎬 هنا بتتحكم في <b>شكل صفحة الكورس وصفحة المحاضرة</b> عند الطلاب: اختار شكل من الأربعة، عدّل الألوان والتفاصيل وشوف النتيجة قدامك لحظياً في المعاينة (بيانات تجريبية). التعديل بيظهر للطلاب بعد «حفظ ونشر».</div>'
+    + '<div class="card" style="margin-bottom:12px"><div class="bar" style="flex-wrap:wrap;gap:8px;margin:0"><button class="btn" data-act="luSave">💾 حفظ ونشر</button><button class="btn s r" data-act="luReset">↩ رجوع للشكل القديم</button><span id="luDirty" style="font-weight:800;font-size:13.5px"></span></div></div>'
+    + '<div class="luw"><div class="luside" id="luForm">' + formHtml() + '</div><div class="luprev"><div class="lubar"><b>👁 معاينة حيّة</b><button class="btn s g lubt on" data-act="luPage" data-id="course">📚 صفحة الكورس</button><button class="btn s g lubt" data-act="luPage" data-id="lecture">🎬 صفحة المحاضرة</button><span style="width:10px"></span><button class="btn s g lubt on" data-act="luDev" data-id="desktop">💻</button><button class="btn s g lubt" data-act="luDev" data-id="mobile">📱</button></div><div id="luBox"><iframe id="luFrame" src="/lesson-preview.html" title="معاينة"></iframe></div></div></div>';
+}];
+VPERM.xlessonui = ['@admin'];
+
+const ok6 = v => /^#[0-9a-fA-F]{6}$/.test(v);
+function setVal(k, v) { const d = LSK.clean({ skin: U.cfg.skin }, false)[k]; if (v === d) delete U.cfg[k]; else U.cfg[k] = v; }
+document.addEventListener('input', e => {
+  const t = e.target; if (!t.closest || !t.closest('#luForm')) return;
+  if (t.dataset.uk) { let v = t.value; if (!ok6(v)) return; v = v.toLowerCase(); setVal(t.dataset.uk, v); document.querySelectorAll('[data-uk="' + t.dataset.uk + '"]').forEach(x => { if (x !== t) x.value = v; }); return push(); }
+  if (t.dataset.ur) { setVal('radius', +t.value); const rv = document.getElementById('luRv'); if (rv) rv.textContent = t.value + 'px'; return push(); }
+  if (t.dataset.ul) { const v = t.value.trim(); if (!v || v === LSK.LBL[t.dataset.ul]) delete U.cfg[t.dataset.ul]; else U.cfg[t.dataset.ul] = v.slice(0, 40); return push(); }
+});
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.closest || !t.closest('#luForm')) return;
+  if (t.dataset.uf) { setVal(t.dataset.uf, t.checked); push(); }
+});
+Object.assign(ACT, {
+  luSkin: id => {
+    if (!LSK.SKINS[id]) return; const lb = {}; Object.keys(U.cfg).forEach(k => { if (/^lbl_/.test(k)) lb[k] = U.cfg[k]; });
+    U.cfg = Object.assign({ skin: id }, lb); if (id === 'classic') delete U.cfg.skin; redraw(); push();
+  },
+  luColorsRs: () => { ['c1', 'c2', 'c3', 'bg', 'ink'].forEach(k => delete U.cfg[k]); redraw(); push(); },
+  luPage: id => { U.page = id; document.querySelectorAll('.lubt[data-act=luPage]').forEach(b => b.classList.toggle('on', b.dataset.id === id)); push(); },
+  luDev: id => { U.dev = id; document.querySelectorAll('.lubt[data-act=luDev]').forEach(b => b.classList.toggle('on', b.dataset.id === id)); fit(); },
+  luSave: async () => {
+    const r = await sb.rpc('lesson_ui_save', { p_cfg: U.cfg }); if (r.error) throw new Error(uErr(r.error));
+    U.cfg = r.data && typeof r.data === 'object' ? r.data : U.cfg; U.saved = JSON.stringify(U.cfg); mark(); toast('✅ تم الحفظ — الشكل الجديد ظهر للطلاب');
+  },
+  luReset: async () => {
+    if (!confirm('ترجّع صفحات الكورس والمحاضرة للشكل القديم؟')) return;
+    const r = await sb.rpc('lesson_ui_save', { p_cfg: {} }); if (r.error) throw new Error(uErr(r.error));
+    U.cfg = {}; U.saved = '{}'; redraw(); push(); toast('اتعمل رجوع للشكل القديم');
+  }
+});
+Object.assign(ACTPERM, { luSkin: ['@admin'], luColorsRs: ['@admin'], luPage: ['@admin'], luDev: ['@admin'], luSave: ['@admin'], luReset: ['@admin'] });
+(function () { if (!NAV.some(n => n[0] === 'xlessonui')) { const i = NAV.findIndex(n => n[0] === 'xlanding'); NAV.splice(i >= 0 ? i + 1 : 0, 0, ['xlessonui', '🎬', 'شكل المحاضرات']); } })();
 })();

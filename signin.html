@@ -67,6 +67,7 @@ const ERR_BTN = 'دخول';
 window.addEventListener('DOMContentLoaded', async () => {
   // لو الطالب مسجل دخوله بالفعل يدخل الصفحة الرئيسية مباشرة
   try {
+    if (AuthUI.preview) throw 0;
     const { data } = await supabaseClient.auth.getSession();
     if (data && data.session) {
       const { data: profile } = await supabaseClient.from('profiles').select('id').eq('id', data.session.user.id).maybeSingle();

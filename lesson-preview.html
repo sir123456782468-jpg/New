@@ -1,0 +1,135 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="robots" content="noindex,nofollow">
+<title>معاينة شكل المحاضرات</title>
+<link rel="preconnect" href="https://fonts.googleapis.com"><link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@700;800&display=swap" rel="stylesheet">
+<style>
+
+:root{--bg:#f4f6fb;--card:#fff;--ink:#0f172a;--muted:#64748b;--line:#e6eaf2;--brand:#ef4444;--grad:linear-gradient(135deg,#ef4444,#ec4899);--ok:#16a34a}
+[data-theme=dark]{--bg:#0a1020;--card:#121b30;--ink:#f1f5f9;--muted:#94a3b8;--line:#22304d;--brand:#f87171}
+*{box-sizing:border-box;margin:0;padding:0;font-family:'Cairo',sans-serif}a{color:inherit;text-decoration:none}
+body{background:var(--bg);color:var(--ink);min-height:100vh}
+.hdr{position:sticky;top:0;z-index:30;display:flex;justify-content:space-between;align-items:center;gap:10px;padding:9px 20px;background:var(--card);border-bottom:3px solid;border-image:linear-gradient(90deg,#ef4444,#ec4899) 1}
+.brand{display:flex;align-items:center;gap:10px}.brand svg{width:42px;height:42px}.brand img{width:42px;height:42px;border-radius:12px;flex:none;box-shadow:0 4px 14px rgba(236,72,153,.35)}.brand b{display:block;font-family:'Cinzel',serif;font-size:16px;line-height:1.15}.brand small{font-size:11px;font-weight:800;color:var(--brand)}
+.btn{display:inline-block;border:none;border-radius:13px;padding:11px 22px;font-weight:800;font-size:14px;cursor:pointer;background:var(--grad);color:#fff;transition:.2s}.btn:hover{transform:translateY(-2px)}.btn.g{background:none;border:2px solid var(--brand);color:var(--brand)}.btn:disabled{opacity:.6}
+.wrap{max-width:1180px;margin:0 auto;padding:20px 16px 50px}
+.top{display:flex;justify-content:space-between;align-items:flex-end;gap:14px;flex-wrap:wrap;margin-bottom:16px}.top h1{font-size:26px;font-weight:900}.top p{color:var(--muted);font-weight:600;margin-top:4px}
+.bar{height:9px;border-radius:9px;background:var(--line);overflow:hidden;min-width:220px;margin-top:6px}.bar i{display:block;height:100%;background:var(--grad);transition:width .8s}
+.grid{display:grid;grid-template-columns:1fr 340px;gap:18px;align-items:start}
+.card{background:var(--card);border:1px solid var(--line);border-radius:20px;padding:18px}
+.vwrap{position:relative;aspect-ratio:16/9;background:#000;border-radius:18px;overflow:hidden}.vwrap iframe{position:absolute;inset:0;width:100%;height:100%;border:0}
+.vwrap video{position:absolute;inset:0;width:100%;height:100%;background:#000;object-fit:contain}.vwrap:fullscreen{border-radius:0;aspect-ratio:auto}
+.ptl{margin-top:12px;display:grid;gap:10px}.ptb{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.ptb .btn{padding:7px 14px;font-size:12.5px;border-radius:50px}.ptb .sp{display:inline-flex;gap:4px;align-items:center;border:1px solid var(--line);border-radius:50px;padding:3px;background:var(--card)}.ptb .sp button{border:0;background:none;color:var(--ink);font:800 12.5px Cairo,sans-serif;padding:5px 10px;border-radius:50px;cursor:pointer}.ptb .sp button.on{background:var(--grad);color:#fff}
+.cvb{padding:10px 14px;border-radius:14px;border:1px solid var(--line);background:var(--card)}.cvb .tp{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;font-weight:800;font-size:13px;margin-bottom:8px}.cvb .tp em{font-style:normal;color:var(--muted)}.cvb .tr{position:relative;height:10px;border-radius:10px;background:rgba(100,116,139,.18);overflow:hidden}.cvb .tr i{position:absolute;top:0;bottom:0;background:var(--grad);border-radius:3px}.cvb.ok .tr i{background:linear-gradient(90deg,#22c55e,#16a34a)}.cvb small{display:block;margin-top:6px;color:var(--muted);font-weight:600;line-height:1.7}
+.rsm{display:flex;gap:8px;align-items:center;flex-wrap:wrap;padding:10px 14px;border-radius:14px;background:rgba(99,102,241,.12);border:1px solid rgba(99,102,241,.45);font-weight:800;font-size:13.5px}
+.nbx{border:1px solid var(--line);border-radius:16px;padding:12px;background:var(--card)}.nbx b{font-size:14px}.nrow{display:flex;gap:8px;margin-top:8px;flex-wrap:wrap}.nrow input{flex:1;min-width:140px;padding:9px 12px;border-radius:12px;border:1px solid var(--line);background:var(--soft,var(--bg));color:var(--ink);font:600 14px Cairo,sans-serif;outline:none;-webkit-user-select:text;user-select:text}.nrow input.tm{flex:none;width:84px;text-align:center;direction:ltr}
+.nit{display:flex;gap:10px;align-items:flex-start;padding:8px 0;border-top:1px dashed var(--line)}.nit .tt{flex:none;border:0;background:rgba(99,102,241,.15);color:#6366f1;border-radius:10px;padding:3px 10px;font:800 12.5px Cairo,sans-serif;cursor:pointer;direction:ltr}.nit span{flex:1;line-height:1.8;font-weight:600;overflow-wrap:anywhere;white-space:pre-wrap}.nit .x{border:0;background:none;color:#dc2626;cursor:pointer;font-size:15px}
+.sh{position:absolute;z-index:3}.sh.t{top:0;left:0;right:0;height:62px}.sh.dr{top:0;right:0;width:70px;height:56px}.vwrap.pdf{aspect-ratio:auto;height:78vh}
+.tabs{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px}.tab{border:1px solid var(--line);background:var(--card);color:var(--ink);padding:9px 16px;border-radius:50px;font-weight:800;font-size:13.5px;cursor:pointer}.tab.on{background:var(--grad);color:#fff;border-color:transparent}.sh.b{bottom:0;right:0;width:130px;height:46px}
+.wm{position:absolute;z-index:4;pointer-events:none;color:rgba(255,255,255,.55);font-weight:800;font-size:15px;text-shadow:0 1px 3px rgba(0,0,0,.8);transition:all 2.5s ease;direction:ltr;white-space:nowrap}
+.empty{aspect-ratio:16/9;display:grid;place-items:center;text-align:center;background:var(--card);border:2px dashed var(--line);border-radius:18px;color:var(--muted);font-weight:700;line-height:2;padding:20px}.empty i{display:block;font-size:46px;font-style:normal}
+.lt{margin-top:14px;display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}.lt h2{font-size:19px}
+.acts{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}.note{margin-top:12px;padding:14px;border-radius:14px;background:rgba(251,191,36,.12);border:1px solid rgba(251,191,36,.5);font-weight:600;line-height:1.9;white-space:pre-wrap}
+.pcard{text-align:center;padding:34px 22px}.pcard h2{font-size:22px;margin-bottom:10px}.pcard p{color:var(--muted);font-weight:600;line-height:1.9;margin-bottom:20px}.pbtns{display:flex;gap:12px;flex-wrap:wrap;justify-content:center}.pbtns .btn{flex:1;min-width:150px;text-align:center}.pbtns .btn.dl{background:#c9d04a;color:#1a1a1a}
+.inav{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-top:14px}.inav .btn{flex:1}.ictr{font-weight:800;color:var(--muted);flex:none}.inav .btn.go{background:var(--ok,#16a34a);color:#fff}.inav .btn[disabled]{opacity:.45;cursor:not-allowed}.ci.lk{opacity:.55}
+.ch{margin:12px 0 6px;font-weight:800;font-size:14px;color:var(--muted)}
+.sec{font-size:12px;font-weight:900;color:var(--brand);padding:12px 6px 6px}
+.ls{max-height:70vh;overflow:auto}.li{display:flex;align-items:center;gap:10px;padding:11px 10px;margin-bottom:5px;border-radius:12px;border:1px solid transparent;cursor:pointer;font-weight:700;font-size:14px}
+.li:hover{background:var(--bg)}.li.on{background:rgba(239,68,68,.1);border-color:var(--brand)}.li .n{flex:none;width:28px;height:28px;border-radius:9px;display:grid;place-items:center;background:var(--bg);font-size:13px}.li.dn .n{background:var(--ok);color:#fff}.li small{display:block;color:var(--muted);font-weight:600;font-size:11.5px}.li .g{flex:1}
+.ex{display:flex;justify-content:space-between;align-items:center;gap:10px;padding:12px;border:1px solid var(--line);border-radius:14px;margin-top:8px;font-weight:700;font-size:14px}
+.join{padding:18px;text-align:center}.join p{color:var(--muted);font-weight:600;margin-bottom:10px;line-height:1.9}.pvl{display:block;font-size:12px;color:var(--muted);font-weight:600;margin-top:3px;line-height:1.7;white-space:normal}.pvs{padding:16px 18px;margin-bottom:14px}.pvc{display:flex;flex-wrap:wrap;gap:8px;margin:10px 0}.pvc span{background:var(--soft,var(--bg));border:1px solid var(--line);border-radius:50px;padding:5px 12px;font-size:13px;font-weight:700}.pvq{font-size:13px;font-weight:700;line-height:1.9}.pvn{color:var(--muted);font-size:12.5px;font-weight:600;margin-top:8px}.jrow{display:flex;gap:8px;align-items:flex-start}.jrow input{flex:1;min-width:0}.jrow .btn{padding:10px 14px;font-size:20px;line-height:1.1}.jh{font-size:12.5px!important;margin:8px 0 0!important}.join input{width:100%;padding:11px;border-radius:12px;border:1px solid var(--line);background:var(--bg);color:var(--ink);font-size:15px;font-weight:800;letter-spacing:2px;text-align:center;text-transform:uppercase;margin-bottom:8px;outline:none}
+#toasts{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:99}.toast{background:#1e293b;color:#fff;padding:12px 22px;border-radius:14px;font-weight:700;font-size:14px}
+/* ===== كابشنات المحاضرات وصفحة المحاضرة ===== */
+.lec{display:flex;align-items:center;gap:14px;padding:16px 18px;margin-bottom:10px;border:1px solid var(--line);border-radius:16px;background:var(--card);cursor:pointer;font-weight:800;transition:.2s}
+.lec:hover{border-color:var(--brand);transform:translateY(-2px)}
+.lec .n{flex:none;width:44px;height:44px;border-radius:13px;display:grid;place-items:center;background:var(--grad);color:#fff;font-size:17px}
+.lec.dn .n{background:var(--ok)}.lec .g{flex:1}.lec small{display:block;color:var(--muted);font-weight:600;font-size:12.5px}.lec .ar{color:var(--muted);font-size:22px}
+.grid.lg{grid-template-columns:340px 1fr}
+.ci{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:16px;margin-bottom:10px;border:1px solid var(--line);border-radius:16px;cursor:pointer;font-weight:800;font-size:14px}
+.ci.on{border-color:var(--brand);background:rgba(239,68,68,.08)}
+.ci .ck{flex:none;width:30px;height:30px;border-radius:50%;border:2px solid var(--line);display:grid;place-items:center;color:#fff;font-size:15px}
+.ci.seen .ck{border-color:var(--ok);background:var(--ok)}
+.ci small{display:block;color:var(--muted);font-weight:600;font-size:12px}
+.lec.ex2 .n{background:linear-gradient(135deg,#6366f1,#8b5cf6)}.lec.ex2.dn .n{background:var(--ok)}.lec.off{opacity:.65;cursor:default}.lec .bd{font-size:12px;font-weight:800;padding:4px 11px;border-radius:50px;background:var(--bg);color:var(--muted)}
+.pn{display:flex;justify-content:space-between;gap:10px;flex-wrap:wrap;margin-top:16px}
+@media(max-width:900px){.grid{grid-template-columns:1fr}.brand div{display:none}.ls{max-height:none}.grid.lg{grid-template-columns:1fr}.grid.lg aside{order:2}}
+.cdesc{margin-top:8px;color:var(--muted);font-weight:600;line-height:1.95;white-space:pre-line;max-width:780px}
+.idesc{margin-top:14px;padding:14px 16px;border-radius:14px;background:var(--card);border:1px solid var(--line);border-inline-start:4px solid var(--brand);font-weight:600;line-height:1.95;white-space:pre-line;color:var(--ink)}
+.idesc small{display:block;font-weight:900;color:var(--brand);margin-bottom:4px;font-size:12px}
+.note small{display:block;font-weight:900;color:#b45309;margin-bottom:4px;font-size:12px}
+.vcv{position:absolute;inset:0;z-index:6;background:#000;color:#fff;display:none;place-items:center;text-align:center;font-weight:800;line-height:2;padding:20px;cursor:pointer}
+.vwrap.blk .vcv{display:grid}
+@media print{.vwrap,#player iframe{display:none!important}}
+/* بدون علامة زرقاء عند الضغط على الشعار */
+.brand,.brand *,.logo,.logo *{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.brand,.brand:focus,.brand:focus-visible,.brand:active,.logo:focus{outline:none;-webkit-tap-highlight-color:transparent}.brand img,.logo img{-webkit-user-drag:none;user-drag:none;outline:none}a,button{-webkit-tap-highlight-color:transparent}
+
+.lk-demo-pl{aspect-ratio:16/9;border-radius:16px;background:linear-gradient(135deg,#0f172a,#1e293b);display:grid;place-items:center;color:#fff;font-weight:800;text-align:center;line-height:2}.lk-demo-pl i{display:grid;place-items:center;width:68px;height:68px;border-radius:50%;background:var(--brand,#ef4444);color:#fff;font-style:normal;font-size:26px;margin:0 auto 6px}
+.pvbadge{position:fixed;bottom:8px;left:8px;z-index:50;background:#0f172a;color:#fff;font:700 11px Cairo,sans-serif;padding:3px 10px;border-radius:50px;opacity:.8;pointer-events:none}
+</style>
+</head>
+<body>
+<header class="hdr"><a class="brand" href="#"><img src="/logo.png" alt=""><div><b>The Leader In English</b><span>Mr. Sherif Khafagy</span></div></a><span class="pvbadge" style="position:static;background:none;color:var(--muted)">معاينة بيانات تجريبية</span></header>
+<main class="wrap" id="root"></main>
+<div class="pvbadge">بيانات تجريبية</div>
+<script src="/lesson-skins.js"></script>
+<script>
+'use strict';
+const $ = s => document.querySelector(s), $$ = s => Array.from(document.querySelectorAll(s));
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+try { document.body.setAttribute('data-theme', localStorage.getItem('platform_theme') || 'light'); } catch (e) { document.body.setAttribute('data-theme', 'light'); }
+/* ===== بيانات تجريبية ===== */
+const E = (t, kind, title, o) => Object.assign({ t, kind, title, desc: '', duration: null, views: 0, seconds: 0, done: false, locked: false, homework: false, state: '' }, o || {});
+const LES = [
+  { id: 'a', n: 1, title: 'المحاضرة الأولى — Present Simple', section: 'الأسبوع الأول', done: true, open: true, free: true, minutes: 55, desc: 'شرح كامل للمضارع البسيط مع أمثلة كتير وتدريبات على كل نقطة.', entries: [E('item', 'video', 'شرح القاعدة', { desc: 'بنشرح فيه استخدامات المضارع البسيط خطوة خطوة.', duration: 32, views: 3, seconds: 2410, done: true }), E('item', 'pdf', 'ملزمة المحاضرة', { desc: 'ملف PDF فيه ملخص القاعدة.', done: true }), E('quiz', 'quiz', 'واجب المحاضرة الأولى', { homework: true, done: true })] },
+  { id: 'b', n: 2, title: 'المحاضرة التانية — Past Simple', section: 'الأسبوع الأول', done: false, open: true, minutes: 48, desc: 'الماضي البسيط والأفعال الشاذة وطريقة حفظها بسهولة.', entries: [E('item', 'video', 'شرح الماضي البسيط', { desc: 'الفرق بين الأفعال المنتظمة وغير المنتظمة.', duration: 28, views: 1, seconds: 640, done: true }), E('item', 'video', 'حل تدريبات', { desc: 'بنحل مع بعض أهم الأسئلة.', duration: 18, views: 0, seconds: 0 }), E('item', 'pdf', 'ملف الأفعال الشاذة', {}), E('quiz', 'quiz', 'امتحان على المحاضرة', { locked: true })] },
+  { id: 'c', n: 3, title: 'المحاضرة التالتة — Future', section: 'الأسبوع التاني', done: false, open: true, minutes: 40, desc: '', entries: [E('item', 'video', 'will vs going to', { duration: 25 }), E('item', 'pdf', 'ملخص', { locked: true })] },
+  { id: 'd', n: 4, title: 'المحاضرة الرابعة — Conditionals', section: 'الأسبوع التاني', done: false, open: false, minutes: 52, count: 4, entries: [] },
+  { id: 'e', n: 5, title: 'المحاضرة الخامسة — Passive Voice', section: 'الأسبوع التالت', done: false, open: false, minutes: 45, count: 3, entries: [] }
+];
+LES.forEach(l => { l.count = l.entries.length || l.count || 0; l.nDone = l.entries.filter(x => x.done).length; l.href = '#'; l.entries.forEach(x => { x.href = '#'; }); });
+const COURSE = { title: 'Grammar From Zero — الصف الثاني الثانوي', desc: 'كورس شامل بيبدأ معاك من الصفر لحد ما تتقن القواعد وتحل الامتحانات بثقة.', year: 'ثانية ثانوي', pct: 34, on: true, minutes: 240, lessons: LES, exams: [{ id: 'x1', title: 'امتحان شامل على الشهر', state: '', tried: false }], top: '', cur: 'b' };
+let CFG = {}, PAGE = 'course';
+
+function classicCourse() {
+  let sec = null, h = '';
+  LES.forEach((l, i) => { if (l.section && l.section !== sec) { sec = l.section; h += '<div class="sec">' + esc(sec) + '</div>'; } h += '<div class="lec' + (l.done ? ' dn' : '') + (l.open ? '' : ' off') + '"><span class="n">' + (l.done ? '✓' : i + 1) + '</span><span class="g">' + esc(l.title) + '<small>' + l.minutes + ' دقيقة</small></span><span class="ar">' + (l.open ? '‹' : '🔒') + '</span></div>'; });
+  return '<div class="top"><div><h1>' + esc(COURSE.title) + '</h1><div class="cdesc">' + esc(COURSE.desc) + '</div></div><div><b>' + COURSE.pct + '% مكتمل</b><div class="bar"><i style="width:' + COURSE.pct + '%"></i></div></div></div>' + h + '<div class="sec" style="margin-top:14px">📝 امتحانات الكورس</div><div class="lec ex2"><span class="n">📝</span><span class="g">امتحان شامل على الشهر</span></div>';
+}
+const CUR = LES[1], ITEMS = CUR.entries;
+const PLAYING = 1;
+function playerHtml(c) {
+  const x = ITEMS[PLAYING];
+  return '<div class="lk-demo-pl"><div><i>▶</i>' + esc(x.title) + '</div></div>' + (x.desc ? '<div class="idesc"><small>ℹ️ عن الفيديو</small>' + esc(x.desc) + '</div>' : '');
+}
+function lectureModel(c) {
+  const rows = ITEMS.map((x, i) => LSK.row(c, x, { i, n: i + 1, on: i === PLAYING })).join('');
+  const dn = ITEMS.filter(x => x.done).length, pc = Math.round(dn / ITEMS.length * 100);
+  return { course: COURSE.title, courseHref: '#', title: CUR.title, desc: CUR.desc, pct: pc, playerHtml: playerHtml(c), prev: { href: '#' }, next: { href: '#' },
+    groups: LES.map((l, i) => l.id === CUR.id ? { id: l.id, title: l.n + '. ' + l.title, cur: true, open: true, nDone: dn, nTotal: ITEMS.length, html: rows } : { id: l.id, title: l.n + '. ' + l.title, cur: false, open: l.open, nDone: l.nDone, nTotal: l.count, html: l.open ? l.entries.map((x, k) => LSK.row(c, x, { i: k, n: k + 1, href: '#' })).join('') : '<div class="lk-r lk"><span class="lk-ri">🔒</span><span class="lk-rt"><b>مقفولة</b></span></div>' }) };
+}
+function classicLecture() {
+  const rows = ITEMS.map((x, i) => '<div class="ci' + (x.done ? ' seen' : '') + (i === PLAYING ? ' on' : '') + '"><span>' + (x.kind === 'video' ? '🎬 ' : x.kind === 'pdf' ? '📄 ' : '📝 ') + esc(x.title) + (x.locked ? '<small>🔒 خلّص اللي قبله الأول</small>' : '') + '</span><span class="ck">' + (x.done ? '✓' : '') + '</span></div>').join('');
+  return '<div class="top"><div><p>' + esc(COURSE.title) + '</p><h1>' + esc(CUR.title) + '</h1></div><a class="btn g" href="#">← كل المحاضرات</a></div><div class="grid lg"><aside><div class="card"><b style="display:block;margin-bottom:12px;font-size:17px">محتوى المحاضرة</b><div id="itemList">' + rows + '</div></div></aside><div><div id="player"><div class="lk-demo-pl" style="background:#000"><div><i style="background:var(--brand)">▶</i>' + esc(ITEMS[PLAYING].title) + '</div></div><div class="idesc"><small>ℹ️ عن الفيديو</small>' + esc(ITEMS[PLAYING].desc) + '</div></div><div class="note"><small>📝 وصف المحاضرة</small>' + esc(CUR.desc) + '</div><div class="pn"><a class="btn g" href="#">→ المحاضرة السابقة</a><a class="btn g" href="#">المحاضرة التالية ←</a></div></div></div>';
+}
+function render() {
+  const dark = document.body.getAttribute('data-theme') === 'dark', c = LSK.clean(CFG, dark);
+  LSK.apply(c);
+  const root = $('#root'); LSK.wire(root);
+  if (c.skin === 'classic') root.innerHTML = PAGE === 'lecture' ? classicLecture() : classicCourse();
+  else root.innerHTML = PAGE === 'lecture' ? LSK.lecture(c, lectureModel(c)) : LSK.course(c, COURSE);
+  $$('a[href="#"]').forEach(a => a.addEventListener('click', e => e.preventDefault()));
+  window.__lkLast = { skin: c.skin, page: PAGE };
+}
+window.addEventListener('message', e => {
+  if (e.origin !== location.origin) return; const m = e.data; if (!m || m.type !== 'lk-preview') return;
+  CFG = m.cfg && typeof m.cfg === 'object' ? m.cfg : {}; PAGE = m.page === 'lecture' ? 'lecture' : 'course'; render();
+});
+document.addEventListener('click', e => { if (e.target.closest && e.target.closest('a')) e.preventDefault(); });
+render();
+try { window.parent.postMessage({ type: 'lk-ready' }, location.origin); } catch (e) {}
+</script>
+</body>
+</html>

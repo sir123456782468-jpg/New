@@ -80,8 +80,10 @@ function startTimer() {
 }
 window.addEventListener('DOMContentLoaded', () => {
   try { tempData = JSON.parse(localStorage.getItem('temp_recovery')); } catch (e) { tempData = null; }
+  if (AuthUI.preview) tempData = { studentEmail: 'student@example.com' };
   if (!getEmail()) { window.location.replace('password_recovery.html'); return; }
   $('emailBadge').textContent = maskEmail(getEmail());
+  if (AuthUI.preview) { $('resendBtn').textContent = 'إعادة إرسال الكود (60)'; return; }
   startTimer(); $('codeInput').focus();
 });
 // أرقام فقط

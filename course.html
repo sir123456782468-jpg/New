@@ -83,6 +83,7 @@ body{background:var(--bg);color:var(--ink);min-height:100vh}
 <div id="toasts"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="/lesson-skins.js"></script>
 <script>
 window.guardFail = function (m) { document.documentElement.style.visibility = 'visible'; document.body.innerHTML = '<div style="max-width:460px;margin:12vh auto;padding:28px;font-family:Cairo,sans-serif;text-align:center;direction:rtl;border:2px solid #ef4444;border-radius:20px;line-height:2"><div style="font-size:46px">🔒</div><b>تعذر فتح الصفحة</b><p style="color:#64748b">' + m + '</p><a href="/signin.html" style="color:#ef4444;font-weight:800">تسجيل الدخول</a></div>'; };
 setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق من حسابك. حدّث الصفحة.'); }, 15000);
@@ -157,8 +158,10 @@ setTimeout(() => { if (!window.currentUser) guardFail('تأخر التحقق م�
     };
 
     window.logout = async function () {
-        await supabaseClient.auth.signOut({ scope: 'local' });
-        location.replace('/signin.html');
+        window.__leaving = true;
+        try { await supabaseClient.auth.signOut({ scope: 'local' }); } catch (e) {}
+        try { sessionStorage.clear(); for (let i = localStorage.length - 1; i >= 0; i--) { const k = localStorage.key(i); if (/^sb-.*-auth-token/.test(k)) localStorage.removeItem(k); } } catch (e) {}
+        location.replace('/?out=1');                     // الخروج بيرجّع للصفحة الرئيسية (index) مش لصفحة الدخول
     };
 })();
 
@@ -176,6 +179,7 @@ const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({ '&': '&a
 document.body.setAttribute('data-theme', localStorage.getItem('platform_theme') || 'light');
 const C = { course: null, lessons: [], on: false, done: new Set(), exams: [], cur: null };
 let wmTimer = null, ITEMS = [], SEEN = new Set(), FILE = null;
+let SKIN = null, OUT = null;      // شكل المحاضرات (classic = null) + مخطط الكورس من السيرفر
 const toast = m => { const e = document.createElement('div'); e.className = 'toast'; e.textContent = m; $('#toasts').appendChild(e); setTimeout(() => e.remove(), 3000); };
 const canOpen = l => C.on || l.is_free;
 const quizQ = async () => { const c = 'id,title,kind,time_limit_minutes,opens_at,closes_at'; let r; for (const ex of [',lesson_id,is_homework,num,lesson_pos,gate,description', ',lesson_id,is_homework,num,lesson_pos,gate', ',lesson_id,is_homework,num', ',lesson_id,is_homework', ',lesson_id', '']) { r = await supabaseClient.from('quizzes').select(c + ex).eq('course_id', CID); if (!r.error) break; } return r; };
@@ -186,7 +190,7 @@ async function init() {
   if (!CID && CNUM) { const r = await supabaseClient.from('courses').select('id').eq('num', CNUM).maybeSingle(); if (r.data) CID = r.data.id; }
   if (!CID) return fail('رابط الكورس غير صحيح');
   try { await supabaseClient.rpc('finalize_expired', { p_mine: true }); } catch (e) {}
-  const [c, l, e, p, q, at, exR, pvR] = await Promise.all([
+  const [c, l, e, p, q, at, exR, pvR, uiR, olR] = await Promise.all([
     (async () => { let r = await supabaseClient.from('courses').select('id,num,title,description,price,academic_year').eq('id', CID).maybeSingle(); if (r.error) r = await supabaseClient.from('courses').select('id,title,description,price,academic_year').eq('id', CID).maybeSingle(); return r; })(),
     supabaseClient.from('lessons').select('id,title,section_title,position,is_free,duration_minutes').eq('course_id', CID).order('position'),
     supabaseClient.from('enrollments').select('course_id').eq('course_id', CID),
@@ -194,9 +198,12 @@ async function init() {
     quizQ(),
     (async () => { const r = await supabaseClient.rpc('my_attempts_basic'); if (!r.error && Array.isArray(r.data)) return { data: r.data.map(x => ({ quiz_id: x.quiz_id })) }; return supabaseClient.from('quiz_attempts').select('quiz_id'); })(),
     supabaseClient.rpc('my_quiz_extensions').then(r => (r && !r.error && Array.isArray(r.data)) ? r.data : [], () => []),
-    supabaseClient.rpc('course_preview', { p_course: CID }).then(r => (r && !r.error && r.data && r.data.course) ? r.data : null, () => null)
+    supabaseClient.rpc('course_preview', { p_course: CID }).then(r => (r && !r.error && r.data && r.data.course) ? r.data : null, () => null),
+    window.LSK ? supabaseClient.rpc('lesson_ui_get').then(r => (r && !r.error && r.data) ? r.data : null, () => null) : null,
+    window.LSK ? supabaseClient.rpc('course_outline', { p_course: CID }).then(r => (r && !r.error && Array.isArray(r.data)) ? r.data : null, () => null) : null
   ]);
   if (!c.data) return fail('الكورس غير موجود أو غير متاح لك.');
+  try { const cl = window.LSK && uiR ? LSK.clean(uiR, document.body.getAttribute('data-theme') === 'dark') : null; if (cl && cl.skin !== 'classic') { SKIN = cl; OUT = olR; LSK.apply(cl); LSK.wire($('#root')); } } catch (e) { SKIN = null; }
   C.course = c.data; C.prev = pvR; C.lessons = l.data || []; C.on = !!(e.data && e.data.length); C.exams = q.data || []; C.tried = new Set((at.data || []).map(x => x.quiz_id));
   (exR || []).forEach(x => { const z = C.exams.find(y => y.id === x.quiz_id); if (z && z.closes_at && new Date(x.until) > new Date(z.closes_at)) z.closes_at = x.until; });   // مهلة شخصية بعد فتح محاولة جديدة
   const ids = new Set(C.lessons.map(x => x.id)); (p.data || []).forEach(x => { if (ids.has(x.lesson_id)) C.done.add(x.lesson_id); });
@@ -208,6 +215,32 @@ async function init() {
 }
 function fail(t) { $('#root').innerHTML = '<div class="empty"><div><i>🔒</i>' + t + '<br><br><a class="btn" href="/home">الرئيسية</a></div></div>'; }
 function pct() { return C.lessons.length ? Math.round(C.done.size / C.lessons.length * 100) : 0; }
+
+
+/* ===== الأشكال الجديدة (sakr / gohary / nova): بناء بيانات الصفحة من السيرفر وتسليمها لـ lesson-skins.js ===== */
+const outMap = () => { const m = {}; (OUT || []).forEach(o => { m[o.id] = o; }); return m; };
+const entOf = e => ({ t: e.t, id: e.id, kind: e.kind, title: e.title, desc: e.description || '', duration: e.duration, views: e.views, seconds: e.seconds, done: !!e.done, locked: !!e.locked, homework: !!e.homework, state: e.t === 'quiz' ? quizState({ id: e.id, opens_at: e.opens_at, closes_at: e.closes_at }) : '' });
+function skinCourse(top) {
+  const om = outMap(), c = C.course;
+  const lessons = C.lessons.map((l, i) => {
+    const o = om[l.id] || {}, ents = (o.entries || []).map(entOf), open = canOpen(l) && (OUT ? o.open !== false : true);
+    ents.forEach(x => { x.href = lecUrl(l.id) + '&i=' + encodeURIComponent(x.id); });
+    return { id: l.id, n: i + 1, title: l.title, section: l.section_title || '', done: C.done.has(l.id), open, free: !!l.is_free, minutes: l.duration_minutes, desc: o.desc || '', count: ents.length || o.count || 0, nDone: ents.filter(x => x.done).length, entries: ents, href: lecUrl(l.id), hw: C.on && C.exams.some(x => x.lesson_id === l.id && x.is_homework) };
+  });
+  const gx = C.on ? C.exams.filter(x => !x.lesson_id).map(x => ({ id: x.id, title: x.title, state: quizState(x), tried: C.tried.has(x.id) })) : [];
+  const mins = C.lessons.reduce((a, l) => a + (+l.duration_minutes || 0), 0);
+  return LSK.course(SKIN, { title: c.title, desc: c.description || '', year: c.academic_year || '', pct: pct(), on: C.on, minutes: mins, lessons, exams: gx, top, cur: (lessons.find(l => l.open && !l.done) || {}).id });
+}
+function wireSkinCourse() {
+  LSK.wire($('#root'));
+  $$('[data-lk-q]').forEach(el => el.onclick = () => { if (el.dataset.s === 'o') return toast('الامتحان لسه ما فتحش'); if (el.dataset.s === 'c') return toast('انتهى وقت الامتحان'); location.href = quizUrl(C.exams.find(z => z.id === el.dataset.lkQ) || { id: el.dataset.lkQ }); });
+  $$('[data-lk-l]').forEach(el => el.onclick = e => {
+    const l = C.lessons.find(x => x.id === el.dataset.lkL); if (!l) return;
+    if (!canOpen(l) || el.classList.contains('lk')) { e.preventDefault(); return toast('🔒 اشترك في الكورس الأول عشان تفتح المحاضرة'); }
+    if (el.tagName !== 'A') location.href = lecUrl(l.id);
+  });
+  const st = $('[data-lk-start]'); if (st) st.onclick = () => { const l = C.lessons.find(x => canOpen(x) && !C.done.has(x.id)) || C.lessons.find(canOpen); if (!l) return toast('🔒 اشترك في الكورس الأول'); location.href = lecUrl(l.id); };
+}
 
 /* ===== صفحة الكورس: كابشنات المحاضرات ===== */
 function draw() {
@@ -226,7 +259,7 @@ function draw() {
     + ((PV.course_quizzes || []).length ? '<div class="pvq">📝 امتحانات الكورس: ' + PV.course_quizzes.map(z => esc(z.title)).join(' • ') + '</div>' : '') + '<p class="pvn">ده ملخص بس لمحتوى الكورس — الفيديوهات والملفات والامتحانات بتفتح بعد ما تشترك بالكود.</p></div>' : '';
   const join = C.on ? '' : '<div class="card join" style="margin-bottom:14px"><p>🔒 لازم تشترك في الكورس عشان تفتح كل المحاضرات.</p>' + (Number(c.price) === 0 ? '<button class="btn" id="jf">اشترك مجاناً</button>' : '<div class="jrow"><input id="jc" dir="ltr" placeholder="XXXX-XXXX-XXXX" maxlength="14" autocomplete="off"><button class="btn g" id="js" type="button" title="امسح الباركود اللي على الكارت بالكاميرا" aria-label="مسح الباركود بالكاميرا">📷</button></div><button class="btn" id="jb" style="width:100%">تفعيل بالكود</button><p class="jh">📷 معاك كارت فيه باركود؟ دوس على الكاميرا والكود هيتكتب لوحده، وبعدها دوس «تفعيل بالكود».</p>') + '</div>';
   const gx = C.exams.filter(x => !x.lesson_id), ex = C.on && gx.length ? '<div class="sec" style="margin-top:14px">📝 امتحانات الكورس</div>' + gx.map(x => { const n = Date.now(), o = x.opens_at && new Date(x.opens_at) > n, cl = x.closes_at && new Date(x.closes_at) < n, tr = C.tried.has(x.id), f = d => new Date(d).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }); return '<div class="lec ex2' + (tr ? ' dn' : '') + (o || (cl && !tr) ? ' off' : '') + '" data-q="' + x.id + '" data-s="' + (o ? 'o' : cl && !tr ? 'c' : '') + '"><span class="n">' + (tr ? '✓' : '📝') + '</span><span class="g">' + esc(x.title) + '<small>' + (x.kind === 'comprehensive' ? 'امتحان شامل' : 'امتحان') + (x.time_limit_minutes ? ' • ' + x.time_limit_minutes + ' دقيقة' : '') + (o ? ' • يفتح ' + f(x.opens_at) : x.closes_at && !cl ? ' • يقفل ' + f(x.closes_at) : '') + '</small></span>' + (o ? '<span class="bd">قريباً</span>' : cl && !tr ? '<span class="bd">انتهى</span>' : tr ? '<span class="bd">تم ✓</span>' : '<span class="ar">‹</span>') + '</div>'; }).join('') : '';
-  $('#root').innerHTML = '<div class="top"><div><h1>' + esc(c.title) + '</h1>' + (c.description ? '<div class="cdesc">' + esc(c.description) + '</div>' : '') + '</div><div><b id="pc">' + pct() + '% مكتمل</b><div class="bar"><i id="pb" style="width:' + pct() + '%"></i></div></div></div>'
+  $('#root').innerHTML = SKIN ? skinCourse(pvSum + join) : '<div class="top"><div><h1>' + esc(c.title) + '</h1>' + (c.description ? '<div class="cdesc">' + esc(c.description) + '</div>' : '') + '</div><div><b id="pc">' + pct() + '% مكتمل</b><div class="bar"><i id="pb" style="width:' + pct() + '%"></i></div></div></div>'
     + pvSum + join + (html || '<div class="empty" style="aspect-ratio:auto">لا توجد محاضرات بعد</div>') + ex;
   $$('.lec[data-q]').forEach(el => el.onclick = () => { if (el.dataset.s === 'o') return toast('الامتحان لسه ما فتحش'); if (el.dataset.s === 'c') return toast('انتهى وقت الامتحان'); location.href = quizUrl(C.exams.find(z => z.id === el.dataset.q) || { id: el.dataset.q }); });
   $$('.lec[data-l]').forEach(el => el.onclick = () => {
@@ -234,6 +267,7 @@ function draw() {
     if (!canOpen(l)) return toast('🔒 اشترك في الكورس الأول عشان تفتح المحاضرة');
     location.href = lecUrl(l.id);
   });
+  if (SKIN) wireSkinCourse();
   const jf = $('#jf'); if (jf) jf.onclick = async () => { jf.disabled = true; const { error } = await supabaseClient.from('enrollments').insert({ student_id: currentUser.id, course_id: CID }); if (error && error.code !== '23505') { toast('تعذر الاشتراك'); jf.disabled = false; return; } location.reload(); };
   const js = $('#js'); if (js) js.onclick = async () => {
     try { if (!window.QRX) await new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/qr.js'; s.onload = res; s.onerror = rej; document.head.appendChild(s); }); } catch (e) { return toast('تعذّر تحميل قارئ الباركود — اكتب الكود بإيدك'); }
@@ -257,11 +291,31 @@ function markSeen(k) { SEEN.add(k); try { localStorage.setItem(seenKey(), JSON.s
 
 const openUrl = u => { const m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/); return /drive\.google\.com/.test(u) && m ? 'https://drive.google.com/file/d/' + m[1] + '/view' : u; };
 const dlUrl = u => { const m = u.match(/\/d\/([\w-]+)/) || u.match(/[?&]id=([\w-]+)/); return /drive\.google\.com/.test(u) && m ? 'https://drive.google.com/uc?export=download&id=' + m[1] : u; };
-let LIST = [], SRV = false, PROGSRV = false, IPROG = new Set(), CURI = 0;
+let EN = {}, LIST = [], SRV = false, PROGSRV = false, IPROG = new Set(), CURI = 0;
 const isDone = x => x.type === 'quiz' ? C.tried.has(x.id) : (PROGSRV ? IPROG.has(x.id) : SEEN.has(x.key));
 const lockedAt = i => { for (let j = 0; j < i; j++) if (LIST[j].gate && !isDone(LIST[j])) return true; return false; };
 const ico = x => x.type === 'quiz' ? (x.is_homework ? '📚 ' : '📝 ') : x.kind === 'video' ? '🎬 ' : x.kind === 'pdf' ? '📄 ' : x.kind === 'file' ? '📄 ' : '🔗 ';
 const quizState = x => { const n = Date.now(), o = x.opens_at && new Date(x.opens_at) > n, cl = x.closes_at && new Date(x.closes_at) < n; return o ? 'o' : (cl && !C.tried.has(x.id)) ? 'c' : ''; };
+
+
+function skinLecture(l, d, pv, nx) {
+  const om = outMap(), groups = C.lessons.map((x, i) => {
+    if (x.id === l.id) return { id: x.id, title: (i + 1) + '. ' + x.title, cur: true, open: true, nDone: 0, nTotal: 0, html: '' };
+    const o = om[x.id] || {}, ok = canOpen(x) && (OUT ? o.open !== false : true), ents = (o.entries || []).map(entOf);
+    const html = ok ? ents.map((e, k) => LSK.row(SKIN, e, { i: k, n: k + 1, href: lecUrl(x.id) + '&i=' + encodeURIComponent(e.id) })).join('') : '';
+    return { id: x.id, title: (i + 1) + '. ' + x.title, cur: false, open: ok, nDone: ents.filter(e => e.done).length, nTotal: ents.length || o.count || 0, html: html || '<a class="lk-r" href="' + (ok ? lecUrl(x.id) : '#') + '"' + (ok ? '' : ' onclick="return false"') + '><span class="lk-ri">' + (ok ? '▶' : '🔒') + '</span><span class="lk-rt"><b>' + (ok ? 'فتح المحاضرة' : 'مقفولة') + '</b></span></a>' };
+  });
+  return LSK.lecture(SKIN, { course: C.course.title, courseHref: courseReal(), title: l.title, desc: d.notes || '', pct: 0, groups, prev: pv ? { href: lecUrl(pv.id) } : null, next: nx ? { href: lecUrl(nx.id) } : null });
+}
+const rowOf = (x, i) => ({ t: x.type, id: x.id, kind: x.type === 'quiz' ? 'quiz' : x.kind, title: x.title, desc: x.type === 'quiz' ? (x.description || '') : (x.desc || ''), duration: x.duration, views: x.views, seconds: x.seconds, done: isDone(x), locked: lockedAt(i), homework: !!x.is_homework, state: x.type === 'quiz' ? quizState(x) : '' });
+function drawSkinList() {
+  const box = $('#itemList'); if (!box) return;
+  box.innerHTML = LIST.map((x, i) => LSK.row(SKIN, rowOf(x, i), { i, n: i + 1, on: i === CURI })).join('') || '<div class="empty" style="aspect-ratio:auto;border:0">لا يوجد محتوى بعد</div>';
+  $$('#itemList .lk-r').forEach(b => b.onclick = () => gotoItem(+b.dataset.i));
+  const dn = LIST.filter(isDone).length, pc = LIST.length ? Math.round(dn / LIST.length * 100) : 0;
+  const cn = $('#lkCnt'); if (cn) cn.textContent = dn + '/' + LIST.length;
+  $$('.lk-top [data-lk-pct]').forEach(e => { e.textContent = pc; }); const rg = $('.lk-top .lk-ring'); if (rg) rg.style.setProperty('--p', pc); const bi = $('.lk-top .lk-bar i'); if (bi) bi.style.width = pc + '%';
+}
 
 async function markItemDone(x) {
   if (!x || x.type === 'quiz' || x.id == null || isDone(x)) return;
@@ -273,9 +327,10 @@ async function autoLesson() {
   const its = LIST.filter(x => x.type === 'item');
   if (!its.length || C.done.has(C.cur) || !its.every(isDone)) return;
   const { error } = await supabaseClient.from('lesson_progress').insert({ student_id: currentUser.id, lesson_id: C.cur });
-  if (!error || error.code === '23505') { C.done.add(C.cur); toast('أحسنت! خلّصت المحاضرة ✅'); }
+  if (!error || error.code === '23505') { C.done.add(C.cur); toast('أحسنت! خلّصت المحاضرة ✅'); if (SKIN && SKIN.confetti) LSK.confetti(SKIN); }
 }
 function drawList() {
+  if (SKIN) return drawSkinList();
   $('#itemList').innerHTML = LIST.map((x, i) => {
     const lk = lockedAt(i), dn = isDone(x), st = x.type === 'quiz' ? quizState(x) : '';
     return '<div class="ci' + (dn ? ' seen' : '') + (lk ? ' lk' : '') + (i === CURI ? ' on' : '') + '" data-i="' + i + '"><span>' + ico(x) + esc(x.title) + (lk ? '<small>🔒 خلّص اللي قبله الأول</small>' : st === 'o' ? '<small>لم يفتح بعد</small>' : st === 'c' ? '<small>انتهى</small>' : x.type === 'quiz' ? '<small>' + (x.is_homework ? 'واجب' : 'امتحان') + '</small>' : '') + '</span><span class="ck">' + (lk ? '🔒' : '✓') + '</span></div>';
@@ -327,7 +382,7 @@ async function open(id) {
   let it, ct, ip;
   if (!rpc.error && rpc.data) {                       // السيرفر بيسلّم الروابط للمفتوح بس
     SRV = true; const rd = rpc.data;
-    it = { data: rd.items || [] }; ct = { data: rd.content || {} };
+    it = { data: rd.items || [] }; ct = { data: rd.content || {} }; EN = {}; (rd.entries || []).forEach(e => { EN[e.id] = e; });
     ip = { data: (rd.items || []).filter(x => x.done).map(x => ({ item_id: x.id })) };
   } else if (rpc.error && /forbidden/.test(rpc.error.message || '')) {
     toast('🔒 المحاضرة دي مقفولة دلوقتي'); setTimeout(() => location.replace(courseReal()), 900); return;
@@ -341,7 +396,7 @@ async function open(id) {
   }
   const d = ct.data || {}; PROGSRV = SRV || !ip.error; IPROG = new Set((ip.data || []).map(x => x.item_id));
   try { SEEN = new Set(JSON.parse(localStorage.getItem(seenKey()) || '[]')); } catch (e) { SEEN = new Set(); }
-  const items = (it.data || []).map(x => ({ type: 'item', key: x.id, id: x.id, kind: x.kind, title: x.title, desc: x.description || '', url: x.url, pos: x.position == null ? 0 : x.position, gate: !!x.gate, locked: !!x.locked }));
+  const items = (it.data || []).map(x => ({ type: 'item', key: x.id, id: x.id, kind: x.kind, title: x.title, desc: x.description || '', url: x.url, pos: x.position == null ? 0 : x.position, gate: !!x.gate, locked: !!x.locked, duration: (EN[x.id] || {}).duration, views: (EN[x.id] || {}).views, seconds: (EN[x.id] || {}).seconds }));
   const quizzes = C.on ? C.exams.filter(x => x.lesson_id === id).map(x => Object.assign({ type: 'quiz', pos: x.lesson_pos == null ? 100000 : x.lesson_pos, gate: !!x.gate }, x)) : [];
   LIST = items.concat(quizzes).map((x, k) => (x._k = k, x)).sort((a, b) => (a.pos - b.pos) || (a.type === b.type ? a._k - b._k : a.type === 'item' ? -1 : 1));
   if (d.video_url && !items.some(x => x.kind === 'video' && x.url === d.video_url)) LIST.unshift({ type: 'item', key: 'v', id: 'v', kind: 'video', title: 'فيديو المحاضرة', url: d.video_url, gate: false });
@@ -350,13 +405,14 @@ async function open(id) {
 
   const idx = C.lessons.findIndex(x => x.id === id);
   const nx = C.lessons.slice(idx + 1).find(canOpen), pv = C.lessons.slice(0, idx).reverse().find(canOpen);
-  $('#root').innerHTML = '<div class="top"><div><p>' + esc(C.course.title) + '</p><h1>' + esc(l.title) + '</h1></div><a class="btn g" href="' + courseReal() + '">← كل المحاضرات</a></div>'
+  if (SKIN) $('#root').innerHTML = skinLecture(l, d, pv, nx);
+  else $('#root').innerHTML = '<div class="top"><div><p>' + esc(C.course.title) + '</p><h1>' + esc(l.title) + '</h1></div><a class="btn g" href="' + courseReal() + '">← كل المحاضرات</a></div>'
     + '<div class="grid lg"><aside><div class="card"><b style="display:block;margin-bottom:12px;font-size:17px">محتوى المحاضرة</b><div id="itemList"></div></div></aside>'
     + '<div><div id="player"></div>'
     + (d.notes ? '<div class="note"><small>📝 وصف المحاضرة</small>' + esc(d.notes) + '</div>' : '')
     + '<div class="pn">' + (pv ? '<a class="btn g" href="' + lecUrl(pv.id) + '">→ المحاضرة السابقة</a>' : '<span></span>') + (nx ? '<a class="btn g" href="' + lecUrl(nx.id) + '">المحاضرة التالية ←</a>' : '') + '</div></div></div>';
   drawList();
-  if (LIST.length) { const f = LIST.findIndex((x, i) => !lockedAt(i)); showItem(Math.max(f, 0)); } else $('#player').innerHTML = '<div class="empty"><div><i>📭</i>لا يوجد محتوى لهذه المحاضرة بعد</div></div>';
+  if (LIST.length) { let f = LIST.findIndex((x, i) => !lockedAt(i)); const iq = QP.get('i'); if (iq) { const k = LIST.findIndex(x => String(x.id) === iq); if (k >= 0 && !lockedAt(k)) f = k; } showItem(Math.max(f, 0)); } else $('#player').innerHTML = '<div class="empty"><div><i>📭</i>لا يوجد محتوى لهذه المحاضرة بعد</div></div>';
 }
 /* ===== حماية الفيديو + تتبّع المشاهدة (للتقرير) ===== */
 const VP = { t: null, acc: 0, sent: 0, id: null, playing: null };

@@ -15,9 +15,9 @@
     + '#spw .h{padding:12px 14px;background:var(--brand,#6366f1);color:#fff;font-weight:800;display:flex;justify-content:space-between;align-items:center;gap:8px}#spw .h span{flex:1}#spw .h button{background:none;border:0;color:#fff;font-size:18px;cursor:pointer;padding:0 4px}'
     + '#spw .f{flex:1;overflow:auto;padding:12px;display:flex;flex-direction:column;gap:8px;background:var(--bg,#f4f6fb)}#spw .m{flex:0 0 auto;box-sizing:border-box;height:auto;min-height:0;overflow:visible;position:relative;display:block;max-width:82%;padding:8px 12px;border-radius:14px;line-height:1.8;font-weight:600;font-size:14px;white-space:pre-wrap;word-break:break-word}#spw .m small{display:block;font-size:11px;opacity:.7;margin-top:3px}'
     + '#spw .m.wme{align-self:flex-start;background:var(--brand,#6366f1);color:#fff}#spw .m.wst{align-self:flex-end;background:var(--card,#fff);border:1px solid var(--line,#ddd)}#spw .m img{max-width:100%;max-height:200px;border-radius:10px;display:block;margin-bottom:4px}#spw .m.bad{background:#dc2626}'
-    + '#spw .i{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line,#ddd);align-items:flex-end}#spw textarea{flex:1;resize:none;border:1px solid var(--line,#ddd);border-radius:12px;padding:8px 10px;font:600 14px Cairo,sans-serif;background:var(--card,#fff);color:var(--ink,#111);min-height:40px;max-height:90px}'
+    + '#spw .i{display:flex;gap:6px;padding:8px;border-top:1px solid var(--line,#ddd);align-items:flex-end}#spw textarea{flex:1;resize:none;border:1px solid var(--line,#ddd);border-radius:12px;padding:8px 10px;font:600 16px Cairo,sans-serif;background:var(--card,#fff);color:var(--ink,#111);min-height:40px;max-height:90px;touch-action:manipulation}'
     + '#spw .i button,#spw .pn button,#spw .bt{border:0;border-radius:12px;padding:0 12px;min-height:40px;font:800 14px Cairo,sans-serif;cursor:pointer;background:var(--brand,#6366f1);color:#fff}#spw .i button.g,#spw .bt.g{background:var(--line,#e6eaf2);color:var(--ink,#111)}#spw .bt.ok{background:#16a34a}#spw .bt.no{background:#dc2626}'
-    + '#spw .pn{padding:16px;display:flex;flex-direction:column;gap:10px;justify-content:center;flex:1;overflow:auto}#spw .pn input{padding:12px;border:1px solid var(--line,#ddd);border-radius:12px;font:700 15px Cairo,sans-serif;background:var(--card,#fff);color:var(--ink,#111);text-align:center}#spw .pn input.ph{direction:ltr}#spw .nt{color:var(--muted,#64748b);font-weight:600;font-size:13px;line-height:1.9;text-align:center}#spw .er{color:#dc2626;font-weight:700;font-size:13px;text-align:center;min-height:18px}'
+    + '#spw .pn{padding:16px;display:flex;flex-direction:column;gap:10px;justify-content:center;flex:1;overflow:auto}#spw .pn input{padding:12px;border:1px solid var(--line,#ddd);border-radius:12px;font:700 16px Cairo,sans-serif;background:var(--card,#fff);color:var(--ink,#111);text-align:center}#spw .pn input.ph{direction:ltr}#spw .nt{color:var(--muted,#64748b);font-weight:600;font-size:13px;line-height:1.9;text-align:center}#spw .er{color:#dc2626;font-weight:700;font-size:13px;text-align:center;min-height:18px}'
     + '#spw .rm{background:var(--bg,#f4f6fb);border:1px solid var(--line,#ddd);border-radius:14px;padding:12px;line-height:1.95;font-weight:700;font-size:14px;white-space:pre-line}#spw .ph0{text-align:center;font:800 22px Cairo,sans-serif;direction:ltr;background:var(--bg,#f4f6fb);border:2px dashed var(--brand,#6366f1);border-radius:14px;padding:12px}'
     + '#spw .lst{flex:1;overflow:auto;padding:10px;display:flex;flex-direction:column;gap:8px;background:var(--bg,#f4f6fb)}#spw .ci{position:relative;background:var(--card,#fff);border:1px solid var(--line,#ddd);border-radius:14px;padding:10px 12px;cursor:pointer;line-height:1.7}#spw .ci b{font-size:14px}#spw .ci small{display:block;color:var(--muted,#64748b);font-weight:600}#spw .ci .tx{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}'
     + '#spw .ci .pl{display:inline-block;padding:1px 8px;border-radius:50px;font-size:11px;font-weight:800;margin-right:6px}#spw .ci .pl.a{background:#ede9fe;color:#6d28d9}#spw .ci .pl.t{background:#e0f2fe;color:#0369a1}#spw .bt.a{background:#7c3aed}#spw .ci .pl.o{background:#dcfce7;color:#15803d}#spw .ci .pl.c{background:var(--line,#e6eaf2);color:var(--muted,#64748b)}#spw .ci i{position:absolute;top:12px;left:12px;width:12px;height:12px;border-radius:50%;background:#ef4444;box-shadow:0 0 0 3px rgba(239,68,68,.25)}'
@@ -25,6 +25,8 @@
   css.textContent += '#spw.inl{position:static;display:flex;width:100%;max-width:none;height:calc(100vh - 230px);min-height:460px;max-height:none;box-shadow:none}#spw.inl .h #spw-x{display:none}'
     + '#spw .at{display:none;align-items:center;gap:8px;padding:6px 10px;border-top:1px solid var(--line,#ddd);background:var(--card,#fff)}#spw .at.on{display:flex}#spw .at img{width:44px;height:44px;object-fit:cover;border-radius:8px}#spw .at span{flex:1;font-weight:700;font-size:13px}#spw .at button{border:0;background:none;font-size:18px;cursor:pointer;color:#dc2626}'
     + '#spw .m.wme small{opacity:.85}';
+  css.textContent += '#spw .f,#spw .lst,#spw .pn{overscroll-behavior:contain;-webkit-overflow-scrolling:touch}#spw.inl{height:calc(100vh - 230px);height:calc(100dvh - 230px)}'
+    + '@media(max-width:600px){#spw:not(.inl){left:0;right:0;top:0;bottom:0;width:100%;max-width:none;height:100vh;height:100dvh;max-height:none;border-radius:0;border:0}#spw:not(.inl).on~#spw-b,#spw.on+#spw-b{display:none}}';
   document.head.appendChild(css);
   const btn = document.createElement('button'); btn.id = 'spw-b'; btn.type = 'button'; btn.setAttribute('aria-label', 'الدعم الفني'); btn.innerHTML = '💬<i></i>';
   const box = document.createElement('div'); box.id = 'spw';
@@ -115,6 +117,8 @@
   const bub = (m, cls, st) => '<div class="m ' + cls + '">' + (m.image_url ? '<img class="zi" src="' + esc(m.image_url) + '" alt="صورة" loading="lazy">' : '') + (m.body ? '<div dir="auto">' + esc(m.body) + '</div>' : '') + '<small>' + (st || new Date(m.created_at).toLocaleTimeString('ar-EG', { hour: '2-digit', minute: '2-digit' })) + '</small></div>';
   function draw(server) {
     const f = $('#spw-f'); if (!f) return; const near = f.scrollHeight - f.scrollTop - f.clientHeight < 90;
+    const sig = JSON.stringify([server.map(m => [m.id || m.created_at, m.body, m.image_url]), seenAt, pending.map(p => [p.body, !!p.err, p.msg])]);
+    if (f.__sig === sig) return; f.__sig = sig;   // نفس المحتوى → ما نعيدش الرسم (بيوقّف الصور تتحمّل تاني وبيعلّق الكيبورد)
     let h = server.map(m => bub(m, m.sender === 'staff' ? 'wst' : 'wme', m.sender === 'student' && !m.is_auto ? (seenAt && new Date(m.created_at) <= new Date(seenAt) ? '✓✓ شافها الدعم' : '✓ تم الإرسال') : null)).join('');
     pending.forEach((p, i) => { h += '<div class="m wme' + (p.err ? ' bad' : '') + '">' + (p.preview ? '<img src="' + esc(p.preview) + '" alt="">' : '') + (p.body ? '<div dir="auto">' + esc(p.body) + '</div>' : '') + '<small>' + (p.err ? '⚠️ لم يُرسل' + (p.msg ? ' (' + esc(p.msg) + ')' : '') + ' — <a href="#" data-r="' + i + '" style="color:#fff;text-decoration:underline">إعادة المحاولة</a>' : '⏳ جاري الإرسال...') + '</small></div>'; });
     if (!server.length && !pending.length) h = '<div class="nt">اكتب رسالتك وهنرد عليك في أقرب وقت 🤝</div>';
@@ -167,6 +171,18 @@
   }
   function startPoll() { clearInterval(poll); poll = setInterval(() => { if (box.classList.contains('on') && !document.hidden) refresh(); }, 5000); }
 
+  // الكيبورد على الموبايل: الصندوق بيتظبط على المساحة المرئية فعلاً فمايتغطّاش ومايعلّقش
+  (function () {
+    const vv = window.visualViewport; if (!vv) return; let raf = 0;
+    const fit = () => {
+      raf = 0; if (!box.classList.contains('on') || box.classList.contains('inl') || innerWidth > 600) { box.style.top = box.style.height = box.style.bottom = ''; return; }
+      box.style.top = Math.max(0, vv.offsetTop) + 'px'; box.style.bottom = 'auto'; box.style.height = Math.round(vv.height) + 'px';
+      const f = $('#spw-f'); if (f && document.activeElement && document.activeElement.id === 'spw-t') f.scrollTop = f.scrollHeight;
+    };
+    const q = () => { if (!raf) raf = requestAnimationFrame(fit); };
+    vv.addEventListener('resize', q); vv.addEventListener('scroll', q); box.addEventListener('focusin', () => setTimeout(q, 60));
+    new MutationObserver(q).observe(box, { attributes: true, attributeFilter: ['class'] });
+  })();
   // ===== الفتح والقفل =====
   async function open() {
     box.classList.add('on'); dot(false);

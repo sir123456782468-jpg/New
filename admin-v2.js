@@ -238,7 +238,7 @@ async function itemsModal(lid) {
   modal('محتوى المحاضرة: ' + (l.title || ''),
     `<p class="nt" style="margin:0 0 10px;line-height:1.9">ده ترتيب ما يشوفه الطالب بالظبط (فوق ← تحت). رتّبهم بالأسهم. علّم 🔒 على أي عنصر لو عايز اللي بعده يتقفل لحد ما الطالب يخلّصه (PDF/رابط = يفتحه، فيديو = يضغط «أنهيت»، امتحان/واجب = يسلّمه).</p>`
     + `<div class="tw" style="margin-bottom:12px"><table>${all.map(row).join('') || '<tr><td class="empty">لسه مفيش محتوى — ضيف من تحت</td></tr>'}</table></div>`
-    + `<div class="card"><b>➕ إضافة محتوى</b><div class="row2" style="margin-top:8px"><select id="ni_k"><option value="video">🎬 فيديو (YouTube / Drive / Vimeo / Bunny)</option><option value="pdf">📄 PDF (رابط Google Drive أو غيره)</option><option value="link">🔗 رابط</option></select><input id="ni_t" placeholder="الاسم (يظهر للطالب)"></div><input id="ni_u" dir="ltr" placeholder="https://...  (أو رابط Bunny: https://iframe.mediadelivery.net/embed/123/xxxxxxxx-...)" style="margin-top:8px"><textarea id="ni_d" dir="auto" placeholder="وصف العنصر (اختياري) — بيظهر للطالب تحت الفيديو/الملف" style="margin-top:8px;min-height:60px"></textarea><button class="btn s" style="margin-top:8px" data-act="itAdd" data-l="${lid}">+ إضافة</button>`
+    + `<div class="card"><b>➕ إضافة محتوى</b><div class="row2" style="margin-top:8px"><select id="ni_k"><option value="video">🎬 فيديو (YouTube / Drive / Vimeo / Bunny)</option><option value="pdf">📄 PDF (رابط Google Drive أو غيره)</option><option value="link">🔗 رابط</option></select><input id="ni_t" placeholder="الاسم (يظهر للطالب)"></div><input id="ni_u" dir="ltr" placeholder="https://...  (أو رابط Bunny: https://iframe.mediadelivery.net/embed/123/xxxxxxxx-...)" style="margin-top:8px"><textarea id="ni_d" dir="auto" placeholder="وصف العنصر (اختياري) — بيظهر للطالب تحت الفيديو/الملف" style="margin-top:8px;min-height:60px"></textarea><input id="ni_m" type="number" min="0" max="900" inputmode="numeric" placeholder="مدة الفيديو بالدقايق (اختياري) — بتظهر في أشكال المحاضرات الجديدة" style="margin-top:8px"><button class="btn s" style="margin-top:8px" data-act="itAdd" data-l="${lid}">+ إضافة</button>`
     + `<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap"><button class="btn s" data-act="itNewQuiz" data-id="${lid}">+ كويز جديد</button><button class="btn s" data-act="itNewHw" data-id="${lid}">+ 📚 واجب جديد</button></div></div>`);
   $('#modal .mbox').classList.add('wide');
 }
@@ -367,7 +367,9 @@ Object.assign(ACT, {
     const [a1, a2] = await Promise.all([sb.from('lesson_items').select('position').eq('lesson_id', lid).order('position', { ascending: false }).limit(1), sb.from('quizzes').select('lesson_pos').eq('lesson_id', lid).order('lesson_pos', { ascending: false }).limit(1)]);
     const mx = Math.max((a1.data && a1.data[0] && a1.data[0].position) || 0, (a2.data && a2.data[0] && a2.data[0].lesson_pos) || 0, 0);
     const dsc = ($('#ni_d') ? $('#ni_d').value.trim() : '') || null;
-    const { error } = await sb.from('lesson_items').insert({ lesson_id: lid, kind: k, title: t, url: u, description: dsc, position: mx + 1 }); if (error) throw error;
+    const mn = $('#ni_m') && $('#ni_m').value.trim() !== '' ? Math.max(0, Math.min(900, +$('#ni_m').value || 0)) : null;
+    const rowI = { lesson_id: lid, kind: k, title: t, url: u, description: dsc, position: mx + 1 }; if (mn) rowI.duration_minutes = mn;
+    const { error } = await sb.from('lesson_items').insert(rowI); if (error) throw new Error((error.message || '').includes('duration_minutes') ? 'شغّل ملف db_47_lesson_skin.sql في Supabase الأول (عشان مدة الفيديو)' : error.message);
     toast('تمت الإضافة ✅'); itRefresh(lid);
   },
   itMv: async (id, el) => {

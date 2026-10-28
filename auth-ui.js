@@ -71,7 +71,26 @@
     A._sl = 1; var s = document.createElement('script'); s.src = '/support-widget.js'; s.onload = function () { if (open) setTimeout(go, 200); }; document.body.appendChild(s);
   };
 
+  /* —— وضع المعاينة الحيّة من لوحة التحكم: نفس الصفحة الحقيقية بس الإعدادات بتجيلها من اللوحة لحظياً وبدون أي إرسال */
+  function bootPreview() {
+    var ph = null;
+    document.addEventListener('submit', function (e) { e.preventDefault(); e.stopImmediatePropagation(); }, true);
+    document.addEventListener('click', function (e) { var a = e.target.closest && e.target.closest('a[href]'); if (a) e.preventDefault(); }, true);
+    var mc = $('#mainCard'); if (mc) mc.style.visibility = 'visible';
+    window.addEventListener('message', function (e) {
+      if (e.origin !== location.origin) return; var m = e.data; if (!m || m.type !== 'lp-preview') return;
+      if ('photo' in m) ph = m.photo && /^data:image\//.test(m.photo) ? m.photo : null;
+      A.data = { cfg: m.cfg || {}, platform_name: m.platform_name, teacher_name: m.teacher_name, photo_v: ph ? 1 : 0 };
+      apply(A.data);
+      var box = $('#vph'); if (box) box.innerHTML = (ph && A.cfg.show_photo !== false) ? '<img alt="" src="' + ph.replace(/"/g, '') + '">' : '<img class="lg" alt="" src="/logo.png">';
+      var mc2 = $('#mainCard'); if (mc2) mc2.style.visibility = 'visible';
+    });
+    try { window.parent.postMessage({ type: 'lp-ready', page: location.pathname }, location.origin); } catch (e) {}
+  }
+
+  A.preview = /[?&]preview=1/.test(location.search) && window.parent !== window;
   A.boot = function () {
+    if (A.preview) return bootPreview();
     var c0 = cached(); apply(c0); photo();
     fetchFresh().then(function (d) { var before = JSON.stringify((c0 && c0.cfg) || {}) + ((c0 && c0.photo_v) || ''); if (JSON.stringify(d.cfg || {}) + (d.photo_v || '') !== before) { apply(d); photo(); } else { A.data = d; } }).catch(function () {});
     var h = $('#helpBtn'); if (h) h.addEventListener('click', function () { A.support(true); });

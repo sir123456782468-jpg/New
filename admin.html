@@ -278,7 +278,7 @@ async function lessonForm(cid, l) {
   const lc = l ? ([].concat(l.lesson_content || [])[0] || {}) : {}; let next = 1;
   if (!l) { const { data } = await sb.from('lessons').select('position').eq('course_id', cid).order('position', { ascending: false }).limit(1); next = data && data[0] ? data[0].position + 1 : 1; }
   modal(l ? 'تعديل الدرس' : 'درس جديد', '<form><label>عنوان الدرس</label><input name="title" required value="' + esc(l && l.title) + '"><div class="row2"><div><label>الوحدة / الباب (اختياري)</label><input name="section" value="' + esc(l && l.section_title) + '"></div><div><label>الترتيب</label><input type="number" name="pos" value="' + (l ? l.position : next) + '"></div></div>'
-    + '<label>وصف المحاضرة (بيظهر للطالب تحت المحتوى — اختياري)</label><textarea name="notes" style="min-height:90px">' + esc(lc.notes) + '</textarea><div class="row2"><div><label>المدة بالدقائق</label><input type="number" name="dur" min="0" value="' + esc(l && l.duration_minutes) + '"></div><label class="chk" style="align-self:end"><input type="checkbox" name="free"' + (l && l.is_free ? ' checked' : '') + '> درس مجاني (معاينة)</label></div>'
+    + '<label>وصف المحاضرة (بيظهر للطالب فوق أو تحت الفيديو حسب شكل المحاضرات — اختياري)</label><textarea name="notes" style="min-height:90px">' + esc(lc.notes) + '</textarea><div class="row2"><div><label>المدة بالدقائق</label><input type="number" name="dur" min="0" value="' + esc(l && l.duration_minutes) + '"></div><label class="chk" style="align-self:end"><input type="checkbox" name="free"' + (l && l.is_free ? ' checked' : '') + '> درس مجاني (معاينة)</label></div>'
     + (l ? '' : '<label class="chk"><input type="checkbox" name="notify" checked> 🔔 ابعت إشعار للطلاب بالمحاضرة الجديدة</label>') + '<p style="color:var(--muted);font-size:12.5px;margin-top:10px;line-height:1.9">بعد حفظ الدرس اضغط زرار "المحتوى" عشان تضيف فيديو الشرح وفيديو الحل وملفات الـPDF (بروابط درايف).</p><button class="btn" style="width:100%;margin-top:12px">حفظ الدرس</button></form>',
     async f => {
       const row = { course_id: cid, title: f.get('title').trim(), section_title: f.get('section').trim() || null, position: +f.get('pos') || 0, is_free: f.get('free') === 'on', duration_minutes: +f.get('dur') || null };
@@ -608,6 +608,7 @@ window.addEventListener('DOMContentLoaded', gate);   // بيشتغل بعد تح
 <script src="/admin-v4.js"></script>
 <script src="/exam-frame.js"></script>
 <script src="/landing-defaults.js"></script>
+<script src="/lesson-skins.js"></script>
 <script src="/admin-v5.js"></script>
 </body>
 </html>
