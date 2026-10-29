@@ -368,6 +368,62 @@ Object.assign(ACT, {
 });
 Object.assign(ACTPERM, { r2Save: ['@admin'], r2Gen: ['@admin'], r2Del: ['@admin'], r2DelAcc: ['@admin'], r2AddAcc: ['@admin'], bnLibAdd: ['@admin'], bnLibDel: ['@admin'] });
 
+// ---------------------------------------------------------------- تليجرام (فيديو مجاني) — للمالك فقط. Bunny و R2 زي ما هم من غير أي تغيير.
+const tgKeyOk = v => /^[A-Za-z0-9_-]{24,200}$/.test(v || '');
+function tgStatusPill(ok) { return ok ? '<span class="pill ok">✅ محفوظ</span>' : '<span class="pill no">ناقص</span>'; }
+function tgCard(st, list, listErr) {
+  const rows = (list || []).map(v => '<tr><td dir="ltr"><b>tg:' + esc(v.id) + '</b></td><td>' + esc(v.title || '—') + '</td><td>' + Math.round((+v.duration || 0) / 60) + ' د</td><td>' + (+v.segments || 0) + '</td><td>' + esc(String(v.created_at || '').slice(0, 10)) + '</td>'
+    + '<td style="white-space:nowrap"><button class="btn s" data-act="tgCopy" data-id="' + esc(v.id) + '">📋 نسخ الرابط</button> <button class="btn s r" data-act="tgDel" data-id="' + esc(v.id) + '">حذف</button></td></tr>').join('');
+  return '<div class="card" style="margin-top:16px" id="tgBox"><b>✈️ تليجرام — فيديو مجاني ومحمي (للمالك فقط)</b>'
+    + '<p class="nt" style="margin:6px 0 0;line-height:1.9">الفيديوهات بتتخزّن في قناتك الخاصة على تليجرام، وبتتشغّل عن طريق بوابتك على Cloudflare بمشغّل المنصة نفسه. الرابط بيتجدّد لكل طالب وبينتهي لوحده ومربوط بحسابه. في «محتوى الدرس» اكتب الفيديو بالشكل: <b dir="ltr">tg:معرّف-الفيديو</b> (الأداة بتطبعه لك بعد الرفع). Bunny و R2 ويوتيوب شغّالين جنبه عادي.</p>'
+    + '<label>رابط البوابة (Worker) ' + tgStatusPill(st.tg_worker_base) + '</label><input data-tg="tg_worker_base" dir="ltr" autocomplete="off" placeholder="' + (st.tg_worker_base ? '(سيبه فاضي لو مش عايز تغيّره)' : 'https://leader-video.xxxx.workers.dev') + '">'
+    + '<label>مفتاح التوقيع TOKEN_KEY ' + tgStatusPill(st.tg_token_key) + '</label><input data-tg="tg_token_key" type="password" dir="ltr" autocomplete="off" placeholder="' + (st.tg_token_key ? '(سيبه فاضي لو مش عايز تغيّره)' : 'ولّد مفتاح ثم انسخه للـWorker') + '">'
+    + '<div class="bar" style="margin:10px 0 0"><button class="btn s" data-act="tgSave">💾 حفظ</button><button class="btn s g" data-act="tgGen">🎲 ولّد مفتاح عشوائي</button><button class="btn s r" data-act="tgReset">حذف الإعدادات</button></div>'
+    + '<p class="nt" style="margin:8px 0 0;line-height:1.9">⚠️ «مفتاح التوقيع» لازم يكون <b>نفس القيمة بالظبط</b> اللي هتحطها في إعدادات الـWorker باسم <b dir="ltr">TOKEN_KEY</b>. لو غيّرته هنا غيّره هناك كمان.</p>'
+    + '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)"><b>🔑 مفتاح الرفع ADMIN_KEY</b><p class="nt" style="margin:4px 0 8px;line-height:1.9">ده مفتاح تاني بيحطّه الـWorker وأداة الرفع (مش بيتخزّن في المنصة). اضغط ولّد، وانسخه في مكانين بس: إعدادات الـWorker باسم <b dir="ltr">ADMIN_KEY</b>، وأداة الرفع لما تسألك عنه.</p><div class="bar" style="margin:0"><input id="tgAdm" readonly dir="ltr" placeholder="اضغط ولّد" style="flex:1;min-width:220px"><button class="btn s g" data-act="tgGenAdmin">🎲 ولّد وانسخ</button></div></div>'
+    + '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)"><b>🎞️ فيديوهات تليجرام المسجّلة (' + (list || []).length + ')</b>'
+    + (listErr ? '<p class="nt" style="color:var(--danger,#ef4444)">' + esc(listErr) + '</p>' : '')
+    + ((list || []).length ? '<div class="tw" style="margin-top:8px"><table><tr><th>الرابط</th><th>العنوان</th><th>المدة</th><th>القطع</th><th>التاريخ</th><th></th></tr>' + rows + '</table></div>'
+      : '<p class="nt" style="margin-top:6px">لسه مفيش فيديوهات. ارفع أول فيديو بأداة الرفع وهيظهر هنا.</p>')
+    + '<p class="nt" style="margin:8px 0 0;line-height:1.9">«حذف» هنا بيمنع الفيديو من التشغيل في المنصة فقط، والقطع المشفّرة بتفضل في قناتك على تليجرام.</p></div></div>';
+}
+const oldSettings2 = VIEWS.settings && VIEWS.settings[1];
+VIEWS.settings = ['إعدادات المنصة', async () => {
+  let h = oldSettings2 ? await oldSettings2() : '';
+  if (!window.__perms) {
+    try {
+      const r = await sb.rpc('secret_status'); let list = [], le = '';
+      if (!r.error) { const l = await sb.rpc('tg_list'); if (l.error) le = /does not exist|schema cache|Could not find/.test(l.error.message || '') ? 'شغّل ملف db_48_tg_video.sql في Supabase الأول' : (l.error.message || ''); else list = l.data || []; h += tgCard(r.data || {}, list, le); }
+    } catch (e) {}
+  }
+  return h;
+}];
+Object.assign(ACT, {
+  tgSave: async () => {
+    const box = $('#tgBox'); let n = 0;
+    for (const i of box.querySelectorAll('input[data-tg]')) {
+      const v = i.value.trim(); if (!v) continue;
+      if (i.dataset.tg === 'tg_worker_base' && !/^https:\/\/[A-Za-z0-9.-]+(:[0-9]+)?$/.test(v.replace(/\/$/, ''))) throw new Error('رابط البوابة لازم يبدأ بـ https:// ومن غير / في الآخر');
+      if (i.dataset.tg === 'tg_token_key' && !tgKeyOk(v)) throw new Error('مفتاح التوقيع: حروف إنجليزي وأرقام و - _ فقط، من 24 حرف لـ 200');
+      const { error } = await sb.rpc('set_secret', { p_key: i.dataset.tg, p_value: i.dataset.tg === 'tg_worker_base' ? v.replace(/\/$/, '') : v }); if (error) throw new Error(secErr(error)); n++;
+    }
+    if (!n) throw new Error('اكتب قيمة واحدة على الأقل'); toast('تم الحفظ ✅'); go('settings');
+  },
+  tgGen: () => { const i = document.querySelector('#tgBox input[data-tg="tg_token_key"]'); const a = new Uint8Array(24); crypto.getRandomValues(a); i.type = 'text'; i.value = Array.from(a).map(b => b.toString(16).padStart(2, '0')).join(''); toast('انسخ المفتاح ده وحطه في الـWorker باسم TOKEN_KEY، وبعدين اضغط حفظ'); },
+  tgGenAdmin: async () => { const i = $('#tgAdm'); const a = new Uint8Array(24); crypto.getRandomValues(a); i.value = Array.from(a).map(b => b.toString(16).padStart(2, '0')).join(''); i.select(); try { await navigator.clipboard.writeText(i.value); toast('اتولّد واتنسخ ✅ — الصقه في Worker باسم ADMIN_KEY'); } catch (e) { toast('انسخ المفتاح اللي ظهر'); } },
+  tgReset: async () => {
+    if (!confirm('حذف إعدادات تليجرام؟ فيديوهات تليجرام هتقف لحد ما تحطها تاني.')) return;
+    for (const k of ['tg_worker_base', 'tg_token_key']) { const { error } = await sb.rpc('set_secret', { p_key: k, p_value: null }); if (error) throw new Error(secErr(error)); }
+    toast('تم الحذف'); go('settings');
+  },
+  tgCopy: async id => { const t = 'tg:' + id; try { await navigator.clipboard.writeText(t); toast('اتنسخ ✅ ' + t); } catch (e) { prompt('انسخ الرابط:', t); } },
+  tgDel: async id => {
+    if (!confirm('حذف الفيديو tg:' + id + ' من المنصة؟ أي درس بيستخدمه هيقف.')) return;
+    const { error } = await sb.rpc('tg_delete', { p_id: id }); if (error) throw new Error(secErr(error)); toast('تم الحذف'); go('settings');
+  }
+});
+Object.assign(ACTPERM, { tgSave: ['@admin'], tgGen: ['@admin'], tgGenAdmin: ['@admin'], tgReset: ['@admin'], tgCopy: ['@admin'], tgDel: ['@admin'] });
+
 // ---------------------------------------------------------------- حالات حساب الطالب: إيقاف مؤقت / إيقاف نهائي / حظر / حذف
 const ST_L = { active: ['ok', 'نشط'], suspended: ['warn', 'موقوف مؤقتاً'], stopped: ['no', 'موقوف'], banned: ['no', 'محظور'] };
 const stOf = s => s.account_status || (s.is_blocked ? 'stopped' : 'active');
@@ -1590,7 +1646,7 @@ VIEWS.xlanding = ['الصفحة الرئيسية', async () => {
   setTimeout(() => { fit(); mark(); const sl = $('#lpPg'); if (sl) sl.value = L.page; }, 30);
   return CSS + '<div class="note" style="margin:0 0 12px">🏠 هنا بتتحكم في <b>صفحة الموقع الرئيسية</b> (اللي بتظهر للزوّار قبل تسجيل الدخول): الألوان، كل نص، صورة المستر، الكورسات اللي تظهر، ترتيب الأقسام، وروابط التواصل. أي تعديل بتشوفه فوراً في المعاينة، وما بيظهر للزوّار غير لما تدوس <b>💾 حفظ ونشر</b>.</div>'
     + '<div class="card" style="margin-bottom:12px"><div class="bar" style="flex-wrap:wrap;gap:8px;margin:0"><button class="btn" data-act="lpSave">💾 حفظ ونشر</button><button class="btn s g" data-act="lpOpen">↗ فتح الصفحة الحقيقية</button><button class="btn s r" data-act="lpReset">↩ رجوع كل حاجة للافتراضي</button><span id="lpDirty" style="font-weight:800;font-size:13.5px"></span></div></div>'
-    + '<div class="lpw"><div class="lpside" id="lpForm">' + formHtml() + '</div><div class="lpprev"><div class="lpbar"><b>👁 معاينة حيّة</b><select id="lpPg" data-pg="1" title="الصفحة اللي بتتعاين"><option value="index">🏠 الرئيسية</option><option value="signin">🔑 تسجيل الدخول</option><option value="signup">📝 إنشاء حساب</option><option value="verify-code">📧 تأكيد البريد</option><option value="verify-recovery">🔁 استعادة الحساب</option></select><button class="btn s g lpdev on" data-act="lpDev" data-id="desktop">💻 كمبيوتر</button><button class="btn s g lpdev" data-act="lpDev" data-id="mobile">📱 موبايل</button></div><div id="lpBox"><iframe id="lpFrame" src="/' + L.page + '.html?preview=1" title="معاينة"></iframe></div></div></div>';
+    + '<div class="lpw"><div class="lpside" id="lpForm">' + formHtml() + '</div><div class="lpprev"><div class="lpbar"><b>👁 معاينة حيّة</b><select id="lpPg" data-pg="1" title="الصفحة اللي بتتعاين"><option value="index">🏠 الرئيسية</option><option value="signin">🔑 تسجيل الدخول</option><option value="signup">📝 إنشاء حساب</option><option value="verify-code">📧 تأكيد البريد</option><option value="verify-recovery">🔁 كود الاستعادة</option><option value="password">🔐 تعيين كلمة المرور</option><option value="password_recovery">🔑 نسيت كلمة المرور</option><option value="Reset_password">♻️ كلمة مرور جديدة</option></select><button class="btn s g lpdev on" data-act="lpDev" data-id="desktop">💻 كمبيوتر</button><button class="btn s g lpdev" data-act="lpDev" data-id="mobile">📱 موبايل</button></div><div id="lpBox"><iframe id="lpFrame" src="/' + L.page + '.html?preview=1" title="معاينة"></iframe></div></div></div>';
 }];
 VPERM.xlanding = ['@admin'];
 
@@ -1658,7 +1714,7 @@ Object.assign(ACT, {
   },
   lpOpen: () => { window.open(L.page === 'index' ? '/index.html' : '/' + L.page + '.html', '_blank', 'noopener'); },
   lpPage: id => {
-    if (!/^(index|signin|signup|verify-code|verify-recovery)$/.test(id)) return; L.page = id; L.ready = false; L.photoSent = false;
+    if (!/^(index|signin|signup|verify-code|verify-recovery|password|password_recovery|Reset_password)$/.test(id)) return; L.page = id; L.ready = false; L.photoSent = false;
     const sel = $('#lpPg'); if (sel) sel.value = id; const f = $('#lpFrame'); if (f) f.src = '/' + id + '.html?preview=1';
   },
   lpReset: async () => {
@@ -1682,7 +1738,7 @@ Object.assign(ACTPERM, { lpSave: ['@admin'], lpOpen: ['@admin'], lpPage: ['@admi
 // ---------------------------------------------------------------- تبويب «شكل المحاضرات»: اختيار شكل صفحة الكورس والمحاضرة + معاينة حيّة
 (function () {
 'use strict';
-const U = { cfg: {}, saved: '{}', page: 'course', dev: 'desktop', ready: false, timer: null };
+const U = { cfg: {}, saved: '{}', page: 'course', dev: 'desktop', mode: (() => { try { return localStorage.getItem('platform_theme') === 'dark' ? 'dark' : 'light'; } catch (e) { return 'light'; } })(), ready: false, timer: null };
 const KEYS_COLOR = [['c1', 'اللون الأساسي (الأزرار والتمييز)'], ['c2', 'اللون الثاني (التدرّج)'], ['c3', 'لون التقدّم والإبراز'], ['bg', 'خلفية الصفحة'], ['ink', 'لون النص']];
 const FLAGS = [['desc_top', 'وصف المحاضرة فوق الفيديو (لو مقفول بيظهر تحته)'], ['item_desc', 'وصف كل فيديو/ملف تحت اسمه في القايمة'], ['stats', 'إحصائيات الفيديو: مدة الفيديو • عدد المشاهدات • إجمالي وقت المشاهدة'], ['progress', 'خط التقدّم الأحمر/الملوّن تحت كل عنصر'], ['numbers', 'ترقيم العناصر بدل الأيقونات'], ['sticky_player', 'تثبيت الفيديو فوق في الموبايل أثناء النزول'], ['confetti', '🎉 احتفال (قصاصات ملوّنة) لما الطالب يخلّص المحاضرة']];
 const LABELS = [['lbl_watch', 'زر الفيديو'], ['lbl_file', 'زر الملف / الرابط'], ['lbl_quiz', 'زر الامتحان'], ['lbl_hw', 'زر الواجب'], ['lbl_side', 'عنوان القايمة الجانبية'], ['lbl_desc', 'عنوان وصف المحاضرة']];
@@ -1703,7 +1759,7 @@ const dirty = () => JSON.stringify(U.cfg) !== U.saved;
 const uErr = e => { const m = (e && e.message) || String(e || ''); if (/does not exist|schema cache/.test(m)) return 'شغّل ملف db_47_lesson_skin.sql في Supabase الأول'; return m; };
 function mark() { const b = document.getElementById('luDirty'); if (b) { const d = dirty(); b.textContent = d ? '● فيه تعديلات لسه ما اتحفظتش' : '✓ كل التعديلات محفوظة ومنشورة'; b.style.color = d ? '#d97706' : '#16a34a'; } }
 function push() {
-  clearTimeout(U.timer); U.timer = setTimeout(() => { const f = document.getElementById('luFrame'); if (f && f.contentWindow && U.ready) f.contentWindow.postMessage({ type: 'lk-preview', cfg: U.cfg, page: U.page }, location.origin); }, 70); mark();
+  clearTimeout(U.timer); U.timer = setTimeout(() => { const f = document.getElementById('luFrame'); if (f && f.contentWindow && U.ready) f.contentWindow.postMessage({ type: 'lk-preview', cfg: U.cfg, page: U.page, theme: U.mode }, location.origin); }, 70); mark();
 }
 function fit() {
   const box = document.getElementById('luBox'), f = document.getElementById('luFrame'); if (!box || !f) return;
@@ -1743,7 +1799,7 @@ VIEWS.xlessonui = ['شكل المحاضرات', async () => {
   setTimeout(() => { fit(); mark(); }, 30);
   return CSS + '<div class="note" style="margin:0 0 12px">🎬 هنا بتتحكم في <b>شكل صفحة الكورس وصفحة المحاضرة</b> عند الطلاب: اختار شكل من الأربعة، عدّل الألوان والتفاصيل وشوف النتيجة قدامك لحظياً في المعاينة (بيانات تجريبية). التعديل بيظهر للطلاب بعد «حفظ ونشر».</div>'
     + '<div class="card" style="margin-bottom:12px"><div class="bar" style="flex-wrap:wrap;gap:8px;margin:0"><button class="btn" data-act="luSave">💾 حفظ ونشر</button><button class="btn s r" data-act="luReset">↩ رجوع للشكل القديم</button><span id="luDirty" style="font-weight:800;font-size:13.5px"></span></div></div>'
-    + '<div class="luw"><div class="luside" id="luForm">' + formHtml() + '</div><div class="luprev"><div class="lubar"><b>👁 معاينة حيّة</b><button class="btn s g lubt on" data-act="luPage" data-id="course">📚 صفحة الكورس</button><button class="btn s g lubt" data-act="luPage" data-id="lecture">🎬 صفحة المحاضرة</button><span style="width:10px"></span><button class="btn s g lubt on" data-act="luDev" data-id="desktop">💻</button><button class="btn s g lubt" data-act="luDev" data-id="mobile">📱</button></div><div id="luBox"><iframe id="luFrame" src="/lesson-preview.html" title="معاينة"></iframe></div></div></div>';
+    + '<div class="luw"><div class="luside" id="luForm">' + formHtml() + '</div><div class="luprev"><div class="lubar"><b>👁 معاينة حيّة</b><button class="btn s g lubt on" data-act="luPage" data-id="course">📚 صفحة الكورس</button><button class="btn s g lubt" data-act="luPage" data-id="lecture">🎬 صفحة المحاضرة</button><span style="width:10px"></span><button class="btn s g lubt on" data-act="luDev" data-id="desktop">💻</button><button class="btn s g lubt" data-act="luDev" data-id="mobile">📱</button><span style="width:10px"></span><button class="btn s g lubt' + (U.mode === 'light' ? ' on' : '') + '" data-act="luMode" data-id="light" title="معاينة بالوضع النهاري">☀️ نهاري</button><button class="btn s g lubt' + (U.mode === 'dark' ? ' on' : '') + '" data-act="luMode" data-id="dark" title="معاينة بالوضع الليلي">🌙 ليلي</button></div><div id="luBox"><iframe id="luFrame" src="/lesson-preview.html" title="معاينة"></iframe></div></div></div>';
 }];
 VPERM.xlessonui = ['@admin'];
 
@@ -1766,6 +1822,7 @@ Object.assign(ACT, {
   },
   luColorsRs: () => { ['c1', 'c2', 'c3', 'bg', 'ink'].forEach(k => delete U.cfg[k]); redraw(); push(); },
   luPage: id => { U.page = id; document.querySelectorAll('.lubt[data-act=luPage]').forEach(b => b.classList.toggle('on', b.dataset.id === id)); push(); },
+  luMode: id => { U.mode = id; document.querySelectorAll('.lubt[data-act=luMode]').forEach(b => b.classList.toggle('on', b.dataset.id === id)); push(); },
   luDev: id => { U.dev = id; document.querySelectorAll('.lubt[data-act=luDev]').forEach(b => b.classList.toggle('on', b.dataset.id === id)); fit(); },
   luSave: async () => {
     const r = await sb.rpc('lesson_ui_save', { p_cfg: U.cfg }); if (r.error) throw new Error(uErr(r.error));
@@ -1777,6 +1834,6 @@ Object.assign(ACT, {
     U.cfg = {}; U.saved = '{}'; redraw(); push(); toast('اتعمل رجوع للشكل القديم');
   }
 });
-Object.assign(ACTPERM, { luSkin: ['@admin'], luColorsRs: ['@admin'], luPage: ['@admin'], luDev: ['@admin'], luSave: ['@admin'], luReset: ['@admin'] });
+Object.assign(ACTPERM, { luSkin: ['@admin'], luColorsRs: ['@admin'], luPage: ['@admin'], luDev: ['@admin'], luMode: ['@admin'], luSave: ['@admin'], luReset: ['@admin'] });
 (function () { if (!NAV.some(n => n[0] === 'xlessonui')) { const i = NAV.findIndex(n => n[0] === 'xlanding'); NAV.splice(i >= 0 ? i + 1 : 0, 0, ['xlessonui', '🎬', 'شكل المحاضرات']); } })();
 })();

@@ -221,7 +221,7 @@ async function xbSave() {
 // ---------- محتوى الدرس: فيديوهات / PDF / كويزات / روابط ----------
 const IKIND = { video: ['🎬', 'فيديو'], pdf: ['📄', 'PDF'], link: ['🔗', 'رابط'] };
 const itDesc = x => x.description ? '<br><small style="color:var(--muted);display:block;margin-top:3px;white-space:pre-line">ℹ️ ' + esc(String(x.description).slice(0, 110)) + (String(x.description).length > 110 ? '…' : '') + '</small>' : '';
-const itUrl = u => /^r2w?:/.test(u || '') ? '☁️ R2 (فيديو محمي بتوقيع) — ' + esc(u) : /^bunny:/.test(u || '') ? '🔐 Bunny (فيديو محمي بتوقيع) — ' + esc(u) : esc((u || '').slice(0, 60));
+const itUrl = u => /^tg:/.test(u || '') ? '✈️ تليجرام (فيديو محمي ومربوط بالطالب) — ' + esc(u) : /^r2w?:/.test(u || '') ? '☁️ R2 (فيديو محمي بتوقيع) — ' + esc(u) : /^bunny:/.test(u || '') ? '🔐 Bunny (فيديو محمي بتوقيع) — ' + esc(u) : esc((u || '').slice(0, 60));
 async function itemsModal(lid) {
   const l = (window.__L || []).find(x => x.id === lid) || {};
   const [it, qz] = await Promise.all([sb.from('lesson_items').select('*').eq('lesson_id', lid).order('position'), sb.from('quizzes').select('*,quiz_questions(count)').eq('lesson_id', lid)]);

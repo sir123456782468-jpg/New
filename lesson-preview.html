@@ -125,6 +125,7 @@ function render() {
 }
 window.addEventListener('message', e => {
   if (e.origin !== location.origin) return; const m = e.data; if (!m || m.type !== 'lk-preview') return;
+  if (m.theme === 'dark' || m.theme === 'light') document.body.setAttribute('data-theme', m.theme);
   CFG = m.cfg && typeof m.cfg === 'object' ? m.cfg : {}; PAGE = m.page === 'lecture' ? 'lecture' : 'course'; render();
 });
 document.addEventListener('click', e => { if (e.target.closest && e.target.closest('a')) e.preventDefault(); });

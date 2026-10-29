@@ -27,21 +27,26 @@
 
   /* ---------------------------------------------------------------- CSS */
   const CSS = `
-.uit{--w:62px;--h:32px;position:relative;flex:none;width:var(--w);height:var(--h);border-radius:99px;border:1px solid rgba(100,116,139,.35);padding:0;cursor:pointer;overflow:hidden;
-  background:linear-gradient(135deg,#bae6fd,#fde68a);transition:background .55s ease,border-color .55s ease,box-shadow .3s;-webkit-tap-highlight-color:transparent;outline:none;appearance:none;-webkit-appearance:none;font-size:0}
+.uit{position:relative;flex:none;width:44px;height:44px;border-radius:50%;border:1px solid rgba(180,83,9,.22);padding:0;cursor:pointer;display:grid;place-items:center;overflow:hidden;
+  background:#fff4dc;box-shadow:0 3px 12px -5px rgba(180,83,9,.45);transition:background-color .7s cubic-bezier(.4,0,.2,1),border-color .7s cubic-bezier(.4,0,.2,1),box-shadow .7s cubic-bezier(.4,0,.2,1),transform .35s cubic-bezier(.34,1.56,.64,1);-webkit-tap-highlight-color:transparent;outline:none;appearance:none;-webkit-appearance:none;font-size:0}
+.uit:hover{transform:scale(1.07)}.uit:active{transform:scale(.9)}
 .uit:focus-visible{box-shadow:0 0 0 3px rgba(239,68,68,.45)}
-.uit::before{content:"";position:absolute;inset:0;background:linear-gradient(135deg,#0b1224,#1e293b);opacity:0;transition:opacity .55s ease}
-.uit .st{position:absolute;inset:0;opacity:0;transition:opacity .5s ease;background:radial-gradient(1.5px 1.5px at 12px 9px,#fff 98%,transparent),radial-gradient(1px 1px at 22px 21px,#fff 98%,transparent),radial-gradient(1.2px 1.2px at 32px 8px,#fff 98%,transparent),radial-gradient(1px 1px at 40px 22px,#fff 98%,transparent)}
-.uit .k{position:absolute;top:3px;inset-inline-start:3px;width:calc(var(--h) - 8px);height:calc(var(--h) - 8px);border-radius:50%;background:#fbbf24;box-shadow:0 2px 6px rgba(0,0,0,.35);
-  transition:transform .55s cubic-bezier(.68,-.35,.27,1.35),background .5s ease;display:grid;place-items:center}
-.uit .k svg{position:absolute;width:62%;height:62%;transition:opacity .35s ease,transform .55s ease}
-.uit .k .sun{opacity:1;transform:rotate(0)}.uit .k .moon{opacity:0;transform:rotate(-90deg) scale(.6)}
-[dir=rtl] .uit[aria-pressed=true] .k{transform:translateX(calc(var(--w) * -1 + var(--h) - 2px))}
-[dir=ltr] .uit[aria-pressed=true] .k,:root:not([dir]) .uit[aria-pressed=true] .k{transform:translateX(calc(var(--w) - var(--h) + 2px))}
-.uit[aria-pressed=true]{border-color:#334155}.uit[aria-pressed=true]::before,.uit[aria-pressed=true] .st{opacity:1}
-.uit[aria-pressed=true] .k{background:#e2e8f0}.uit[aria-pressed=true] .k .sun{opacity:0;transform:rotate(90deg) scale(.6)}.uit[aria-pressed=true] .k .moon{opacity:1;transform:rotate(0)}
-.uit:active .k{width:calc(var(--h) - 2px)}
-html.ui-anim *,html.ui-anim *::before,html.ui-anim *::after{transition:background-color .5s ease,color .4s ease,border-color .5s ease,fill .5s ease,box-shadow .5s ease!important}
+.uit svg{width:28px;height:28px;overflow:visible;transition:transform .9s cubic-bezier(.34,1.25,.5,1);transform:rotate(0)}
+.uit .rays,.uit .core,.uit .cut,.uit .sp{transform-box:view-box;transform-origin:12px 12px}
+.uit .rays{stroke:#f59e0b;stroke-width:2;stroke-linecap:round;transition:opacity .45s ease,transform .8s cubic-bezier(.34,1.25,.5,1),stroke .6s;opacity:1;transform:rotate(0) scale(1)}
+.uit .core{fill:#f59e0b;transition:fill .7s cubic-bezier(.4,0,.2,1),transform .8s cubic-bezier(.34,1.25,.5,1);transform:scale(.56)}
+.uit .cut{fill:#fff4dc;transition:fill .7s cubic-bezier(.4,0,.2,1),transform .8s cubic-bezier(.34,1.25,.5,1),opacity .4s ease;transform:translate(15px,-15px);opacity:0}
+.uit .sp{fill:#fde68a;opacity:0;transition:opacity .5s ease .15s,transform .8s cubic-bezier(.34,1.25,.5,1) .1s;transform:scale(.3)}
+.uit[aria-pressed=true]{background:#18223f;border-color:rgba(148,163,184,.3);box-shadow:0 3px 14px -5px rgba(2,6,23,.9),0 0 0 3px rgba(148,163,184,.06)}
+.uit[aria-pressed=true] svg{transform:rotate(-28deg)}
+.uit[aria-pressed=true] .rays{opacity:0;transform:rotate(90deg) scale(.3)}
+.uit[aria-pressed=true] .core{fill:#e8edf7;transform:scale(1)}
+.uit[aria-pressed=true] .cut{fill:#18223f;transform:translate(4.6px,-4.2px);opacity:1}
+.uit[aria-pressed=true] .sp{opacity:1;transform:scale(1)}
+::view-transition-old(root),::view-transition-new(root){animation:none;mix-blend-mode:normal}
+html.ui-vt::view-transition-new(root){animation:uiReveal .75s cubic-bezier(.4,0,.2,1) both}
+@keyframes uiReveal{from{clip-path:circle(0 at var(--vx) var(--vy))}to{clip-path:circle(var(--vr) at var(--vx) var(--vy))}}
+html.ui-anim *:not(.uit):not(.uit *){transition:background-color .6s ease,color .5s ease,border-color .6s ease,fill .6s ease,box-shadow .6s ease!important}
 
 /* ---------- عارض الصور ---------- */
 .ulb{position:fixed;inset:0;z-index:100000;background:rgba(2,6,23,.92);display:flex;align-items:center;justify-content:center;overflow:hidden;touch-action:none;animation:ulbIn .2s ease;-webkit-tap-highlight-color:transparent}
@@ -90,28 +95,41 @@ img.zi,.zoomable img,img[data-zoom]{cursor:zoom-in}
 @keyframes ubnPulse{0%,100%{filter:brightness(1)}50%{filter:brightness(1.14)}}
 @keyframes ubnOut{to{opacity:0;transform:scale(.96);max-height:0;margin:0;padding-top:0;padding-bottom:0}}
 @media(max-width:560px){.ubn-bar{padding:10px 12px}.ubn .cd span{min-width:40px}}
-@media(prefers-reduced-motion:reduce){.ubn,.uit .k,.uit{animation:none!important;transition:none!important}}
+@media(prefers-reduced-motion:reduce){.ubn,.uit,.uit *{animation:none!important;transition:none!important}html.ui-vt::view-transition-new(root){animation:none!important}}
 `;
   const st = el('style'); st.id = 'ui-css'; st.textContent = CSS; (document.head || document.documentElement).appendChild(st);
 
   /* ---------------------------------------------------------------- الوضع الليلي */
-  const SUN = '<svg class="sun" viewBox="0 0 24 24" fill="none" stroke="#b45309" stroke-width="2.2" stroke-linecap="round"><circle cx="12" cy="12" r="4.2" fill="#fff7ed"/><path d="M12 2.5v2.4M12 19.1v2.4M2.5 12h2.4M19.1 12h2.4M5.3 5.3 7 7M17 17l1.7 1.7M5.3 18.7 7 17M17 7l1.7-1.7"/></svg>';
-  const MOON = '<svg class="moon" viewBox="0 0 24 24"><path d="M20 14.5A8.5 8.5 0 1 1 9.5 4a7 7 0 0 0 10.5 10.5z" fill="#475569"/></svg>';
+  const RAYS = [0, 45, 90, 135, 180, 225, 270, 315].map(d => '<line x1="12" y1="2.2" x2="12" y2="4.6" transform="rotate(' + d + ' 12 12)"/>').join('');
+  const ICON = '<svg viewBox="0 0 24 24" aria-hidden="true" focusable="false"><g class="rays">' + RAYS + '</g><circle class="core" cx="12" cy="12" r="9"/><circle class="cut" cx="12" cy="12" r="7.4"/>'
+    + '<path class="sp" d="M19.5 3.5l.6 1.5 1.5.6-1.5.6-.6 1.5-.6-1.5-1.5-.6 1.5-.6z"/><path class="sp" d="M4.2 17.6l.45 1.1 1.1.45-1.1.45-.45 1.1-.45-1.1-1.1-.45 1.1-.45z"/></svg>';
   UI.theme = () => (document.body && document.body.getAttribute('data-theme')) || store.get('platform_theme') || 'light';
-  UI.setTheme = function (t, animate) {
+  UI.setTheme = function (t, animate, src) {
     t = t === 'dark' ? 'dark' : 'light';
     const root = document.documentElement;
-    if (animate) { root.classList.add('ui-anim'); clearTimeout(UI._ta); UI._ta = setTimeout(() => root.classList.remove('ui-anim'), 650); }
-    if (document.body) document.body.setAttribute('data-theme', t);
-    store.set('platform_theme', t);
-    document.querySelectorAll('.uit').forEach(b => { b.setAttribute('aria-pressed', t === 'dark' ? 'true' : 'false'); b.title = t === 'dark' ? 'الوضع الليلي (اضغط للنهاري)' : 'الوضع النهاري (اضغط لليلي)'; });
-    if (typeof window.onThemeChange === 'function') { try { window.onThemeChange(t); } catch (e) {} }
+    const apply = () => {
+      if (document.body) document.body.setAttribute('data-theme', t);
+      store.set('platform_theme', t);
+      document.querySelectorAll('.uit').forEach(b => { b.setAttribute('aria-pressed', t === 'dark' ? 'true' : 'false'); b.title = t === 'dark' ? 'الوضع الليلي (اضغط للنهاري)' : 'الوضع النهاري (اضغط لليلي)'; });
+      if (typeof window.onThemeChange === 'function') { try { window.onThemeChange(t); } catch (e) {} }
+    };
+    const cur = document.body && document.body.getAttribute('data-theme');
+    const calm = window.matchMedia && matchMedia('(prefers-reduced-motion: reduce)').matches;
+    if (animate && cur !== t && !calm && typeof document.startViewTransition === 'function' && !document.hidden) {
+      // انتقال دائري ناعم يبدأ من الزرار نفسه
+      const r = src && src.getBoundingClientRect ? src.getBoundingClientRect() : null, x = r ? r.left + r.width / 2 : innerWidth / 2, y = r ? r.top + r.height / 2 : 0;
+      root.style.setProperty('--vx', x + 'px'); root.style.setProperty('--vy', y + 'px'); root.style.setProperty('--vr', Math.hypot(Math.max(x, innerWidth - x), Math.max(y, innerHeight - y)) + 'px');
+      root.classList.add('ui-vt');
+      try { const vt = document.startViewTransition(apply); const done = () => root.classList.remove('ui-vt'); vt.finished.then(done, done); return; } catch (e) { root.classList.remove('ui-vt'); }
+    }
+    if (animate) { root.classList.add('ui-anim'); clearTimeout(UI._ta); UI._ta = setTimeout(() => root.classList.remove('ui-anim'), 800); }
+    apply();
   };
   UI.initTheme = function () {
     document.querySelectorAll('.uit').forEach(b => {
       if (b.dataset.ready) return; b.dataset.ready = '1';
-      b.type = 'button'; b.setAttribute('role', 'switch'); b.setAttribute('aria-label', 'تغيير الوضع'); b.innerHTML = '<span class="st"></span><span class="k">' + SUN + MOON + '</span>';
-      b.addEventListener('click', () => UI.setTheme(UI.theme() === 'dark' ? 'light' : 'dark', true));
+      b.type = 'button'; b.setAttribute('role', 'switch'); b.setAttribute('aria-label', 'تغيير الوضع'); b.innerHTML = ICON;
+      b.addEventListener('click', () => UI.setTheme(UI.theme() === 'dark' ? 'light' : 'dark', true, b));
     });
     UI.setTheme(store.get('platform_theme') || UI.theme(), false);
   };
