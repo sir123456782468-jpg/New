@@ -291,6 +291,7 @@ async function lessonForm(cid, l) {
 const itemKind = { video: '🎬 فيديو', pdf: '📄 PDF', link: '🔗 رابط' };
 const normUrl = v => {
   v = (v || '').trim();
+  if (/^tg:[A-Za-z0-9_-]{6,40}$/.test(v)) return v;                           // فيديو تليجرام: السيرفر بيوقّع الرابط لكل طالب
   if ((/^r2:[A-Za-z0-9._\/-]{1,255}$/.test(v) || /^r2w:[A-Za-z0-9_-]{1,80}\/[A-Za-z0-9._\/-]{1,200}$/.test(v)) && !v.includes('..')) return v;       // فيديو R2: السيرفر بيوقّع الرابط
   let b = v.match(/^bunny:(\d+)\/([0-9a-fA-F-]{36})$/) || v.match(/^https:\/\/(?:iframe|player)\.mediadelivery\.net\/(?:embed|play)\/(\d+)\/([0-9a-fA-F-]{36})/);
   if (b) return 'bunny:' + b[1] + '/' + b[2].toLowerCase();                  // فيديو Bunny: بيتخزّن كـ bunny:المكتبة/الفيديو والسيرفر بيوقّع الرابط
