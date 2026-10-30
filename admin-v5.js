@@ -369,6 +369,10 @@ Object.assign(ACT, {
 Object.assign(ACTPERM, { r2Save: ['@admin'], r2Gen: ['@admin'], r2Del: ['@admin'], r2DelAcc: ['@admin'], r2AddAcc: ['@admin'], bnLibAdd: ['@admin'], bnLibDel: ['@admin'] });
 
 // ---------------------------------------------------------------- تليجرام (فيديو مجاني) — للمالك فقط. Bunny و R2 زي ما هم من غير أي تغيير.
+async function tgClip(t, inp) {
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) {}
+  try { const x = inp || document.createElement('textarea'); if (!inp) { x.value = t; x.style.position = 'fixed'; x.style.opacity = '0'; document.body.appendChild(x); } x.focus(); x.select(); try { x.setSelectionRange(0, 9999); } catch (z) {} const ok = document.execCommand('copy'); if (!inp) x.remove(); return !!ok; } catch (e) { return false; }
+}
 const tgKeyOk = v => /^[A-Za-z0-9_-]{24,200}$/.test(v || '');
 function tgStatusPill(ok) { return ok ? '<span class="pill ok">✅ محفوظ</span>' : '<span class="pill no">ناقص</span>'; }
 function tgCard(st, list, listErr) {
@@ -378,8 +382,8 @@ function tgCard(st, list, listErr) {
     + '<p class="nt" style="margin:6px 0 0;line-height:1.9">الفيديوهات بتتخزّن في قناتك الخاصة على تليجرام، وبتتشغّل عن طريق بوابتك على Cloudflare بمشغّل المنصة نفسه. الرابط بيتجدّد لكل طالب وبينتهي لوحده ومربوط بحسابه. في «محتوى الدرس» اكتب الفيديو بالشكل: <b dir="ltr">tg:معرّف-الفيديو</b> (الأداة بتطبعه لك بعد الرفع). Bunny و R2 ويوتيوب شغّالين جنبه عادي.</p>'
     + '<label>رابط البوابة (Worker) ' + tgStatusPill(st.tg_worker_base) + '</label><input data-tg="tg_worker_base" dir="ltr" autocomplete="off" placeholder="' + (st.tg_worker_base ? '(سيبه فاضي لو مش عايز تغيّره)' : 'https://leader-video.xxxx.workers.dev') + '">'
     + '<label>مفتاح التوقيع TOKEN_KEY ' + tgStatusPill(st.tg_token_key) + '</label><input data-tg="tg_token_key" type="password" dir="ltr" autocomplete="off" placeholder="' + (st.tg_token_key ? '(سيبه فاضي لو مش عايز تغيّره)' : 'ولّد مفتاح ثم انسخه للـWorker') + '">'
-    + '<div class="bar" style="margin:10px 0 0"><button class="btn s" data-act="tgSave">💾 حفظ</button><button class="btn s g" data-act="tgGen">🎲 ولّد مفتاح عشوائي</button><button class="btn s r" data-act="tgReset">حذف الإعدادات</button></div>'
-    + '<p class="nt" style="margin:8px 0 0;line-height:1.9">⚠️ «مفتاح التوقيع» لازم يكون <b>نفس القيمة بالظبط</b> اللي هتحطها في إعدادات الـWorker باسم <b dir="ltr">TOKEN_KEY</b>. لو غيّرته هنا غيّره هناك كمان.</p>'
+    + '<div class="bar" style="margin:10px 0 0"><button class="btn s" data-act="tgSave">💾 حفظ</button><button class="btn s g" data-act="tgGen">🎲 ولّد مفتاح عشوائي</button><button class="btn s g" data-act="tgCopyKey">📋 نسخ المفتاح</button><button class="btn s r" data-act="tgReset">حذف الإعدادات</button></div>'
+    + '<p class="nt" style="margin:8px 0 0;line-height:1.9">⚠️ «مفتاح التوقيع» لازم يكون <b>نفس القيمة بالظبط</b> اللي هتحطها في إعدادات الـWorker باسم <b dir="ltr">TOKEN_KEY</b>. لو غيّرته هنا غيّره هناك كمان. المفتاح بعد الحفظ مابيتعرضش تاني (أمان) — فانسخه قبل ما تدوس حفظ.</p>'
     + '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)"><b>🔑 مفتاح الرفع ADMIN_KEY</b><p class="nt" style="margin:4px 0 8px;line-height:1.9">ده مفتاح تاني بيحطّه الـWorker وأداة الرفع (مش بيتخزّن في المنصة). اضغط ولّد، وانسخه في مكانين بس: إعدادات الـWorker باسم <b dir="ltr">ADMIN_KEY</b>، وأداة الرفع لما تسألك عنه.</p><div class="bar" style="margin:0"><input id="tgAdm" readonly dir="ltr" placeholder="اضغط ولّد" style="flex:1;min-width:220px"><button class="btn s g" data-act="tgGenAdmin">🎲 ولّد وانسخ</button></div></div>'
     + '<div style="margin-top:12px;padding-top:10px;border-top:1px dashed var(--line)"><b>🎞️ فيديوهات تليجرام المسجّلة (' + (list || []).length + ')</b>'
     + (listErr ? '<p class="nt" style="color:var(--danger,#ef4444)">' + esc(listErr) + '</p>' : '')
@@ -409,8 +413,9 @@ Object.assign(ACT, {
     }
     if (!n) throw new Error('اكتب قيمة واحدة على الأقل'); toast('تم الحفظ ✅'); go('settings');
   },
-  tgGen: () => { const i = document.querySelector('#tgBox input[data-tg="tg_token_key"]'); const a = new Uint8Array(24); crypto.getRandomValues(a); i.type = 'text'; i.value = Array.from(a).map(b => b.toString(16).padStart(2, '0')).join(''); toast('انسخ المفتاح ده وحطه في الـWorker باسم TOKEN_KEY، وبعدين اضغط حفظ'); },
-  tgGenAdmin: async () => { const i = $('#tgAdm'); const a = new Uint8Array(24); crypto.getRandomValues(a); i.value = Array.from(a).map(b => b.toString(16).padStart(2, '0')).join(''); i.select(); try { await navigator.clipboard.writeText(i.value); toast('اتولّد واتنسخ ✅ — الصقه في Worker باسم ADMIN_KEY'); } catch (e) { toast('انسخ المفتاح اللي ظهر'); } },
+  tgGen: async () => { const i = document.querySelector('#tgBox input[data-tg="tg_token_key"]'); const a = new Uint8Array(24); crypto.getRandomValues(a); i.type = 'text'; i.value = Array.from(a).map(b => b.toString(16).padStart(2, '0')).join(''); const ok = await tgClip(i.value, i); toast(ok ? 'اتولّد واتنسخ ✅ — الصقه في الـWorker باسم TOKEN_KEY، وبعدين اضغط حفظ' : 'اتولّد — دوس مطوّل على المفتاح وانسخه، أو دوس «📋 نسخ المفتاح»'); },
+  tgCopyKey: async () => { const i = document.querySelector('#tgBox input[data-tg="tg_token_key"]'); if (!i || !i.value.trim()) { toast('ولّد مفتاح الأول'); return; } i.type = 'text'; const ok = await tgClip(i.value, i); toast(ok ? 'اتنسخ ✅' : 'دوس مطوّل على المفتاح وانسخه'); },
+  tgGenAdmin: async () => { const i = $('#tgAdm'); const a = new Uint8Array(24); crypto.getRandomValues(a); i.value = Array.from(a).map(b => b.toString(16).padStart(2, '0')).join(''); const ok = await tgClip(i.value, i); toast(ok ? 'اتولّد واتنسخ ✅ — الصقه في Worker باسم ADMIN_KEY' : 'اتولّد — دوس مطوّل على المفتاح وانسخه'); },
   tgReset: async () => {
     if (!confirm('حذف إعدادات تليجرام؟ فيديوهات تليجرام هتقف لحد ما تحطها تاني.')) return;
     for (const k of ['tg_worker_base', 'tg_token_key']) { const { error } = await sb.rpc('set_secret', { p_key: k, p_value: null }); if (error) throw new Error(secErr(error)); }
@@ -422,7 +427,7 @@ Object.assign(ACT, {
     const { error } = await sb.rpc('tg_delete', { p_id: id }); if (error) throw new Error(secErr(error)); toast('تم الحذف'); go('settings');
   }
 });
-Object.assign(ACTPERM, { tgSave: ['@admin'], tgGen: ['@admin'], tgGenAdmin: ['@admin'], tgReset: ['@admin'], tgCopy: ['@admin'], tgDel: ['@admin'] });
+Object.assign(ACTPERM, { tgSave: ['@admin'], tgGen: ['@admin'], tgGenAdmin: ['@admin'], tgCopyKey: ['@admin'], tgReset: ['@admin'], tgCopy: ['@admin'], tgDel: ['@admin'] });
 
 // ---------------------------------------------------------------- حالات حساب الطالب: إيقاف مؤقت / إيقاف نهائي / حظر / حذف
 const ST_L = { active: ['ok', 'نشط'], suspended: ['warn', 'موقوف مؤقتاً'], stopped: ['no', 'موقوف'], banned: ['no', 'محظور'] };
