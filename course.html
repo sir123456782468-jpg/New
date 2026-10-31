@@ -126,6 +126,30 @@ body{background:var(--bg);color:var(--ink);min-height:100vh}
 .vwrap.pfs{position:fixed;inset:0;z-index:2147483000;border-radius:0;aspect-ratio:auto;width:100vw;height:100vh;height:100dvh}
 body.pfsb{overflow:hidden}
 @media(max-width:600px){.tgc-big{width:62px;height:62px;font-size:25px}.tgc-sk{width:44px;height:44px}}
+/* ===== شكل الأزرار (زجاجي) ===== */
+.tgc-big{width:88px;height:88px;background:rgba(255,255,255,.14)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1.5px solid rgba(255,255,255,.38);box-shadow:0 10px 40px rgba(0,0,0,.45)!important;color:#fff;display:grid;place-items:center;padding:0}
+.tgc-big svg{width:42px;height:42px}
+.vwrap.paused .tgc-big{background:var(--grad)!important;border-color:transparent;animation:tgpulse 2.2s infinite}
+@keyframes tgpulse{0%{box-shadow:0 10px 40px rgba(0,0,0,.45),0 0 0 0 rgba(236,72,153,.55)}70%{box-shadow:0 10px 40px rgba(0,0,0,.45),0 0 0 24px rgba(236,72,153,0)}100%{box-shadow:0 10px 40px rgba(0,0,0,.45),0 0 0 0 rgba(236,72,153,0)}}
+.tgc-sk{width:62px;height:62px;background:rgba(255,255,255,.12);backdrop-filter:blur(12px);-webkit-backdrop-filter:blur(12px);border:1.5px solid rgba(255,255,255,.3);box-shadow:0 8px 24px rgba(0,0,0,.4);padding:0;color:#fff}
+.tgc-sk svg{width:36px;height:36px}
+.tgc-sk:active{background:rgba(255,255,255,.28)}
+.tgc-fl{color:#fff;background:rgba(255,255,255,.2);backdrop-filter:blur(8px)}.tgc-fl svg{width:34px;height:34px}
+.tgc-bar{padding:44px 16px 12px;background:linear-gradient(#0000,#000d)}
+.tgc-pg{height:5px;margin:0 2px 14px;transition:height .15s}
+.tgc-pg:hover,.tgc-pg:active{height:8px}
+.tgc-pg .f{box-shadow:0 0 12px rgba(236,72,153,.75)}
+.tgc-pg .k{width:17px;height:17px;margin:-8.5px 0 0 -8.5px;box-shadow:0 0 0 6px rgba(236,72,153,.35),0 2px 8px #0008}
+.tgc-ct{gap:10px}
+.tgc-ct button{height:42px;min-width:42px;padding:0;border-radius:50%;background:rgba(255,255,255,.12);backdrop-filter:blur(10px);-webkit-backdrop-filter:blur(10px);border:1px solid rgba(255,255,255,.2);display:inline-flex;align-items:center;justify-content:center;gap:6px;transition:background .15s,transform .15s}
+.tgc-ct button:active{transform:scale(.9)}
+.tgc-ct button svg{width:22px;height:22px;flex:none}
+.tgc-ct #tgPl{background:var(--grad);border-color:transparent;width:46px;height:46px}
+.tgc-ct #tgPl svg{width:24px;height:24px}
+.tgc-ct #tgSt{border-radius:22px;padding:0 14px}
+.tgc-ct #tgTm{background:rgba(255,255,255,.12);border:1px solid rgba(255,255,255,.16);padding:7px 13px;border-radius:20px;font-size:13px}
+@media(max-width:600px){.tgc-big{width:70px;height:70px}.tgc-big svg{width:32px;height:32px}.tgc-sk{width:50px;height:50px}.tgc-sk svg{width:30px;height:30px}.tgc-ct{gap:7px}.tgc-ct button{height:38px;min-width:38px}.tgc-ct #tgPl{width:42px;height:42px}.tgc-ct #tgTm{padding:6px 10px;font-size:12px}.tgc-ct #tgSt{padding:0 10px}}
+
 @media print{.vwrap,#player iframe{display:none!important}}
 /* بدون علامة زرقاء عند الضغط على الشعار */
 .brand,.brand *,.logo,.logo *{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.brand,.brand:focus,.brand:focus-visible,.brand:active,.logo:focus{outline:none;-webkit-tap-highlight-color:transparent}.brand img,.logo img{-webkit-user-drag:none;user-drag:none;outline:none}a,button{-webkit-tap-highlight-color:transparent}
@@ -524,17 +548,31 @@ function tgOk(u) {
     return l.protocol === 'https:' && l.searchParams.get('tg') === '1' && !!window.currentUser && /^\/v\/\d{10}\/[0-9a-f-]{36}\/[0-9a-f]{64}\/[A-Za-z0-9_-]{6,40}\/index\.m3u8$/.test(l.pathname) && l.pathname.split('/')[3].toLowerCase() === String(window.currentUser.id).toLowerCase();
   } catch (e) { return false; }
 }
+const IC = (() => {
+  const f = d => '<svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">' + d + '</svg>', k = d => '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">' + d + '</svg>';
+  const t = '<text x="12" y="15.4" font-size="7.2" font-weight="800" text-anchor="middle" fill="currentColor" stroke="none" font-family="Cairo,Arial,sans-serif">10</text>';
+  return {
+    play: f('<path d="M8 5.2v13.6a1 1 0 0 0 1.5.86l11-6.8a1 1 0 0 0 0-1.72l-11-6.8A1 1 0 0 0 8 5.2z"/>'),
+    pause: f('<rect x="6" y="4.5" width="4.4" height="15" rx="1.5"/><rect x="13.6" y="4.5" width="4.4" height="15" rx="1.5"/>'),
+    back: k('<path d="M12 5V2.2L7.6 6 12 9.8V7a6 6 0 1 1-6 6"/>') .replace('</svg>', t + '</svg>'),
+    fwd: k('<path d="M12 5V2.2L16.4 6 12 9.8V7a6 6 0 1 0 6 6"/>').replace('</svg>', t + '</svg>'),
+    vol: k('<path d="M4 9.5v5h3.5l5 4v-13l-5 4z" fill="currentColor"/><path d="M16 9a4 4 0 0 1 0 6M18.6 6.4a8 8 0 0 1 0 11.2"/>'),
+    mute: k('<path d="M4 9.5v5h3.5l5 4v-13l-5 4z" fill="currentColor"/><path d="M16.5 9.5l5 5M21.5 9.5l-5 5"/>'),
+    set: k('<path d="M4 7h9M19 7h1M4 17h1M11 17h9"/><circle cx="16" cy="7" r="2.4"/><circle cx="8" cy="17" r="2.4"/>'),
+    fs: k('<path d="M4 9V4h5M20 9V4h-5M4 15v5h5M20 15v5h-5"/>')
+  };
+})();
 function tgOverlay() {
   const nm = (document.querySelector('.brand b') || {}).textContent || 'The Leader In English', tn = (document.querySelector('.brand small') || {}).textContent || '';
   return '<div class="tgc on" id="tgc"><div class="tgc-top"><img src="/logo.png" alt=""><b>' + esc(nm) + '</b><span>' + esc(tn) + '</span></div>'
-    + '<button type="button" class="tgc-sk l" id="tgBk" aria-label="رجوع 10 ثواني">⏪ 10</button><button type="button" class="tgc-sk r" id="tgFw" aria-label="تقديم 10 ثواني">10 ⏩</button>'
-    + '<button type="button" class="tgc-big" id="tgBig" aria-label="تشغيل">▶</button><div class="tgc-sp"></div><div class="tgc-fl l" id="tgFlL">⏪ 10</div><div class="tgc-fl r" id="tgFlR">10 ⏩</div>'
+    + '<button type="button" class="tgc-sk l" id="tgBk" aria-label="رجوع 10 ثواني">' + IC.back + '</button><button type="button" class="tgc-sk r" id="tgFw" aria-label="تقديم 10 ثواني">' + IC.fwd + '</button>'
+    + '<button type="button" class="tgc-big" id="tgBig" aria-label="تشغيل" data-s="p">' + IC.play + '</button><div class="tgc-sp"></div><div class="tgc-fl l" id="tgFlL">' + IC.back + '</div><div class="tgc-fl r" id="tgFlR">' + IC.fwd + '</div>'
     + '<div class="tgc-err" id="tgErr"></div>'
     + '<div class="tgc-mn" id="tgMn" hidden><div class="mv" id="tgMv0"><button type="button" class="mrow" id="tgRowQ" hidden><span>الجودة</span><em id="tgRowQv">تلقائي</em><i>‹</i></button><button type="button" class="mrow" id="tgRowS"><span>السرعة</span><em id="tgRowSv">عادي</em><i>‹</i></button></div>'
     + '<div class="mv" id="tgMvS" hidden><button type="button" class="mback" data-back="1"><i>›</i> السرعة</button><div class="mr" id="tgMnR"></div></div>'
     + '<div class="mv" id="tgMvQ" hidden><button type="button" class="mback" data-back="1"><i>›</i> الجودة</button><div class="mr" id="tgMnQ"></div></div></div>'
     + '<div class="tgc-bar"><div class="tgc-pg" id="tgPg"><i class="b" id="tgB"></i><i class="f" id="tgF"></i><i class="k" id="tgK"></i></div>'
-    + '<div class="tgc-ct"><button type="button" id="tgPl" aria-label="تشغيل/إيقاف">▶</button><button type="button" id="tgMu" aria-label="الصوت">🔊</button><span id="tgTm">0:00 / 0:00</span><i class="sp"></i><button type="button" id="tgSt" aria-label="الإعدادات: السرعة والجودة">⚙ <b id="tgStl">1×</b></button><button type="button" id="tgFs" aria-label="ملء الشاشة">⛶</button></div></div></div>';
+    + '<div class="tgc-ct"><button type="button" id="tgPl" aria-label="تشغيل/إيقاف" data-s="p">' + IC.play + '</button><button type="button" id="tgMu" aria-label="الصوت">' + IC.vol + '</button><span id="tgTm">0:00 / 0:00</span><i class="sp"></i><button type="button" id="tgSt" aria-label="الإعدادات: السرعة والجودة">' + IC.set + '<b id="tgStl">1×</b></button><button type="button" id="tgFs" aria-label="ملء الشاشة">' + IC.fs + '</button></div></div></div>';
 }
 function tgFs() {
   const w = $('#vw'); if (!w) return;
@@ -647,7 +685,7 @@ function tgBind(v) {
   const g = id => document.getElementById(id), box = g('tgc'), w = g('vw'); if (!box || !w) return;
   let ht = 0;
   const mn = g('tgMn'); const menuOpen = () => !!mn && !mn.hidden;
-  const show = () => { box.classList.add('on'); clearTimeout(ht); if (!v.paused && !menuOpen()) ht = setTimeout(() => box.classList.remove('on'), 3000); };
+  const show = () => { box.classList.add('on'); clearTimeout(ht); if (!v.paused && !menuOpen()) ht = setTimeout(() => box.classList.remove('on'), 5000); };
   const closeMenu = () => { if (mn) mn.hidden = true; };
   const upd = () => {
     const d = v.duration || PL.dur || 0, c = v.currentTime || 0; let b = 0;
@@ -655,7 +693,7 @@ function tgBind(v) {
     const p = d ? Math.min(100, c * 100 / d) : 0;
     g('tgF').style.width = p + '%'; g('tgK').style.left = p + '%'; g('tgB').style.width = (d ? Math.min(100, b * 100 / d) : 0) + '%'; g('tgTm').textContent = fmtT(c) + ' / ' + fmtT(d);
   };
-  const sync = () => { const p = v.paused; w.classList.toggle('paused', p); g('tgPl').textContent = p ? '▶' : '⏸'; g('tgBig').textContent = p ? '▶' : '⏸'; if (p) { box.classList.add('on'); clearTimeout(ht); } else show(); };
+  const sync = () => { const p = v.paused; w.classList.toggle('paused', p); [g('tgPl'), g('tgBig')].forEach(b => { b.dataset.s = p ? 'p' : 'pl'; b.innerHTML = p ? IC.play : IC.pause; }); if (p) { box.classList.add('on'); clearTimeout(ht); } else show(); };
   w.classList.add('paused');
   ['timeupdate', 'progress', 'loadedmetadata', 'durationchange', 'seeked'].forEach(n => v.addEventListener(n, upd));
   ['play', 'pause', 'ended'].forEach(n => v.addEventListener(n, sync));
@@ -674,12 +712,13 @@ function tgBind(v) {
     const r = box.getBoundingClientRect(), x = (ev.clientX - r.left) / (r.width || 1), now = Date.now();
     if (now - lastTap < 330 && (x < 0.38 || x > 0.62) && Math.abs(x - lastX) < 0.3) { lastTap = 0; seekBy(x < 0.5 ? -10 : 10); flash(x < 0.5); return; }
     lastTap = now; lastX = x;
-    if (box.classList.contains('on') && !v.paused) { box.classList.remove('on'); clearTimeout(ht); } else show();
+    show();       // اللمسة بتظهر الأزرار 5 ثواني (وبتتجدّد مع كل لمسة)
   });
-  box.addEventListener('pointermove', show);
+  box.addEventListener('pointerup', () => { if (box.classList.contains('on')) show(); }, true);
+  box.addEventListener('pointermove', ev => { if (ev.pointerType === 'mouse') show(); });
   g('tgBig').onclick = ev => { ev.stopPropagation(); toggle(); }; g('tgPl').onclick = ev => { ev.stopPropagation(); toggle(); };
   g('tgBk').onclick = ev => { ev.stopPropagation(); seekBy(-10); }; g('tgFw').onclick = ev => { ev.stopPropagation(); seekBy(10); };
-  g('tgMu').onclick = ev => { ev.stopPropagation(); v.muted = !v.muted; g('tgMu').textContent = v.muted ? '🔇' : '🔊'; };
+  g('tgMu').onclick = ev => { ev.stopPropagation(); v.muted = !v.muted; g('tgMu').innerHTML = v.muted ? IC.mute : IC.vol; g('tgMu').dataset.m = v.muted ? '1' : ''; };
   const RATES = [0.75, 1, 1.25, 1.5, 2], rl = r => r === 1 ? 'عادي' : r + '×';
   const views = { 0: g('tgMv0'), S: g('tgMvS'), Q: g('tgMvQ') }, view = k => Object.keys(views).forEach(x => { views[x].hidden = x !== String(k); });
   window.tgBack = () => view(0);
@@ -711,7 +750,7 @@ document.addEventListener('keydown', ev => {
   else if (k === 'ArrowLeft') { ev.preventDefault(); v.currentTime = Math.max(0, v.currentTime - 10); }
   else if (k === 'ArrowRight') { ev.preventDefault(); v.currentTime = Math.min(v.duration || 1e9, v.currentTime + 10); }
   else if (k === 'f' || k === 'F') { ev.preventDefault(); tgFs(); }
-  else if (k === 'm' || k === 'M') { ev.preventDefault(); v.muted = !v.muted; const m = document.getElementById('tgMu'); if (m) m.textContent = v.muted ? '🔇' : '🔊'; }
+  else if (k === 'm' || k === 'M') { ev.preventDefault(); v.muted = !v.muted; const m = document.getElementById('tgMu'); if (m) { m.innerHTML = v.muted ? IC.mute : IC.vol; m.dataset.m = v.muted ? '1' : ''; } }
 });
 
 /* ===== مشغّل موحّد: استكمال من حيث وقفت + سرعات + ملاحظات على وقت معيّن ===== */
