@@ -520,6 +520,9 @@ function tgNote(x) { try { TGLOG.push(String(x).slice(0, 90)); if (TGLOG.length 
 let TGPROBE = '';
 function tgHint() {
   const lg = TGLOG.join(' ');
+  if (TGPROBE === 'old') return '<div style="margin-top:8px;color:#fde68a">السبب: الـWorker في Cloudflare لسه على الكود القديم. افتح Edit code والصق الكود الجديد (tg-worker.txt) واضغط Deploy.</div>';
+  if (TGPROBE === 'anon') return '<div style="margin-top:8px;color:#fde68a">السبب: المفتاح SB_ANON في Cloudflare غلط أو من مشروع Supabase تاني (لازم «anon public» من Settings ← API Keys) أو SB_URL غلط.</div>';
+  if (TGPROBE === 'service') return '<div style="margin-top:8px;color:#fde68a">السبب: المفتاح SB_SERVICE في Cloudflare غلط (لازم «service_role» من نفس المشروع).</div>';
   if (/auth cfg/.test(lg)) return '<div style="margin-top:8px;color:#fde68a">السبب: في Cloudflare الإعدادين SB_URL أو SB_ANON ناقصين أو فاضيين.</div>';
   if (/auth token/.test(lg)) return '<div style="margin-top:8px;color:#fde68a">السبب: Supabase رفض توكن الدخول — غالباً SB_URL أو SB_ANON في Cloudflare غلط (لازم مفتاح anon public من نفس مشروع Supabase). سجّل خروج ودخول وجرّب.</div>';
   if (/auth user/.test(lg)) return '<div style="margin-top:8px;color:#fde68a">السبب: التوكن بتاع حساب تاني غير صاحب الرابط. سجّل خروج ودخول وحدّث الصفحة.</div>';
@@ -530,15 +533,28 @@ function tgHint() {
   if (/^cfg:/.test(TGPROBE)) return '<div style="margin-top:8px;color:#fde68a">السبب المحتمل: إعدادات ناقصة في Cloudflare (' + esc(TGPROBE.slice(4).split(',').map(k => ({ bot: 'TG_BOT_TOKEN' }[k] || k.toUpperCase())).join(' ، ')) + ').</div>';
   return '';
 }
+let TGSRV = false;
+async function tgSrv(src) {
+  if (TGSRV) return; TGSRV = true;
+  try {
+    const c = new AbortController(), t = setTimeout(() => c.abort(), 8000);
+    const r = await fetch(src, { cache: 'no-store', signal: c.signal, headers: { Authorization: 'Bearer ' + TGTOK } }); clearTimeout(t);
+    const x = r.ok ? '' : String(await r.text()).replace(/[^\w .:-]/g, '').slice(0, 24);
+    tgNote('srv ' + r.status + (x ? ' ' + x : ''));
+  } catch (z) { tgNote('srv blocked'); }
+}
 async function tgProbe(org) {
   try {
     const c = new AbortController(), t = setTimeout(() => c.abort(), 8000);
     const r = await fetch(org + '/health', { cache: 'no-store', signal: c.signal }); clearTimeout(t);
+    if (r.status === 404) { TGPROBE = 'old'; tgNote('worker is old version'); return; }
     const j = await r.json();
     if (!j || !j.ok) { TGPROBE = 'bad'; tgNote('health bad'); return; }
     const miss = Object.keys(j.cfg || {}).filter(k => k !== 'origins' && !j.cfg[k]); if (!j.cfg || !j.cfg.origins) miss.push('ALLOWED_ORIGINS');
     if (!j.origin_allowed) { TGPROBE = 'origin'; tgNote('health: origin not allowed (' + String(j.origin || '').slice(0, 40) + ')'); }
     else if (miss.length) { TGPROBE = 'cfg:' + miss.join(','); tgNote('health: missing ' + miss.join(',')); }
+    else if (j.live && j.live.anon === false) { TGPROBE = 'anon'; tgNote('health: SB_ANON rejected'); }
+    else if (j.live && j.live.service === false) { TGPROBE = 'service'; tgNote('health: SB_SERVICE rejected'); }
     else { TGPROBE = 'ok'; tgNote('health ok'); }
   } catch (z) { TGPROBE = 'net'; tgNote('health: unreachable'); }
 }
@@ -559,6 +575,7 @@ async function tgStart(v, e) {
   v.addEventListener('loadedmetadata', () => clearTimeout(wd), { once: true });
   h.on(Hls.Events.ERROR, async (ev, d) => {
     if (d) tgNote((d.fatal ? 'FATAL ' : '') + tgWhy(d));
+    if (d && d.fatal) tgSrv(e.src);
     if (!d || !d.fatal) return;
     const code = d.response && d.response.code;
     if (code === 401 || code === 403) {
