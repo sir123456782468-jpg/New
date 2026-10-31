@@ -80,7 +80,13 @@ body{background:var(--bg);color:var(--ink);min-height:100vh}
 .tgc button{font-family:inherit;color:#fff;border:0;cursor:pointer}
 .tgc-big{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:78px;height:78px;border-radius:50%;background:var(--grad);font-size:30px;display:grid;place-items:center;box-shadow:0 0 0 10px rgba(239,68,68,.18),0 14px 34px rgba(236,72,153,.45);transition:transform .15s}
 .tgc-big:active{transform:translate(-50%,-50%) scale(.94)}
-.vwrap:not(.paused) .tgc-big{opacity:0;pointer-events:none}.vwrap:not(.paused) .tgc.on .tgc-big{opacity:.0}
+.tgc-big,.tgc-sk{transition:opacity .22s,transform .22s}
+.vwrap:not(.paused) .tgc:not(.on) .tgc-big,.vwrap:not(.paused) .tgc:not(.on) .tgc-sk{opacity:0;pointer-events:none}
+.vwrap:not(.paused) .tgc.on .tgc-big{background:rgba(255,255,255,.2);backdrop-filter:blur(10px);box-shadow:0 0 0 1px rgba(255,255,255,.25)}
+.vwrap:not(.paused) .tgc.on .tgc-big,.vwrap:not(.paused) .tgc.on .tgc-sk{animation:tgpop .24s ease-out}
+@keyframes tgpop{from{opacity:0;transform:translate(-50%,-50%) scale(.82)}to{opacity:1;transform:translate(-50%,-50%) scale(1)}}
+.vwrap:not(.paused) .tgc.on .tgc-sk{animation-name:tgpop2}
+@keyframes tgpop2{from{opacity:0;transform:translateY(-50%) scale(.82)}to{opacity:1;transform:translateY(-50%) scale(1)}}
 .tgc-sk{position:absolute;top:50%;transform:translateY(-50%);width:54px;height:54px;border-radius:50%;background:rgba(255,255,255,.14);backdrop-filter:blur(8px);font:800 13px Cairo,sans-serif;display:grid;place-items:center}
 .tgc-sk.l{left:13%}.tgc-sk.r{right:13%}
 .tgc-sp{position:absolute;top:50%;left:50%;width:46px;height:46px;margin:-23px;border-radius:50%;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;animation:tgsp .8s linear infinite;display:none;pointer-events:none}
@@ -98,10 +104,28 @@ body{background:var(--bg);color:var(--ink);min-height:100vh}
 .tgc-ct{display:flex;align-items:center;gap:8px;font-size:13px;font-weight:800}
 .tgc-ct button{height:34px;min-width:34px;padding:0 11px;border-radius:10px;background:rgba(255,255,255,.14);font-weight:800;font-size:13px}
 .tgc-ct #tgPl{background:var(--grad)}
+.tgc-ct #tgSt b{font-weight:800}
+.tgc-mn{position:absolute;left:12px;bottom:66px;width:236px;max-width:calc(100% - 24px);max-height:calc(100% - 90px);overflow-y:auto;background:rgba(244,246,252,.97);color:#3b4558;border-radius:14px;padding:6px;z-index:4;cursor:default;box-shadow:0 14px 36px #0007;transform-origin:bottom left}
+.tgc-mn:not([hidden]){animation:tgmn .18s ease-out}
+@keyframes tgmn{from{opacity:0;transform:translateY(8px) scale(.96)}to{opacity:1;transform:none}}
+.tgc-mn[hidden],.tgc-mn .mv[hidden],.tgc-mn .mrow[hidden]{display:none}
+.tgc-mn .mrow{display:flex;align-items:center;gap:8px;width:100%;height:44px;padding:0 12px;border-radius:10px;background:transparent;color:#3b4558;font-weight:800;font-size:14px;text-align:start}
+.tgc-mn .mrow span{flex:1}.tgc-mn .mrow em{font-style:normal;opacity:.75;font-weight:800;direction:ltr}.tgc-mn .mrow i{font-style:normal;opacity:.55;font-size:18px}
+.tgc-mn .mrow:hover,.tgc-mn .mrow:active,.tgc-mn .mr button:hover{background:rgba(120,130,160,.16)}
+.tgc-mn .mback{display:flex;align-items:center;gap:6px;width:100%;height:40px;padding:0 10px;border-radius:10px;background:transparent;color:#3b4558;font-weight:800;font-size:13px;border-bottom:1px solid rgba(120,130,160,.25);border-radius:10px 10px 0 0;margin-bottom:4px}
+.tgc-mn .mback i{font-style:normal;font-size:18px;opacity:.6}
+.tgc-mn .mr{display:flex;flex-direction:column;gap:2px}
+.tgc-mn .mr button{display:flex;align-items:center;justify-content:space-between;height:42px;padding:0 12px;border-radius:10px;background:transparent;color:#3b4558;font-weight:800;font-size:14px;direction:rtl}
+.tgc-mn .mr button.on{background:rgba(236,72,153,.12);color:#be185d}
+.tgc-mn .mr button.on:after{content:"✓";font-weight:900}
+.tgc-fl{position:absolute;top:50%;margin-top:-30px;width:60px;height:60px;border-radius:50%;background:rgba(255,255,255,.2);display:grid;place-items:center;font-weight:800;font-size:13px;pointer-events:none;opacity:0;z-index:3}
+.tgc-fl.l{left:14%}.tgc-fl.r{right:14%}.tgc-fl.go{animation:tgfl .6s ease-out}
+@keyframes tgfl{0%{opacity:.95;transform:scale(.8)}100%{opacity:0;transform:scale(1.25)}}
+
 .tgc-ct .sp{flex:1}.tgc-ct span{direction:ltr;font-variant-numeric:tabular-nums}
 .vwrap.pfs{position:fixed;inset:0;z-index:2147483000;border-radius:0;aspect-ratio:auto;width:100vw;height:100vh;height:100dvh}
 body.pfsb{overflow:hidden}
-@media(max-width:600px){.tgc-big{width:62px;height:62px;font-size:25px}.tgc-sk{width:44px;height:44px}.tgc-ct #tgRt{display:inline-block}}
+@media(max-width:600px){.tgc-big{width:62px;height:62px;font-size:25px}.tgc-sk{width:44px;height:44px}}
 @media print{.vwrap,#player iframe{display:none!important}}
 /* بدون علامة زرقاء عند الضغط على الشعار */
 .brand,.brand *,.logo,.logo *{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.brand,.brand:focus,.brand:focus-visible,.brand:active,.logo:focus{outline:none;-webkit-tap-highlight-color:transparent}.brand img,.logo img{-webkit-user-drag:none;user-drag:none;outline:none}a,button{-webkit-tap-highlight-color:transparent}
@@ -504,10 +528,13 @@ function tgOverlay() {
   const nm = (document.querySelector('.brand b') || {}).textContent || 'The Leader In English', tn = (document.querySelector('.brand small') || {}).textContent || '';
   return '<div class="tgc on" id="tgc"><div class="tgc-top"><img src="/logo.png" alt=""><b>' + esc(nm) + '</b><span>' + esc(tn) + '</span></div>'
     + '<button type="button" class="tgc-sk l" id="tgBk" aria-label="رجوع 10 ثواني">⏪ 10</button><button type="button" class="tgc-sk r" id="tgFw" aria-label="تقديم 10 ثواني">10 ⏩</button>'
-    + '<button type="button" class="tgc-big" id="tgBig" aria-label="تشغيل">▶</button><div class="tgc-sp"></div>'
+    + '<button type="button" class="tgc-big" id="tgBig" aria-label="تشغيل">▶</button><div class="tgc-sp"></div><div class="tgc-fl l" id="tgFlL">⏪ 10</div><div class="tgc-fl r" id="tgFlR">10 ⏩</div>'
     + '<div class="tgc-err" id="tgErr"></div>'
+    + '<div class="tgc-mn" id="tgMn" hidden><div class="mv" id="tgMv0"><button type="button" class="mrow" id="tgRowQ" hidden><span>الجودة</span><em id="tgRowQv">تلقائي</em><i>‹</i></button><button type="button" class="mrow" id="tgRowS"><span>السرعة</span><em id="tgRowSv">عادي</em><i>‹</i></button></div>'
+    + '<div class="mv" id="tgMvS" hidden><button type="button" class="mback" data-back="1"><i>›</i> السرعة</button><div class="mr" id="tgMnR"></div></div>'
+    + '<div class="mv" id="tgMvQ" hidden><button type="button" class="mback" data-back="1"><i>›</i> الجودة</button><div class="mr" id="tgMnQ"></div></div></div>'
     + '<div class="tgc-bar"><div class="tgc-pg" id="tgPg"><i class="b" id="tgB"></i><i class="f" id="tgF"></i><i class="k" id="tgK"></i></div>'
-    + '<div class="tgc-ct"><button type="button" id="tgPl" aria-label="تشغيل/إيقاف">▶</button><button type="button" id="tgMu" aria-label="الصوت">🔊</button><span id="tgTm">0:00 / 0:00</span><i class="sp"></i><button type="button" id="tgRt" aria-label="السرعة">1×</button><button type="button" id="tgFs" aria-label="ملء الشاشة">⛶</button></div></div></div>';
+    + '<div class="tgc-ct"><button type="button" id="tgPl" aria-label="تشغيل/إيقاف">▶</button><button type="button" id="tgMu" aria-label="الصوت">🔊</button><span id="tgTm">0:00 / 0:00</span><i class="sp"></i><button type="button" id="tgSt" aria-label="الإعدادات: السرعة والجودة">⚙ <b id="tgStl">1×</b></button><button type="button" id="tgFs" aria-label="ملء الشاشة">⛶</button></div></div></div>';
 }
 function tgFs() {
   const w = $('#vw'); if (!w) return;
@@ -562,15 +589,42 @@ function tgFail(msg, code) { const w = $('#vw'), e = $('#tgErr'); if (!w || !e) 
 function tgWhy(d) { const r = d && d.response, t = r && r.text ? String(r.text).replace(/[^\w .:-]/g, '').slice(0, 24) : ''; return [d && d.details, r && r.code, t].filter(x => x !== undefined && x !== null && x !== '').join(' / '); }
 async function tgStart(v, e) {
   tgBind(v);
+  const tokP = tgTok();                                    // التوكن بيتجهّز وإحنا بنحمّل المشغّل (أسرع)
+  try { const o = new URL(e.src).origin, l = document.createElement('link'); l.rel = 'preconnect'; l.href = o; l.crossOrigin = ''; document.head.appendChild(l); } catch (z) {}
   try { if (!window.Hls) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); } catch (z) {}
   if (!window.Hls || !Hls.isSupported()) return tgFail('المتصفح ده مش بيدعم تشغيل الفيديو المحمي.<br>حدّث نظام الموبايل (آيفون 17.1 أو أحدث) أو افتح المنصة من Chrome.');
-  await tgTok();
+  await tokP; await tgTok();
   if (!TGTOK) return tgFail('سجّل دخولك تاني عشان تشغّل الفيديو.');
   const org = new URL(e.src).origin; let tries = 0, mtries = 0, refreshed = false;
   tgProbe(org);
-  const h = PL.hls = new Hls({ maxBufferLength: 40, maxMaxBufferLength: 60, enableWorker: true, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 2, fragLoadingMaxRetry: 3, fragLoadingRetryDelay: 1000,
+  const h = PL.hls = new Hls({ maxBufferLength: 60, maxMaxBufferLength: 90, backBufferLength: 40, enableWorker: true, startFragPrefetch: true, abrEwmaDefaultEstimate: 2500000, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 2, fragLoadingMaxRetry: 3, fragLoadingRetryDelay: 1000, manifestLoadingTimeOut: 12000, levelLoadingTimeOut: 12000, fragLoadingTimeOut: 25000,
     xhrSetup: (xhr, url) => { try { if (new URL(url).origin === org && TGTOK) { if (!xhr.readyState) xhr.open('GET', url, true); xhr.setRequestHeader('Authorization', 'Bearer ' + TGTOK); } } catch (z) {} } });
-  try { h.on(Hls.Events.MANIFEST_PARSED, () => tgNote('playlist ok')); } catch (z) {}
+  const qb = $('#tgMnQ'), rowQ = $('#tgRowQ'), rowQv = $('#tgRowQv'); let qSorted = [];
+  const qPref = () => { try { return localStorage.getItem('tgq') || 'auto'; } catch (z) { return 'auto'; } };
+  const qMark = () => {
+    if (!qb) return; const auto = !!h.autoLevelEnabled, li = h.currentLevel >= 0 ? h.currentLevel : h.loadLevel, cur = h.levels && h.levels[li];
+    qb.querySelectorAll('button').forEach(b => { const a = b.dataset.q === 'auto'; b.classList.toggle('on', a ? auto : (!auto && cur && String(cur.height) === b.dataset.q)); if (a) b.textContent = 'تلقائي' + (auto && cur && cur.height ? ' (' + cur.height + 'p)' : ''); });
+    if (rowQv) rowQv.textContent = auto ? 'تلقائي' + (cur && cur.height ? ' (' + cur.height + 'p)' : '') : ((cur && cur.height) ? cur.height + 'p' : '');
+  };
+  window.tgQMark = qMark;
+  try {
+    h.on(Hls.Events.MANIFEST_PARSED, () => {
+      tgNote('playlist ok');
+      const L = h.levels || []; if (L.length < 2 || !qb) return;
+      qSorted = L.map((l, i) => ({ i, h: l.height || 0 })).filter(x => x.h).sort((a, b) => b.h - a.h);
+      qb.innerHTML = '<button type="button" data-q="auto">تلقائي</button>' + qSorted.map(x => '<button type="button" data-q="' + x.h + '">' + x.h + 'p</button>').join('');
+      if (rowQ) rowQ.hidden = false;
+      const pf = qPref(), hit = qSorted.find(x => String(x.h) === pf); if (pf !== 'auto' && hit) h.currentLevel = hit.i;
+      qMark();
+    });
+    h.on(Hls.Events.LEVEL_SWITCHED, () => qMark());
+  } catch (z) {}
+  if (qb) qb.onclick = ev => {
+    const b = ev.target.closest('button[data-q]'); if (!b) return; ev.stopPropagation();
+    if (b.dataset.q === 'auto') h.currentLevel = -1; else { const x = qSorted.find(y => String(y.h) === b.dataset.q); if (x) h.currentLevel = x.i; }
+    try { localStorage.setItem('tgq', b.dataset.q); } catch (z) {}
+    qMark(); if (window.tgBack) window.tgBack();
+  };
   const wd = setTimeout(() => { if (!v.readyState && !($('#vw') || document.createElement('i')).classList.contains('er')) tgFail('الفيديو بياخد وقت طويل ومابدأش.<br>اتأكد من الإنترنت وحدّث الصفحة. لو استمر ابعت كود الخطأ للدعم.', 'timeout 20s'); }, 20000);
   v.addEventListener('loadedmetadata', () => clearTimeout(wd), { once: true });
   h.on(Hls.Events.ERROR, async (ev, d) => {
@@ -592,7 +646,9 @@ async function tgStart(v, e) {
 function tgBind(v) {
   const g = id => document.getElementById(id), box = g('tgc'), w = g('vw'); if (!box || !w) return;
   let ht = 0;
-  const show = () => { box.classList.add('on'); clearTimeout(ht); if (!v.paused) ht = setTimeout(() => box.classList.remove('on'), 3000); };
+  const mn = g('tgMn'); const menuOpen = () => !!mn && !mn.hidden;
+  const show = () => { box.classList.add('on'); clearTimeout(ht); if (!v.paused && !menuOpen()) ht = setTimeout(() => box.classList.remove('on'), 3000); };
+  const closeMenu = () => { if (mn) mn.hidden = true; };
   const upd = () => {
     const d = v.duration || PL.dur || 0, c = v.currentTime || 0; let b = 0;
     try { for (let i = 0; i < v.buffered.length; i++) if (v.buffered.start(i) <= c + 0.6 && v.buffered.end(i) >= c) b = v.buffered.end(i); } catch (z) {}
@@ -607,14 +663,37 @@ function tgBind(v) {
   ['playing', 'canplay', 'seeked', 'loadeddata'].forEach(n => v.addEventListener(n, () => w.classList.remove('ld')));
   const toggle = () => { if (v.paused) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } else v.pause(); };
   const seekBy = s => { const d = v.duration || 0; v.currentTime = Math.max(0, Math.min(d || 1e9, (v.currentTime || 0) + s)); upd(); show(); };
-  box.addEventListener('click', ev => { if (ev.target.closest('button') || ev.target.closest('.tgc-pg') || ev.target.closest('.tgc-err')) return; if (box.classList.contains('on') || v.paused) toggle(); show(); });
+  // لمسة واحدة على الشاشة = إظهار/إخفاء الأزرار فقط (مابتوقّفش الفيديو). الإيقاف من زر ⏸ أو المسافة. لمستين على يمين/شمال = ±10 ثواني. الماوس (الكمبيوتر): الضغطة بتشغّل/توقّف.
+  let ptype = 'mouse', lastTap = 0, lastX = 0.5;
+  box.addEventListener('pointerdown', ev => { ptype = ev.pointerType || 'mouse'; });
+  const flash = left => { const f = g(left ? 'tgFlL' : 'tgFlR'); if (!f) return; f.classList.remove('go'); void f.offsetWidth; f.classList.add('go'); };
+  box.addEventListener('click', ev => {
+    if (ev.target.closest('button') || ev.target.closest('.tgc-pg') || ev.target.closest('.tgc-err') || ev.target.closest('.tgc-mn')) return;
+    if (menuOpen()) { closeMenu(); show(); return; }
+    if (ptype === 'mouse') { toggle(); show(); return; }
+    const r = box.getBoundingClientRect(), x = (ev.clientX - r.left) / (r.width || 1), now = Date.now();
+    if (now - lastTap < 330 && (x < 0.38 || x > 0.62) && Math.abs(x - lastX) < 0.3) { lastTap = 0; seekBy(x < 0.5 ? -10 : 10); flash(x < 0.5); return; }
+    lastTap = now; lastX = x;
+    if (box.classList.contains('on') && !v.paused) { box.classList.remove('on'); clearTimeout(ht); } else show();
+  });
   box.addEventListener('pointermove', show);
   g('tgBig').onclick = ev => { ev.stopPropagation(); toggle(); }; g('tgPl').onclick = ev => { ev.stopPropagation(); toggle(); };
   g('tgBk').onclick = ev => { ev.stopPropagation(); seekBy(-10); }; g('tgFw').onclick = ev => { ev.stopPropagation(); seekBy(10); };
   g('tgMu').onclick = ev => { ev.stopPropagation(); v.muted = !v.muted; g('tgMu').textContent = v.muted ? '🔇' : '🔊'; };
-  const RATES = [1, 1.25, 1.5, 2, 0.75];
-  g('tgRt').onclick = ev => { ev.stopPropagation(); const r = RATES[(RATES.indexOf(PL.rate) + 1) % RATES.length]; plRate(r); g('tgRt').textContent = r + '×'; };
-  v.addEventListener('ratechange', () => { g('tgRt').textContent = (v.playbackRate || 1) + '×'; });
+  const RATES = [0.75, 1, 1.25, 1.5, 2], rl = r => r === 1 ? 'عادي' : r + '×';
+  const views = { 0: g('tgMv0'), S: g('tgMvS'), Q: g('tgMvQ') }, view = k => Object.keys(views).forEach(x => { views[x].hidden = x !== String(k); });
+  window.tgBack = () => view(0);
+  const stl = () => { const r = v.playbackRate || 1, t = g('tgStl'); if (t) t.textContent = r + '×'; const rv = g('tgRowSv'); if (rv) rv.textContent = rl(r); };
+  const mark = () => { const R = g('tgMnR'); if (R) R.querySelectorAll('button').forEach(b => b.classList.toggle('on', +b.dataset.r === (v.playbackRate || 1))); };
+  g('tgMnR').innerHTML = RATES.map(r => '<button type="button" data-r="' + r + '">' + rl(r) + '</button>').join('');
+  g('tgMnR').addEventListener('click', ev => { const b = ev.target.closest('button[data-r]'); if (!b) return; ev.stopPropagation(); plRate(+b.dataset.r); stl(); mark(); view(0); });
+  g('tgRowS').onclick = ev => { ev.stopPropagation(); view('S'); mark(); };
+  g('tgRowQ').onclick = ev => { ev.stopPropagation(); view('Q'); if (window.tgQMark) window.tgQMark(); };
+  mn.querySelectorAll('[data-back]').forEach(b => { b.onclick = ev => { ev.stopPropagation(); view(0); }; });
+  g('tgSt').onclick = ev => { ev.stopPropagation(); const o = mn.hidden; mn.hidden = !o; if (o) { view(0); stl(); } show(); };
+  mn.addEventListener('click', ev => ev.stopPropagation());
+  v.addEventListener('ratechange', () => { stl(); mark(); });
+  stl(); mark();
   g('tgFs').onclick = ev => { ev.stopPropagation(); tgFs(); };
   const pg = g('tgPg'); let dn = false;
   const at = ev => { const r = pg.getBoundingClientRect(), x = Math.max(0, Math.min(1, (ev.clientX - r.left) / (r.width || 1))), d = v.duration || 0; if (d) { v.currentTime = x * d; upd(); } };
