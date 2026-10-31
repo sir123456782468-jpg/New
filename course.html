@@ -126,6 +126,8 @@ body{background:var(--bg);color:var(--ink);min-height:100vh}
 .vwrap.pfs{position:fixed;inset:0;z-index:2147483000;border-radius:0;aspect-ratio:auto;width:100vw;height:100vh;height:100dvh}
 body.pfsb{overflow:hidden}
 @media(max-width:600px){.tgc-big{width:62px;height:62px;font-size:25px}.tgc-sk{width:44px;height:44px}}
+.tgc-slow{position:absolute;left:50%;bottom:104px;transform:translateX(-50%);background:rgba(10,14,32,.82);backdrop-filter:blur(8px);border:1px solid rgba(255,255,255,.2);padding:8px 16px;border-radius:20px;font-size:13px;font-weight:800;z-index:2;white-space:nowrap;max-width:92%;overflow:hidden;text-overflow:ellipsis;pointer-events:none}
+.tgc-slow[hidden]{display:none}
 /* ===== شكل الأزرار (زجاجي) ===== */
 .tgc-big{width:88px;height:88px;background:rgba(255,255,255,.14)!important;backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);border:1.5px solid rgba(255,255,255,.38);box-shadow:0 10px 40px rgba(0,0,0,.45)!important;color:#fff;display:grid;place-items:center;padding:0}
 .tgc-big svg{width:42px;height:42px}
@@ -567,7 +569,7 @@ function tgOverlay() {
   return '<div class="tgc on" id="tgc"><div class="tgc-top"><img src="/logo.png" alt=""><b>' + esc(nm) + '</b><span>' + esc(tn) + '</span></div>'
     + '<button type="button" class="tgc-sk l" id="tgBk" aria-label="رجوع 10 ثواني">' + IC.back + '</button><button type="button" class="tgc-sk r" id="tgFw" aria-label="تقديم 10 ثواني">' + IC.fwd + '</button>'
     + '<button type="button" class="tgc-big" id="tgBig" aria-label="تشغيل" data-s="p">' + IC.play + '</button><div class="tgc-sp"></div><div class="tgc-fl l" id="tgFlL">' + IC.back + '</div><div class="tgc-fl r" id="tgFlR">' + IC.fwd + '</div>'
-    + '<div class="tgc-err" id="tgErr"></div>'
+    + '<div class="tgc-slow" id="tgSlow" hidden>الفيديو بياخد وقت أطول من العادي… استنى لحظة</div><div class="tgc-err" id="tgErr"></div>'
     + '<div class="tgc-mn" id="tgMn" hidden><div class="mv" id="tgMv0"><button type="button" class="mrow" id="tgRowQ" hidden><span>الجودة</span><em id="tgRowQv">تلقائي</em><i>‹</i></button><button type="button" class="mrow" id="tgRowS"><span>السرعة</span><em id="tgRowSv">عادي</em><i>‹</i></button></div>'
     + '<div class="mv" id="tgMvS" hidden><button type="button" class="mback" data-back="1"><i>›</i> السرعة</button><div class="mr" id="tgMnR"></div></div>'
     + '<div class="mv" id="tgMvQ" hidden><button type="button" class="mback" data-back="1"><i>›</i> الجودة</button><div class="mr" id="tgMnQ"></div></div></div>'
@@ -663,8 +665,10 @@ async function tgStart(v, e) {
     try { localStorage.setItem('tgq', b.dataset.q); } catch (z) {}
     qMark(); if (window.tgBack) window.tgBack();
   };
-  const wd = setTimeout(() => { if (!v.readyState && !($('#vw') || document.createElement('i')).classList.contains('er')) tgFail('الفيديو بياخد وقت طويل ومابدأش.<br>اتأكد من الإنترنت وحدّث الصفحة. لو استمر ابعت كود الخطأ للدعم.', 'timeout 20s'); }, 20000);
-  v.addEventListener('loadedmetadata', () => clearTimeout(wd), { once: true });
+  const isEr = () => ($('#vw') || document.createElement('i')).classList.contains('er');
+  const wd = setTimeout(() => { if (!v.readyState && !isEr()) { const sl = $('#tgSlow'); if (sl) sl.hidden = false; tgNote('slow 15s'); } }, 15000);
+  const wd2 = setTimeout(() => { if (!v.readyState && !isEr()) tgFail('الفيديو لسه ماابتدأش.<br>اتأكد من الإنترنت وحدّث الصفحة. لو استمر ابعت كود الخطأ للدعم.', 'timeout 60s'); }, 60000);
+  v.addEventListener('loadedmetadata', () => { clearTimeout(wd); clearTimeout(wd2); }, { once: true });
   h.on(Hls.Events.ERROR, async (ev, d) => {
     if (d) tgNote((d.fatal ? 'FATAL ' : '') + tgWhy(d));
     if (d && d.fatal) tgSrv(e.src);
@@ -698,7 +702,8 @@ function tgBind(v) {
   ['timeupdate', 'progress', 'loadedmetadata', 'durationchange', 'seeked'].forEach(n => v.addEventListener(n, upd));
   ['play', 'pause', 'ended'].forEach(n => v.addEventListener(n, sync));
   ['waiting', 'seeking', 'stalled'].forEach(n => v.addEventListener(n, () => w.classList.add('ld')));
-  ['playing', 'canplay', 'seeked', 'loadeddata'].forEach(n => v.addEventListener(n, () => w.classList.remove('ld')));
+  ['playing', 'canplay', 'seeked', 'loadeddata'].forEach(n => v.addEventListener(n, () => { w.classList.remove('ld'); const sl = g('tgSlow'); if (sl) sl.hidden = true; }));
+  ['playing', 'loadeddata'].forEach(n => v.addEventListener(n, () => { w.classList.remove('er'); }));
   const toggle = () => { if (v.paused) { const p = v.play(); if (p && p.catch) p.catch(() => {}); } else v.pause(); };
   const seekBy = s => { const d = v.duration || 0; v.currentTime = Math.max(0, Math.min(d || 1e9, (v.currentTime || 0) + s)); upd(); show(); };
   // لمسة واحدة على الشاشة = إظهار/إخفاء الأزرار فقط (مابتوقّفش الفيديو). الإيقاف من زر ⏸ أو المسافة. لمستين على يمين/شمال = ±10 ثواني. الماوس (الكمبيوتر): الضغطة بتشغّل/توقّف.
@@ -712,7 +717,7 @@ function tgBind(v) {
     const r = box.getBoundingClientRect(), x = (ev.clientX - r.left) / (r.width || 1), now = Date.now();
     if (now - lastTap < 330 && (x < 0.38 || x > 0.62) && Math.abs(x - lastX) < 0.3) { lastTap = 0; seekBy(x < 0.5 ? -10 : 10); flash(x < 0.5); return; }
     lastTap = now; lastX = x;
-    show();       // اللمسة بتظهر الأزرار 5 ثواني (وبتتجدّد مع كل لمسة)
+    if (box.classList.contains('on') && !v.paused) { box.classList.remove('on'); clearTimeout(ht); } else show();   // لمسة = تظهر 5 ثواني، ولمسة تانية وهي ظاهرة = تختفي
   });
   box.addEventListener('pointerup', () => { if (box.classList.contains('on')) show(); }, true);
   box.addEventListener('pointermove', ev => { if (ev.pointerType === 'mouse') show(); });
@@ -865,13 +870,4 @@ async function plStart(x, e) {
   const tm = $('#ntm'); if (tm) { tm.onfocus = () => { if (!tm.value) tm.value = fmtT(PL.cur); }; $('#ntx').onfocus = () => { tm.value = fmtT(PL.cur); }; }
   if (plOk()) {
     try {
-      const [pos, nl] = await Promise.all([supabaseClient.rpc('video_pos_get', { p_item: x.id }), supabaseClient.rpc('note_list', { p_item: x.id })]);
-      if (PL.x !== x) return;
-      if (!nl.error && Array.isArray(nl.data)) { PL.notes = nl.data; const n = $('#nls'); if (n) n.innerHTML = noteHTML(); }
-      const p = pos.data || {};
-      PL.need = p.need_pct || 90; if (Array.isArray(p.ranges)) PL.cov = p.ranges; if (p.duration > 0 && !PL.dur) PL.dur = p.duration; plBar();
-      if (p.seconds > 5 && (!p.duration || p.seconds < p.duration - 15) && $('#rsm')) {
-        PL.resume = p.seconds; PL.rtries = 0; PL.rat = 0;
-        if (PL.kind === 'h5' && PL.v) { const go = () => { try { PL.v.currentTime = p.seconds; } catch (z) {} }; if (PL.v.readyState >= 1) go(); else PL.v.addEventListener('loadedmetadata', go, { once: true }); }
-        else if (PL.kind === 'bn') plSeek(p.seconds, true);
-        $('#rsm').innerHTML = '<div class="rsm">▶ كمّلنا من حيث وقفت: <b dir="ltr">' + fmtT(p.seconds) + '</b><button type="button" class="btn g" id="rno
+      const [pos, nl] = await Promise.all([supabaseClient.rpc('video_pos_get', { p_item: x.id }), supabaseClient.rpc('note_list', { p_item: x
