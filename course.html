@@ -514,7 +514,10 @@ function tgFs() {
   const fb = () => { w.classList.add('pfs'); document.body.classList.add('pfsb'); };
   try { if (w.requestFullscreen) { const p = w.requestFullscreen(); if (p && p.catch) p.catch(fb); } else fb(); } catch (e) { fb(); }
 }
-function tgFail(msg) { const w = $('#vw'), e = $('#tgErr'); if (!w || !e) return; e.innerHTML = msg; w.classList.add('er'); w.classList.remove('ld'); }
+const TGLOG = [];
+function tgNote(x) { try { TGLOG.push(String(x).slice(0, 90)); if (TGLOG.length > 6) TGLOG.shift(); } catch (z) {} }
+function tgFail(msg, code) { const w = $('#vw'), e = $('#tgErr'); if (!w || !e) return; const dg = (code ? [code] : []).concat(TGLOG).join(' | '); e.innerHTML = '<div>' + msg + (dg ? '<div dir="ltr" style="margin-top:10px;font:600 12px/1.6 monospace;color:#fca5a5;word-break:break-all;opacity:.95">كود الخطأ: ' + esc(dg) + '</div>' : '') + '</div>'; w.classList.add('er'); w.classList.remove('ld'); }
+function tgWhy(d) { const r = d && d.response, t = r && r.text ? String(r.text).replace(/[^\w .:-]/g, '').slice(0, 24) : ''; return [d && d.details, r && r.code, t].filter(x => x !== undefined && x !== null && x !== '').join(' / '); }
 async function tgStart(v, e) {
   tgBind(v);
   try { if (!window.Hls) await new Promise((ok, no) => { const s = document.createElement('script'); s.src = 'https://cdn.jsdelivr.net/npm/hls.js@1.5.8/dist/hls.min.js'; s.onload = ok; s.onerror = no; document.head.appendChild(s); }); } catch (z) {}
@@ -524,17 +527,21 @@ async function tgStart(v, e) {
   const org = new URL(e.src).origin; let tries = 0, mtries = 0, refreshed = false;
   const h = PL.hls = new Hls({ maxBufferLength: 40, maxMaxBufferLength: 60, enableWorker: true, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 2, fragLoadingMaxRetry: 3, fragLoadingRetryDelay: 1000,
     xhrSetup: (xhr, url) => { try { if (new URL(url).origin === org && TGTOK) xhr.setRequestHeader('Authorization', 'Bearer ' + TGTOK); } catch (z) {} } });
+  try { h.on(Hls.Events.MANIFEST_PARSED, () => tgNote('playlist ok')); } catch (z) {}
+  const wd = setTimeout(() => { if (!v.readyState && !($('#vw') || document.createElement('i')).classList.contains('er')) tgFail('الفيديو بياخد وقت طويل ومابدأش.<br>اتأكد من الإنترنت وحدّث الصفحة. لو استمر ابعت كود الخطأ للدعم.', 'timeout 20s'); }, 20000);
+  v.addEventListener('loadedmetadata', () => clearTimeout(wd), { once: true });
   h.on(Hls.Events.ERROR, async (ev, d) => {
+    if (d) tgNote((d.fatal ? 'FATAL ' : '') + tgWhy(d));
     if (!d || !d.fatal) return;
     const code = d.response && d.response.code;
     if (code === 401 || code === 403) {
       if (!refreshed) { refreshed = true; await tgTok(); try { h.startLoad(); } catch (z) {} return; }
-      return tgFail('انتهت صلاحية الفيديو أو الحساب مفتوح من جهاز تاني.<br>حدّث الصفحة وجرّب تاني.');
+      return tgFail('انتهت صلاحية الفيديو أو الحساب مفتوح من جهاز تاني.<br>حدّث الصفحة وجرّب تاني.', tgWhy(d));
     }
     if (code === 429) { if (tries++ < 6) { setTimeout(() => { try { h.startLoad(); } catch (z) {} }, 8000); return; } }
     if (d.type === Hls.ErrorTypes.NETWORK_ERROR && tries++ < 4) { setTimeout(() => { try { h.startLoad(); } catch (z) {} }, 1500 * tries); return; }
     if (d.type === Hls.ErrorTypes.MEDIA_ERROR && mtries++ < 2) { try { h.recoverMediaError(); } catch (z) {} return; }
-    tgFail('تعذّر تشغيل الفيديو.<br>اتأكد من الإنترنت وحدّث الصفحة (Ctrl+F5)، ولو المشكلة مستمرة كلّم الدعم الفني.');
+    tgFail('تعذّر تشغيل الفيديو.<br>اتأكد من الإنترنت وحدّث الصفحة (Ctrl+F5)، ولو المشكلة مستمرة كلّم الدعم الفني.', tgWhy(d));
   });
   h.loadSource(e.src); h.attachMedia(v);
 }
