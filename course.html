@@ -86,7 +86,8 @@ body{background:var(--bg);color:var(--ink);min-height:100vh}
 .tgc-sp{position:absolute;top:50%;left:50%;width:46px;height:46px;margin:-23px;border-radius:50%;border:4px solid rgba(255,255,255,.25);border-top-color:#fff;animation:tgsp .8s linear infinite;display:none;pointer-events:none}
 .vwrap.ld .tgc-sp{display:block}.vwrap.ld .tgc-big{opacity:0}
 @keyframes tgsp{to{transform:rotate(360deg)}}
-.tgc-err{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:24px;font-weight:800;line-height:2;background:rgba(6,11,30,.92);z-index:2}
+.tgc-err{position:absolute;inset:0;display:none;place-items:center;text-align:center;padding:24px;font-weight:800;line-height:2;background:rgba(6,11,30,.92);z-index:2;overflow-y:auto}
+@media(max-width:640px){.tgc-err{padding:10px 14px;font-size:13px;line-height:1.7}.tgc-err>div{margin:auto}}
 .vwrap.er .tgc-err{display:grid}
 .tgc-bar{position:absolute;left:0;right:0;bottom:0;padding:34px 14px 10px;background:linear-gradient(#0000,#000c)}
 .tgc-pg{position:relative;height:6px;border-radius:6px;background:rgba(255,255,255,.25);margin:0 4px 10px;direction:ltr;cursor:pointer;touch-action:none}
@@ -515,8 +516,27 @@ function tgFs() {
   try { if (w.requestFullscreen) { const p = w.requestFullscreen(); if (p && p.catch) p.catch(fb); } else fb(); } catch (e) { fb(); }
 }
 const TGLOG = [];
-function tgNote(x) { try { TGLOG.push(String(x).slice(0, 90)); if (TGLOG.length > 6) TGLOG.shift(); } catch (z) {} }
-function tgFail(msg, code) { const w = $('#vw'), e = $('#tgErr'); if (!w || !e) return; const dg = (code ? [code] : []).concat(TGLOG).join(' | '); e.innerHTML = '<div>' + msg + (dg ? '<div dir="ltr" style="margin-top:10px;font:600 12px/1.6 monospace;color:#fca5a5;word-break:break-all;opacity:.95">كود الخطأ: ' + esc(dg) + '</div>' : '') + '</div>'; w.classList.add('er'); w.classList.remove('ld'); }
+function tgNote(x) { try { TGLOG.push(String(x).slice(0, 90)); if (TGLOG.length > 8) TGLOG.shift(); } catch (z) {} }
+let TGPROBE = '';
+function tgHint() {
+  if (TGPROBE === 'net') return '<div style="margin-top:8px;color:#fde68a">السبب المحتمل: المتصفح مش قادر يوصل لبوابة الفيديو. اتأكد من «رابط البوابة» في لوحة التحكم (لازم نفس عنوان الـWorker من Cloudflare).</div>';
+  if (TGPROBE === 'origin') return '<div style="margin-top:8px;color:#fde68a">السبب المحتمل: إعداد ALLOWED_ORIGINS في Cloudflare مش مطابق لعنوان موقعك بالظبط.</div>';
+  if (/^cfg:/.test(TGPROBE)) return '<div style="margin-top:8px;color:#fde68a">السبب المحتمل: إعدادات ناقصة في Cloudflare (' + esc(TGPROBE.slice(4).split(',').map(k => ({ bot: 'TG_BOT_TOKEN' }[k] || k.toUpperCase())).join(' ، ')) + ').</div>';
+  return '';
+}
+async function tgProbe(org) {
+  try {
+    const c = new AbortController(), t = setTimeout(() => c.abort(), 8000);
+    const r = await fetch(org + '/health', { cache: 'no-store', signal: c.signal }); clearTimeout(t);
+    const j = await r.json();
+    if (!j || !j.ok) { TGPROBE = 'bad'; tgNote('health bad'); return; }
+    const miss = Object.keys(j.cfg || {}).filter(k => k !== 'origins' && !j.cfg[k]); if (!j.cfg || !j.cfg.origins) miss.push('ALLOWED_ORIGINS');
+    if (!j.origin_allowed) { TGPROBE = 'origin'; tgNote('health: origin not allowed (' + String(j.origin || '').slice(0, 40) + ')'); }
+    else if (miss.length) { TGPROBE = 'cfg:' + miss.join(','); tgNote('health: missing ' + miss.join(',')); }
+    else { TGPROBE = 'ok'; tgNote('health ok'); }
+  } catch (z) { TGPROBE = 'net'; tgNote('health: unreachable'); }
+}
+function tgFail(msg, code) { const w = $('#vw'), e = $('#tgErr'); if (!w || !e) return; const dg = (code ? [code] : []).concat(TGLOG).join(' | '); e.innerHTML = '<div>' + msg + tgHint() + (dg ? '<div dir="ltr" style="margin-top:10px;font:600 12px/1.6 monospace;color:#fca5a5;word-break:break-all;opacity:.95">كود الخطأ: ' + esc(dg) + '</div>' : '') + '</div>'; w.classList.add('er'); w.classList.remove('ld'); }
 function tgWhy(d) { const r = d && d.response, t = r && r.text ? String(r.text).replace(/[^\w .:-]/g, '').slice(0, 24) : ''; return [d && d.details, r && r.code, t].filter(x => x !== undefined && x !== null && x !== '').join(' / '); }
 async function tgStart(v, e) {
   tgBind(v);
@@ -525,6 +545,7 @@ async function tgStart(v, e) {
   await tgTok();
   if (!TGTOK) return tgFail('سجّل دخولك تاني عشان تشغّل الفيديو.');
   const org = new URL(e.src).origin; let tries = 0, mtries = 0, refreshed = false;
+  tgProbe(org);
   const h = PL.hls = new Hls({ maxBufferLength: 40, maxMaxBufferLength: 60, enableWorker: true, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 2, fragLoadingMaxRetry: 3, fragLoadingRetryDelay: 1000,
     xhrSetup: (xhr, url) => { try { if (new URL(url).origin === org && TGTOK) xhr.setRequestHeader('Authorization', 'Bearer ' + TGTOK); } catch (z) {} } });
   try { h.on(Hls.Events.MANIFEST_PARSED, () => tgNote('playlist ok')); } catch (z) {}
