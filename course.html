@@ -519,6 +519,12 @@ const TGLOG = [];
 function tgNote(x) { try { TGLOG.push(String(x).slice(0, 90)); if (TGLOG.length > 8) TGLOG.shift(); } catch (z) {} }
 let TGPROBE = '';
 function tgHint() {
+  const lg = TGLOG.join(' ');
+  if (/auth cfg/.test(lg)) return '<div style="margin-top:8px;color:#fde68a">السبب: في Cloudflare الإعدادين SB_URL أو SB_ANON ناقصين أو فاضيين.</div>';
+  if (/auth token/.test(lg)) return '<div style="margin-top:8px;color:#fde68a">السبب: Supabase رفض توكن الدخول — غالباً SB_URL أو SB_ANON في Cloudflare غلط (لازم مفتاح anon public من نفس مشروع Supabase). سجّل خروج ودخول وجرّب.</div>';
+  if (/auth user/.test(lg)) return '<div style="margin-top:8px;color:#fde68a">السبب: التوكن بتاع حساب تاني غير صاحب الرابط. سجّل خروج ودخول وحدّث الصفحة.</div>';
+  if (/auth gate/.test(lg)) return '<div style="margin-top:8px;color:#fde68a">السبب: فحص حالة الحساب فشل — الحساب غير مفعّل/موقوف، أو الحساب ده مالوش ملف طالب (جرّب بحساب طالب عادي مش حساب إدارة).</div>';
+  if (/auth net/.test(lg)) return '<div style="margin-top:8px;color:#fde68a">السبب: الـWorker مش قادر يوصل لـSupabase — راجع SB_URL.</div>';
   if (TGPROBE === 'net') return '<div style="margin-top:8px;color:#fde68a">السبب المحتمل: المتصفح مش قادر يوصل لبوابة الفيديو. اتأكد من «رابط البوابة» في لوحة التحكم (لازم نفس عنوان الـWorker من Cloudflare).</div>';
   if (TGPROBE === 'origin') return '<div style="margin-top:8px;color:#fde68a">السبب المحتمل: إعداد ALLOWED_ORIGINS في Cloudflare مش مطابق لعنوان موقعك بالظبط.</div>';
   if (/^cfg:/.test(TGPROBE)) return '<div style="margin-top:8px;color:#fde68a">السبب المحتمل: إعدادات ناقصة في Cloudflare (' + esc(TGPROBE.slice(4).split(',').map(k => ({ bot: 'TG_BOT_TOKEN' }[k] || k.toUpperCase())).join(' ، ')) + ').</div>';
