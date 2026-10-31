@@ -569,7 +569,7 @@ async function tgStart(v, e) {
   const org = new URL(e.src).origin; let tries = 0, mtries = 0, refreshed = false;
   tgProbe(org);
   const h = PL.hls = new Hls({ maxBufferLength: 40, maxMaxBufferLength: 60, enableWorker: true, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 2, fragLoadingMaxRetry: 3, fragLoadingRetryDelay: 1000,
-    xhrSetup: (xhr, url) => { try { if (new URL(url).origin === org && TGTOK) xhr.setRequestHeader('Authorization', 'Bearer ' + TGTOK); } catch (z) {} } });
+    xhrSetup: (xhr, url) => { try { if (new URL(url).origin === org && TGTOK) { if (!xhr.readyState) xhr.open('GET', url, true); xhr.setRequestHeader('Authorization', 'Bearer ' + TGTOK); } } catch (z) {} } });
   try { h.on(Hls.Events.MANIFEST_PARSED, () => tgNote('playlist ok')); } catch (z) {}
   const wd = setTimeout(() => { if (!v.readyState && !($('#vw') || document.createElement('i')).classList.contains('er')) tgFail('الفيديو بياخد وقت طويل ومابدأش.<br>اتأكد من الإنترنت وحدّث الصفحة. لو استمر ابعت كود الخطأ للدعم.', 'timeout 20s'); }, 20000);
   v.addEventListener('loadedmetadata', () => clearTimeout(wd), { once: true });
