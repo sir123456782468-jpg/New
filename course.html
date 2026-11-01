@@ -590,6 +590,7 @@ function tgHint() {
   if (TGPROBE === 'old') return '<div style="margin-top:8px;color:#fde68a">السبب: الـWorker في Cloudflare لسه على الكود القديم. افتح Edit code والصق الكود الجديد (tg-worker.txt) واضغط Deploy.</div>';
   if (TGPROBE === 'anon') return '<div style="margin-top:8px;color:#fde68a">السبب: المفتاح SB_ANON في Cloudflare غلط أو من مشروع Supabase تاني (لازم «anon public» من Settings ← API Keys) أو SB_URL غلط.</div>';
   if (TGPROBE === 'service') return '<div style="margin-top:8px;color:#fde68a">السبب: المفتاح SB_SERVICE في Cloudflare غلط (لازم «service_role» من نفس المشروع).</div>';
+  if (/upstream/.test(lg)) { const m = /upstream ([^|]*)/.exec(lg); return '<div style="margin-top:8px;color:#fde68a">السبب: بوابة الفيديو مش قادرة تجيب القطعة من تليجرام' + (m && m[1].trim() ? ' (' + esc(m[1].trim()) + ')' : '') + '. لو فيها 429 يبقى تليجرام حدّ من البوت مؤقتاً — استنى شوية وجرّب. غير كده راجع توكن البوت في Cloudflare.</div>'; }
   if (/auth cfg/.test(lg)) return '<div style="margin-top:8px;color:#fde68a">السبب: في Cloudflare الإعدادين SB_URL أو SB_ANON ناقصين أو فاضيين.</div>';
   if (/auth token/.test(lg)) return '<div style="margin-top:8px;color:#fde68a">السبب: Supabase رفض توكن الدخول — غالباً SB_URL أو SB_ANON في Cloudflare غلط (لازم مفتاح anon public من نفس مشروع Supabase). سجّل خروج ودخول وجرّب.</div>';
   if (/auth user/.test(lg)) return '<div style="margin-top:8px;color:#fde68a">السبب: التوكن بتاع حساب تاني غير صاحب الرابط. سجّل خروج ودخول وحدّث الصفحة.</div>';
@@ -604,9 +605,10 @@ let TGSRV = false;
 async function tgSrv(src) {
   if (TGSRV) return; TGSRV = true;
   try {
+    if (new URL(src).origin !== window.__tgOrg) return;          // التوكن بيتبعت لبوابة الفيديو بس
     const c = new AbortController(), t = setTimeout(() => c.abort(), 8000);
     const r = await fetch(src, { cache: 'no-store', signal: c.signal, headers: { Authorization: 'Bearer ' + TGTOK } }); clearTimeout(t);
-    const x = r.ok ? '' : String(await r.text()).replace(/[^\w .:-]/g, '').slice(0, 24);
+    const x = r.ok ? '' : String(await r.text()).replace(/[^\w .:-]/g, '').slice(0, 44);
     tgNote('srv ' + r.status + (x ? ' ' + x : ''));
   } catch (z) { tgNote('srv blocked'); }
 }
@@ -636,7 +638,7 @@ async function tgStart(v, e) {
   await tokP; await tgTok();
   if (!TGTOK) return tgFail('سجّل دخولك تاني عشان تشغّل الفيديو.');
   const org = new URL(e.src).origin; let tries = 0, mtries = 0, refreshed = false;
-  tgProbe(org);
+  tgProbe(org); window.__tgOrg = org;
   const h = PL.hls = new Hls({ maxBufferLength: 60, maxMaxBufferLength: 90, backBufferLength: 40, enableWorker: true, startFragPrefetch: true, abrEwmaDefaultEstimate: 2500000, manifestLoadingMaxRetry: 2, levelLoadingMaxRetry: 2, fragLoadingMaxRetry: 3, fragLoadingRetryDelay: 1000, manifestLoadingTimeOut: 12000, levelLoadingTimeOut: 12000, fragLoadingTimeOut: 25000,
     xhrSetup: (xhr, url) => { try { if (new URL(url).origin === org && TGTOK) { if (!xhr.readyState) xhr.open('GET', url, true); xhr.setRequestHeader('Authorization', 'Bearer ' + TGTOK); } } catch (z) {} } });
   const qb = $('#tgMnQ'), rowQ = $('#tgRowQ'), rowQv = $('#tgRowQv'); let qSorted = [];
@@ -671,7 +673,7 @@ async function tgStart(v, e) {
   v.addEventListener('loadedmetadata', () => { clearTimeout(wd); clearTimeout(wd2); }, { once: true });
   h.on(Hls.Events.ERROR, async (ev, d) => {
     if (d) tgNote((d.fatal ? 'FATAL ' : '') + tgWhy(d));
-    if (d && d.fatal) tgSrv(e.src);
+    if (d && d.fatal) tgSrv(d.url || (d.frag && d.frag.url) || e.src);
     if (!d || !d.fatal) return;
     const code = d.response && d.response.code;
     if (code === 401 || code === 403) {
@@ -870,4 +872,33 @@ async function plStart(x, e) {
   const tm = $('#ntm'); if (tm) { tm.onfocus = () => { if (!tm.value) tm.value = fmtT(PL.cur); }; $('#ntx').onfocus = () => { tm.value = fmtT(PL.cur); }; }
   if (plOk()) {
     try {
-      const [pos, nl] = await Promise.all([supabaseClient.rpc('video_pos_get', { p_item: x.id }), supabaseClient.rpc('note_list', { p_item: x
+      const [pos, nl] = await Promise.all([supabaseClient.rpc('video_pos_get', { p_item: x.id }), supabaseClient.rpc('note_list', { p_item: x.id })]);
+      if (PL.x !== x) return;
+      if (!nl.error && Array.isArray(nl.data)) { PL.notes = nl.data; const n = $('#nls'); if (n) n.innerHTML = noteHTML(); }
+      const p = pos.data || {};
+      PL.need = p.need_pct || 90; if (Array.isArray(p.ranges)) PL.cov = p.ranges; if (p.duration > 0 && !PL.dur) PL.dur = p.duration; plBar();
+      if (p.seconds > 5 && (!p.duration || p.seconds < p.duration - 15) && $('#rsm')) {
+        PL.resume = p.seconds; PL.rtries = 0; PL.rat = 0;
+        if (PL.kind === 'h5' && PL.v) { const go = () => { try { PL.v.currentTime = p.seconds; } catch (z) {} }; if (PL.v.readyState >= 1) go(); else PL.v.addEventListener('loadedmetadata', go, { once: true }); }
+        else if (PL.kind === 'bn') plSeek(p.seconds, true);
+        $('#rsm').innerHTML = '<div class="rsm">▶ كمّلنا من حيث وقفت: <b dir="ltr">' + fmtT(p.seconds) + '</b><button type="button" class="btn g" id="rno">ابدأ من الأول</button></div>';
+        $('#rno').onclick = () => { PL.resume = null; plSeek(0); $('#rsm').innerHTML = ''; };
+        setTimeout(() => { const r = $('#rsm'); if (r && !r.dataset.k) r.innerHTML = ''; }, 12000);
+      }
+    } catch (z) {}
+  }
+}
+
+function startWm() {
+  clearInterval(wmTimer); const w = $('#wm'), box = $('#vw'); if (!w || !box) return;
+  const mv = () => { w.style.top = (8 + Math.random() * (box.clientHeight - 50)) + 'px'; w.style.left = (8 + Math.random() * Math.max(10, box.clientWidth - w.clientWidth - 16)) + 'px'; };
+  mv(); wmTimer = setInterval(mv, 4000);
+}
+// منع كليك يمين على المشغّل
+document.addEventListener('contextmenu', e => { if (e.target.closest('.vwrap')) e.preventDefault(); });
+if (window.currentProfile) init(); else document.addEventListener('auth-ready', init);
+</script>
+<script src="/ui.js" defer></script>
+<script src="/support-widget.js" defer></script>
+</body>
+</html>
