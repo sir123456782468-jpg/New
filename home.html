@@ -15,14 +15,17 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;600;700;800;900&family=Cinzel:wght@700;800&display=swap" rel="stylesheet">
+    <script src="/home-schema.js"></script>
+<script src="/home-ui.js"></script>
+<script>if(window.HM_PREVIEW)document.write('<script src="/home-preview-stub.js"><\/script>')</script>
     <style>
         html { visibility: hidden; } /* مخفية لحد ما auth-guard.js يتأكد من تسجيل الدخول */
-        :root { --bg:#f4f6fb; --card:#fff; --ink:#0f172a; --muted:#64748b; --line:#e6eaf2; --brand:#ef4444; --grad:linear-gradient(135deg,#ef4444,#ec4899); --sh:0 10px 30px -16px rgba(15,23,42,.2); --ok:#16a34a; --bad:#dc2626; }
+        :root { --bg:#f4f6fb; --card:#fff; --ink:#0f172a; --muted:#64748b; --line:#e6eaf2; --brand:#ef4444; --g1:#ef4444; --g2:#ec4899; --grad:linear-gradient(135deg,var(--g1),var(--g2)); --sh:0 10px 30px -16px rgba(15,23,42,.2); --ok:#16a34a; --bad:#dc2626; }
         [data-theme="dark"] { --bg:#0a1020; --card:#121b30; --ink:#f1f5f9; --muted:#94a3b8; --line:#22304d; --brand:#f87171; --sh:0 10px 30px -16px rgba(0,0,0,.8); }
         * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Cairo', sans-serif; }
         body { background: var(--bg); color: var(--ink); min-height: 100vh; transition: background .3s, color .3s; }
         a { color: inherit; text-decoration: none; } button { font-family: inherit; }
-        .hdr { position: sticky; top: 0; z-index: 70; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 22px; background: var(--card); border-bottom: 3px solid; border-image: linear-gradient(90deg,#ef4444,#ec4899) 1; }
+        .hdr { position: sticky; top: 0; z-index: 70; display: flex; align-items: center; justify-content: space-between; gap: 12px; padding: 9px 22px; background: var(--hdr-bg,var(--card)); border-bottom: 3px solid; border-image: linear-gradient(90deg,var(--hdr-b1,var(--g1)),var(--hdr-b2,var(--g2))) 1; }
         .brand { display: flex; align-items: center; gap: 10px; } .brand svg { width: 46px; height: 46px; flex: none; } .brand img { width: 46px; height: 46px; flex: none; border-radius: 13px; box-shadow: 0 4px 14px rgba(236,72,153,.35); }
         .brand b { display: block; font-family: 'Cinzel', serif; font-size: 18px; line-height: 1.15; } .brand small { font-size: 11px; font-weight: 800; letter-spacing: 1.6px; color: var(--brand); }
         .tools { display: flex; align-items: center; gap: 10px; }
@@ -40,38 +43,38 @@
         .nl { max-height: 360px; overflow: auto; } .nl .nt { display: flex; gap: 10px; cursor: pointer; opacity: .62; } .nl .nt.un { opacity: 1; background: rgba(239,68,68,.07); } .nl .nt.un b::after { content: ''; display: inline-block; width: 8px; height: 8px; border-radius: 50%; background: var(--brand); margin-inline-start: 6px; } .nl .nt:hover { background: rgba(239,68,68,.12); } .nt .ni { font-size: 20px; } .nt em { font-style: normal; font-size: 11px; color: var(--muted); font-weight: 600; }
         .nt { padding: 10px 12px; font-size: 13px; font-weight: 700; line-height: 1.7; border-bottom: 1px solid var(--line); } .nt:last-child { border: 0; } .nt small { display: block; color: var(--muted); font-weight: 600; }
         .shell { display: flex; align-items: flex-start; }
-        .side { width: 250px; flex: none; position: sticky; top: 71px; height: calc(100vh - 71px); padding: 14px; background: var(--card); border-left: 1px solid var(--line); transition: width .3s; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none; } .side::-webkit-scrollbar { display: none; width: 0; height: 0; } .side .col { position: sticky; top: -14px; z-index: 2; background: var(--card); } .side .nav { padding-bottom: 24px; }
+        .side { width: var(--side-w,250px); flex: none; position: sticky; top: 71px; height: calc(100vh - 71px); padding: 14px; background: var(--side-bg,var(--card)); border-left: 1px solid var(--line); transition: width .3s; overflow-y: auto; overflow-x: hidden; overscroll-behavior: contain; scrollbar-width: none; -ms-overflow-style: none; } .side::-webkit-scrollbar { display: none; width: 0; height: 0; } .side .col { position: sticky; top: -14px; z-index: 2; background: var(--side-bg,var(--card)); } .side .nav { padding-bottom: 24px; }
         .sdot { width: 9px; height: 9px; border-radius: 50%; background: #ef4444; box-shadow: 0 0 0 3px rgba(239,68,68,.25); margin-inline-start: auto; flex: none; } .side.min .sdot { position: absolute; top: 8px; inset-inline-end: 8px; } .side a { position: relative; }
         .side.min { width: 78px; } .side.min .lbl { display: none; }
         .col { display: flex; align-items: center; justify-content: space-between; padding: 6px 8px 14px; font-size: 13px; font-weight: 800; color: var(--muted); } .col button { width: 32px; height: 32px; border-radius: 9px; border: none; background: var(--grad); color: #fff; cursor: pointer; font-size: 15px; } .side.min .col { justify-content: center; } .side.min .col span { display: none; }
         .nav a { display: flex; align-items: center; gap: 12px; padding: 10px 12px; margin-bottom: 6px; border-radius: 14px; font-weight: 800; font-size: 15px; transition: .2s; white-space: nowrap; }
         .nav a .ic { width: 36px; height: 36px; border-radius: 11px; display: grid; place-items: center; font-size: 18px; background: rgba(239,68,68,.1); flex: none; } .nav a:hover { background: var(--bg); }
-        .nav a.on { background: var(--grad); color: #fff; box-shadow: 0 10px 22px -12px #ef4444; } .nav a.on .ic { background: rgba(255,255,255,.22); }
-        .main { flex: 1; min-width: 0; padding: 22px 26px 30px; }
+        .nav { display: flex; flex-direction: column; } .nav a.on { background: linear-gradient(135deg,var(--nav-on1,var(--g1)),var(--nav-on2,var(--g2))); color: var(--nav-ink,#fff); box-shadow: 0 10px 22px -12px #ef4444; } .nav a.on .ic { background: rgba(255,255,255,.22); }
+        .main { flex: 1; min-width: 0; padding: 22px 26px 30px; max-width: var(--main-w,none); margin-inline: auto; }
         .view { display: none; } .view.on { display: block; animation: up .4s ease both; } @keyframes up { from { opacity: 0; transform: translateY(14px); } }
-        .card { background: var(--card); border: 1px solid var(--line); border-radius: 20px; box-shadow: var(--sh); }
-        .hello { text-align: center; margin: 4px 0 22px; } .hello h1 { font-size: clamp(26px,5vw,42px); font-weight: 900; } .hello h1 span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; } .hello p { color: var(--muted); font-weight: 700; margin-top: 6px; direction: ltr; transition: opacity .4s; }
-        .stats { display: grid; grid-template-columns: repeat(4,1fr); gap: 14px; margin-bottom: 16px; }
-        .sc { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px; border-radius: 20px; color: #fff; transition: transform .25s; } .sc:hover { transform: translateY(-4px); }
-        .sc .n { font-size: 32px; font-weight: 900; line-height: 1.1; } .sc .l { font-size: 13px; font-weight: 700; opacity: .95; } .sc .i { width: 50px; height: 50px; border-radius: 14px; background: rgba(255,255,255,.22); display: grid; place-items: center; font-size: 24px; flex: none; }
-        .sc.a { background: linear-gradient(135deg,#ef4444,#f97316); } .sc.b { background: linear-gradient(135deg,#6366f1,#8b5cf6); } .sc.c { background: linear-gradient(135deg,#10b981,#14b8a6); } .sc.d { background: linear-gradient(135deg,#ec4899,#f43f5e); }
-        .g2 { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 16px; } .g3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
+        .card { background: var(--card); border: 1px solid var(--line); border-radius: var(--r-card,20px); box-shadow: var(--sh); }
+        .hello { text-align: var(--greet-al,center); margin: 4px 0 22px; } .hello h1 { font-size: clamp(26px,5vw,var(--greet-fs,42px)); font-weight: 900; } .hello h1 span { background: var(--grad); -webkit-background-clip: text; background-clip: text; color: transparent; } .hello p { color: var(--hello-sub,var(--muted)); font-weight: 700; margin-top: 6px; direction: ltr; transition: opacity .4s; }
+        .stats { display: grid; grid-template-columns: repeat(var(--stcols,4),1fr); gap: 14px; margin-bottom: 16px; }
+        .sc { display: flex; align-items: center; justify-content: space-between; gap: 10px; padding: 18px; border-radius: var(--r-card,20px); color: var(--st-ink,#fff); transition: transform .25s; } .sc:hover { transform: translateY(-4px); }
+        .sc .n { font-size: var(--st-fs,32px); font-weight: 900; line-height: 1.1; } .sc .l { font-size: 13px; font-weight: 700; opacity: .95; } .sc .i { width: 50px; height: 50px; border-radius: 14px; background: rgba(255,255,255,.22); display: grid; place-items: center; font-size: 24px; flex: none; }
+        .sc.a { background: linear-gradient(135deg,var(--st-a1,#ef4444),var(--st-a2,#f97316)); } .sc.b { background: linear-gradient(135deg,var(--st-b1,#6366f1),var(--st-b2,#8b5cf6)); } .sc.c { background: linear-gradient(135deg,var(--st-c1,#10b981),var(--st-c2,#14b8a6)); } .sc.d { background: linear-gradient(135deg,var(--st-d1,#ec4899),var(--st-d2,#f43f5e)); }
+        .g2 { display: grid; grid-template-columns: 1fr 2fr; gap: 16px; margin-bottom: 16px; } .g2[data-solo], .g3[data-solo] { grid-template-columns: 1fr !important; } .g3 { display: grid; grid-template-columns: 2fr 1fr; gap: 16px; margin-bottom: 16px; }
         .cp { padding: 20px; } .cp h3 { font-size: 17px; font-weight: 900; margin-bottom: 14px; } .cp .sub { font-size: 13px; color: var(--muted); font-weight: 600; line-height: 1.8; text-align: center; margin-top: 8px; }
         .ring { display: block; width: 170px; height: 170px; margin: 6px auto; } .ring circle { fill: none; stroke-width: 13; } .rbg { stroke: var(--line); } .rfg { stroke: url(#rg); stroke-linecap: round; animation: dash 1.3s ease both; } .rt { font-size: 30px; font-weight: 900; fill: var(--ink); }
         @keyframes dash { from { stroke-dashoffset: var(--c); } }
         .lg { display: flex; gap: 16px; font-size: 12.5px; font-weight: 700; color: var(--muted); margin-bottom: 8px; } .lg i { display: inline-block; width: 11px; height: 11px; border-radius: 50%; margin-left: 6px; }
         .line { width: 100%; height: auto; display: block; } .line text { font-size: 11px; fill: var(--muted); font-weight: 700; font-family: 'Cairo'; } .line .gl { stroke: var(--line); }
         .bars { display: flex; align-items: flex-end; gap: 12px; height: 200px; border-bottom: 1px solid var(--line); background: repeating-linear-gradient(to top, var(--line) 0, var(--line) 1px, transparent 1px, transparent 25%); }
-        .b2 { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; } .b2 em { font-style: normal; font-size: 12px; font-weight: 900; margin-bottom: 4px; } .b2 i { width: 100%; max-width: 44px; height: 0; border-radius: 10px 10px 0 0; background: linear-gradient(180deg,#34d399,#10b981); transition: height 1s ease; } .b2 i.lo { background: linear-gradient(180deg,#fb7185,#e11d48); }
+        .b2 { flex: 1; height: 100%; display: flex; flex-direction: column; justify-content: flex-end; align-items: center; } .b2 em { font-style: normal; font-size: 12px; font-weight: 900; margin-bottom: 4px; } .b2 i { width: 100%; max-width: 44px; height: 0; border-radius: 10px 10px 0 0; background: linear-gradient(180deg,var(--bo1,#34d399),var(--bo2,#10b981)); transition: height 1s ease; } .b2 i.lo { background: linear-gradient(180deg,var(--bl1,#fb7185),var(--bl2,#e11d48)); }
         .xl { display: flex; gap: 12px; margin-top: 6px; } .xl span { flex: 1; text-align: center; font-size: 11px; font-weight: 700; color: var(--muted); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
         .pie { position: relative; width: 170px; height: 170px; margin: 6px auto 12px; border-radius: 50%; } .pie::after { content: ""; position: absolute; inset: 30px; border-radius: 50%; background: var(--card); } .pie b { position: absolute; inset: 0; z-index: 1; display: grid; place-items: center; font-size: 26px; font-weight: 900; }
         .sec { display: flex; align-items: center; justify-content: space-between; gap: 10px; flex-wrap: wrap; margin: 22px 0 14px; } .sec h3 { font-size: 20px; font-weight: 900; } .sec a { color: var(--brand); font-weight: 800; font-size: 14px; }
         .tabs { display: inline-flex; gap: 4px; padding: 4px; border-radius: 50px; background: var(--card); border: 1px solid var(--line); } .tab { border: none; background: none; padding: 8px 18px; border-radius: 50px; font-weight: 800; font-size: 14px; color: var(--muted); cursor: pointer; } .tab.on { background: var(--grad); color: #fff; }
-        .btn { display: inline-block; text-align: center; padding: 11px 22px; border-radius: 13px; border: 2px solid var(--brand); background: none; color: var(--brand); font-weight: 800; font-size: 14px; cursor: pointer; transition: .2s; } .btn:hover { transform: translateY(-2px); } .btn.main { background: var(--grad); border-color: transparent; color: #fff; } .btn.sm { padding: 8px 16px; font-size: 13px; } .btn:disabled { opacity: .6; cursor: wait; }
-        .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(270px,1fr)); gap: 18px; }
-        .cc { overflow: hidden; display: flex; flex-direction: column; transition: transform .3s; animation: up .5s ease both; animation-delay: calc(var(--i,0)*60ms); border: 2px solid var(--brand); } .cc:hover { transform: translateY(-7px); }
-        .th { position: relative; height: 140px; background: var(--grad); display: grid; place-items: center; font-size: 52px; overflow: hidden; } .th img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
-        .tag { position: absolute; top: 10px; padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 900; color: #fff; background: rgba(0,0,0,.55); } .tag.r { right: 10px; } .tag.l { left: 10px; background: var(--ok); }
+        .btn { display: inline-block; text-align: center; padding: 11px 22px; border-radius: var(--r-btn,13px); border: 2px solid var(--brand); background: none; color: var(--brand); font-weight: 800; font-size: 14px; cursor: pointer; transition: .2s; } .btn:hover { transform: translateY(-2px); } .btn.main { background: var(--grad); border-color: transparent; color: #fff; } .btn.sm { padding: 8px 16px; font-size: 13px; } .btn:disabled { opacity: .6; cursor: wait; }
+        .grid { display: grid; grid-template-columns: repeat(auto-fill,minmax(var(--cc-minw,270px),1fr)); gap: 18px; }
+        .cc { overflow: hidden; display: flex; flex-direction: column; transition: transform .3s; animation: up .5s ease both; animation-delay: calc(var(--i,0)*60ms); border: 2px solid var(--cc-bd,var(--brand)); } .cc:hover { transform: translateY(-7px); }
+        .th { position: relative; height: var(--cc-th,140px); background: var(--grad); display: grid; place-items: center; font-size: 52px; overflow: hidden; } .th img { position: absolute; inset: 0; width: 100%; height: 100%; object-fit: cover; }
+        .tag { position: absolute; top: 10px; padding: 4px 12px; border-radius: 50px; font-size: 12px; font-weight: 900; color: #fff; background: var(--cc-tag,rgba(0,0,0,.55)); } .tag.r { right: 10px; } .tag.l { left: 10px; background: var(--cc-tag2,var(--ok)); }
         .cb { padding: 16px; display: flex; flex-direction: column; gap: 9px; flex: 1; } .cb h4 { font-size: 17px; font-weight: 800; } .cb p { font-size: 13px; color: var(--muted); line-height: 1.8; display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden; } .meta { font-size: 12.5px; font-weight: 700; color: var(--muted); }
         .bar { height: 8px; border-radius: 8px; background: var(--line); overflow: hidden; } .bar i { display: block; height: 100%; background: var(--grad); border-radius: 8px; transition: width 1s; }
         .acts { display: flex; gap: 8px; margin-top: auto; } .acts .btn { flex: 1; }
@@ -81,9 +84,9 @@
         .op { padding: 10px 14px; border-radius: 12px; border: 1px solid var(--line); margin-bottom: 7px; font-weight: 600; font-size: 14px; direction: ltr; text-align: left; } .op.right { background: rgba(22,163,74,.13); border-color: var(--ok); color: var(--ok); font-weight: 800; } .op.wrong { background: rgba(220,38,38,.12); border-color: var(--bad); color: var(--bad); font-weight: 800; text-decoration: line-through; }
         .info { display: grid; grid-template-columns: repeat(2,1fr); gap: 12px; padding: 20px; } .info div { padding: 12px 14px; border-radius: 14px; background: var(--bg); } .info small { display: block; color: var(--muted); font-weight: 700; font-size: 12px; } .info b { font-size: 15px; word-break: break-all; }
         .pf { display: flex; align-items: center; gap: 16px; padding: 22px; margin-bottom: 14px; } .pf .av { width: 74px; height: 74px; font-size: 30px; cursor: default; } .chip { display: inline-block; padding: 5px 14px; border-radius: 50px; background: var(--grad); color: #fff; font-weight: 800; font-size: 13px; margin-top: 6px; }
-        .note { padding: 14px 18px; margin-top: 14px; font-size: 13.5px; font-weight: 700; line-height: 1.9; color: var(--muted); background: rgba(251,191,36,.12); border: 1px solid rgba(251,191,36,.5); border-radius: 16px; }
-        .ann { display: flex; gap: 10px; margin-bottom: 10px; padding: 13px 18px; border-radius: 16px; background: rgba(251,191,36,.14); border: 1px solid rgba(251,191,36,.55); font-weight: 700; font-size: 14px; } .ann small { display: block; color: var(--muted); font-weight: 600; }
-        .redeem { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 18px 20px; border: 2px dashed var(--line); border-radius: 20px; background: var(--card); } .redeem b { display: block; font-size: 16px; } .redeem span { font-size: 13px; color: var(--muted); font-weight: 600; }
+        .note { padding: 14px 18px; margin-top: 14px; font-size: 13.5px; font-weight: 700; line-height: 1.9; color: var(--muted); background: var(--note-bg,rgba(251,191,36,.12)); border: 1px solid var(--note-bd,rgba(251,191,36,.5)); border-radius: 16px; }
+        .ann { display: flex; gap: 10px; margin-bottom: 10px; padding: 13px 18px; border-radius: 16px; background: var(--ann-bg,rgba(251,191,36,.14)); border: 1px solid var(--ann-bd,rgba(251,191,36,.55)); font-weight: 700; font-size: 14px; } .ann small { display: block; color: var(--muted); font-weight: 600; }
+        .redeem { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: 14px; padding: 18px 20px; border: 2px dashed var(--rd-bd,var(--line)); border-radius: var(--r-card,20px); background: var(--rd-bg,var(--card)); } .redeem b { display: block; font-size: 16px; } .redeem span { font-size: 13px; color: var(--muted); font-weight: 600; }
         .redeem .scan { padding: 0 14px; font-size: 20px; line-height: 1; } .scanhint { flex-basis: 100%; font-size: 12.5px; color: var(--muted); font-weight: 600; }
         .redeem form { display: flex; gap: 8px; flex: 1; min-width: 250px; max-width: 400px; } .redeem input { flex: 1; min-width: 0; padding: 11px; border-radius: 12px; border: 1px solid var(--line); background: var(--bg); color: var(--ink); font-size: 15px; font-weight: 800; letter-spacing: 2px; text-align: center; text-transform: uppercase; outline: none; } .redeem input:focus { border-color: var(--brand); }
         .empty { text-align: center; padding: 34px 18px; color: var(--muted); font-weight: 700; line-height: 2; border: 2px dashed var(--line); border-radius: 20px; grid-column: 1/-1; } .empty i { display: block; font-size: 44px; font-style: normal; }
@@ -92,7 +95,7 @@
         .foot { display: grid; grid-template-columns: 1.4fr 1fr 1fr 1fr; gap: 26px; padding: 34px 28px 18px; background: var(--card); border-top: 1px solid var(--line); } .foot h4 { font-size: 15px; color: var(--brand); margin-bottom: 12px; } .foot a { display: block; font-size: 14px; font-weight: 700; color: var(--muted); margin-bottom: 8px; } .foot a:hover { color: var(--brand); } .foot .cp2 { grid-column: 1/-1; text-align: center; font-size: 12px; color: var(--muted); padding-top: 14px; border-top: 1px solid var(--line); }
         .modal { position: fixed; inset: 0; z-index: 200; display: none; align-items: center; justify-content: center; padding: 20px; background: rgba(2,6,23,.65); backdrop-filter: blur(6px); } .modal.on { display: flex; animation: up .25s ease; }
         .box { width: 100%; max-width: 380px; padding: 30px 24px; text-align: center; background: var(--card); border-radius: 24px; border: 1px solid var(--line); } .box i { font-size: 46px; font-style: normal; } .box h3 { margin: 8px 0 6px; font-size: 21px; } .box p { color: var(--muted); font-weight: 600; margin-bottom: 20px; } .box .acts { flex-direction: column; } .box .out { background: #dc2626; border-color: #dc2626; color: #fff; }
-        .bottom { display: none; position: fixed; bottom: 0; right: 0; left: 0; z-index: 60; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: var(--card); border-top: 1px solid var(--line); } .bottom a { flex: 1 0 62px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; border-radius: 12px; font-size: 11px; font-weight: 800; color: var(--muted); } .bottom a span { font-size: 20px; } .bottom a.on { color: var(--brand); background: rgba(239,68,68,.1); }
+        .bottom { display: none; position: fixed; bottom: 0; right: 0; left: 0; z-index: 60; padding: 6px 6px calc(6px + env(safe-area-inset-bottom)); background: var(--bot-bg,var(--card)); border-top: 1px solid var(--line); } .bottom a { flex: 1 0 62px; display: flex; flex-direction: column; align-items: center; gap: 2px; padding: 6px 0; border-radius: 12px; font-size: 11px; font-weight: 800; color: var(--muted); } .bottom a span { font-size: 20px; } .bottom a.on { color: var(--bot-on,var(--brand)); background: rgba(239,68,68,.1); }
         #confetti { position: fixed; inset: 0; pointer-events: none; z-index: 300; } #toasts { position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%); z-index: 310; display: grid; gap: 8px; } .toast { background: #1e293b; color: #fff; padding: 12px 22px; border-radius: 14px; font-weight: 700; font-size: 14px; animation: up .3s ease; box-shadow: 0 10px 30px rgba(0,0,0,.35); }
         .rs-card { margin-bottom: 14px; overflow: hidden; }
         .rs-h { display: flex; align-items: center; gap: 14px; padding: 16px 18px; cursor: pointer; }
@@ -106,7 +109,7 @@
         .rs-a { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
         .bottom { overflow-x: auto; } .bottom a { min-width: 62px; }
         @media (max-width: 600px) { .rs-g { grid-template-columns: repeat(2,1fr); } }
-        @media (max-width: 900px) { .side { display: none; } .bottom { display: flex; } .main { padding: 16px 14px 90px; } .stats { grid-template-columns: repeat(2,1fr); } .g2, .g3 { grid-template-columns: 1fr; } .info { grid-template-columns: 1fr; } .foot { grid-template-columns: 1fr 1fr; padding-bottom: 90px; } .brand div { display: none; } .hdr { padding: 8px 14px; } }
+        @media (max-width: 900px) { .side { display: none; } .bottom { display: flex; } .main { padding: 16px 14px 90px; } .stats { grid-template-columns: repeat(var(--stc2,2),1fr); } .g2, .g3 { grid-template-columns: 1fr; } .info { grid-template-columns: 1fr; } .foot { grid-template-columns: 1fr 1fr; padding-bottom: 90px; } .brand div { display: none; } .hdr { padding: 8px 14px; } }
         @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
         /* «مستواي» — بيتحسب وقت الفتح ومابيتخزنش في القاعدة */
         .lv-g{display:grid;grid-template-columns:repeat(auto-fit,minmax(130px,1fr));gap:12px;margin-bottom:16px}
@@ -121,125 +124,136 @@
         .lv-wk{display:flex;justify-content:space-between;gap:10px;align-items:center;padding:10px 0;border-bottom:1px dashed var(--line);flex-wrap:wrap}.lv-wk:last-child{border:0}.lv-wk span{font-weight:800;font-size:14px;overflow-wrap:anywhere;min-width:0;flex:1 1 180px}.lv-wk small{color:var(--muted);display:block;font-weight:600}
     /* بدون علامة زرقاء عند الضغط على الشعار */
 .brand,.brand *,.logo,.logo *{-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}.brand,.brand:focus,.brand:focus-visible,.brand:active,.logo:focus{outline:none;-webkit-tap-highlight-color:transparent}.brand img,.logo img{-webkit-user-drag:none;user-drag:none;outline:none}a,button{-webkit-tap-highlight-color:transparent}
+/* ===== تحكم الصفحة الرئيسية (home-ui.js) ===== */
+[data-hm-off] { display: none !important; }
+html[data-hm-theme] .uit { display: none !important; }
+html[data-hm-noanim] *, html[data-hm-noanim] *::before, html[data-hm-noanim] *::after { animation: none !important; transition: none !important; }
+#v-home.hm-ord.on { display: flex; flex-direction: column; } #v-home.hm-ord > [data-blk] { margin-bottom: 16px; } #v-home.hm-ord > [data-blk] > .sec { margin-top: 0; } .bottom a .bl { font-style: normal; }
 </style>
 </head>
 <body data-theme="light">
 <svg width="0" height="0" style="position:absolute" aria-hidden="true">
-    <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ef4444"/><stop offset="1" stop-color="#ec4899"/></linearGradient></defs>
+    <defs><linearGradient id="rg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" style="stop-color:var(--ring1,var(--g1))"/><stop offset="1" style="stop-color:var(--ring2,var(--g2))"/></linearGradient></defs>
     <symbol id="logo" viewBox="0 0 64 64"><path d="M14 4h36a10 10 0 0 1 10 10v26a10 10 0 0 1-10 10H32L20 61V50h-6A10 10 0 0 1 4 40V14A10 10 0 0 1 14 4z" fill="url(#rg)"/><path d="M21 21h8v19h14v8H21z" fill="#fff"/><path d="M18 19V11l5 4 4-7 4 7 5-4v8z" fill="#fbbf24"/><circle cx="46" cy="18" r="2.6" fill="#fff" opacity=".85"/><circle cx="52" cy="26" r="1.8" fill="#fff" opacity=".6"/></symbol>
 </svg>
 
 <header class="hdr">
-    <a class="brand" href="#home"><img src="data:image/png;base64,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" alt="" width="46" height="46" class="blg"><div><b>The Leader</b><small>IN ENGLISH</small></div></a>
+    <a class="brand" href="#home"><img src="data:image/png;base64,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" alt="" width="46" height="46" class="blg" data-hs="sh_logo"><div data-hs="sh_brand_text"><b data-hk="brand_t">The Leader</b><small data-hk="brand_s">IN ENGLISH</small></div></a>
     <div class="tools">
-        <button class="uit" type="button"></button>
-        <div class="dd" id="ddBell"><button class="ib" type="button" onclick="dd('ddBell')" aria-label="الإشعارات">🔔<span class="dot" id="bellDot"></span></button>
+        <button class="uit" type="button" data-hs="sh_theme_btn"></button>
+        <div class="dd" id="ddBell" data-hs="sh_bell"><button class="ib" type="button" onclick="dd('ddBell')" aria-label="الإشعارات">🔔<span class="dot" id="bellDot"></span></button>
             <div class="menu" id="bellList"><div class="nt">لا توجد إشعارات جديدة 👌</div></div></div>
-        <div class="dd" id="ddUser"><button class="av" type="button" id="avatar" onclick="dd('ddUser')">؟</button>
-            <div class="menu"><div class="hi">أهلاً <span id="hiName"></span><small id="hiYear"></small></div>
-                <a href="#home">🏠 الصفحة الرئيسية</a><a href="#account">👤 حسابي</a><button class="out" type="button" onclick="askLogout()">🚪 تسجيل الخروج</button></div></div>
+        <div class="dd" id="ddUser" data-hs="sh_user"><button class="av" type="button" id="avatar" onclick="dd('ddUser')">؟</button>
+            <div class="menu"><div class="hi"><span data-hk="menu_hi">أهلاً</span> <span id="hiName"></span><small id="hiYear" data-hs="sh_menu_year"></small></div>
+                <a href="#home" data-hk="menu_home" data-hs="sh_menu_home">🏠 الصفحة الرئيسية</a><a href="#account" data-hk="menu_account" data-hs="sh_menu_account">👤 حسابي</a><button class="out" type="button" onclick="askLogout()" data-hk="menu_logout" data-hs="sh_menu_logout">🚪 تسجيل الخروج</button></div></div>
     </div>
 </header>
 
 <div class="shell">
-    <aside class="side" id="side">
-        <div class="col"><span>تصغير النافذة</span><button type="button" onclick="$('#side').classList.toggle('min')" aria-label="تصغير">‹</button></div>
+    <aside class="side" id="side" data-hs="sh_sidebar">
+        <div class="col" data-hs="sh_side_min"><span data-hk="side_min">تصغير النافذة</span><button type="button" onclick="$('#side').classList.toggle('min')" aria-label="تصغير">‹</button></div>
         <nav class="nav">
-            <a href="#home" data-v="home"><b class="ic">🏠</b><span class="lbl">الرئيسية</span></a>
-            <a href="#courses" data-v="courses"><b class="ic">📚</b><span class="lbl">الكورسات</span></a>
-            <a href="#exams" data-v="exams"><b class="ic">📝</b><span class="lbl">الاختبارات</span></a>
-            <a href="#results" data-v="results"><b class="ic">🏅</b><span class="lbl">نتائجي</span></a>
-            <a href="#level" data-v="level"><b class="ic">📈</b><span class="lbl">مستواي</span></a>
-            <a href="#mistakes" data-v="mistakes"><b class="ic">🧠</b><span class="lbl">أخطائي</span></a>
-            <a href="/quiz?mode=mistakes"><b class="ic">🎯</b><span class="lbl">امتحان من أخطائي</span></a>
-            <a href="#support" data-v="support"><b class="ic">🔧</b><span class="lbl">الدعم الفني</span><i class="sdot" id="dotTech" hidden></i></a>
-            <a href="#academic" data-v="academic"><b class="ic">📘</b><span class="lbl">الدعم العلمي</span><i class="sdot" id="dotAc" hidden></i></a>
-            <a href="#account" data-v="account"><b class="ic">👤</b><span class="lbl">حسابي</span></a>
+            <a href="#home" data-v="home" data-nid="home" data-hs="sh_nav_home" data-ho="nav:home"><b class="ic">🏠</b><span class="lbl">الرئيسية</span></a>
+            <a href="#courses" data-v="courses" data-nid="courses" data-hs="sh_nav_courses" data-ho="nav:courses"><b class="ic">📚</b><span class="lbl">الكورسات</span></a>
+            <a href="#exams" data-v="exams" data-nid="exams" data-hs="sh_nav_exams" data-ho="nav:exams"><b class="ic">📝</b><span class="lbl">الاختبارات</span></a>
+            <a href="#results" data-v="results" data-nid="results" data-hs="sh_nav_results" data-ho="nav:results"><b class="ic">🏅</b><span class="lbl">نتائجي</span></a>
+            <a href="#level" data-v="level" data-nid="level" data-hs="sh_nav_level" data-ho="nav:level"><b class="ic">📈</b><span class="lbl">مستواي</span></a>
+            <a href="#mistakes" data-v="mistakes" data-nid="mistakes" data-hs="sh_nav_mistakes" data-ho="nav:mistakes"><b class="ic">🧠</b><span class="lbl">أخطائي</span></a>
+            <a href="/quiz?mode=mistakes" data-nid="practice" data-hs="sh_nav_practice" data-ho="nav:practice"><b class="ic">🎯</b><span class="lbl">امتحان من أخطائي</span></a>
+            <a href="#support" data-v="support" data-nid="support" data-hs="sh_nav_support" data-ho="nav:support"><b class="ic">🔧</b><span class="lbl">الدعم الفني</span><i class="sdot" id="dotTech" hidden></i></a>
+            <a href="#academic" data-v="academic" data-nid="academic" data-hs="sh_nav_academic" data-ho="nav:academic"><b class="ic">📘</b><span class="lbl">الدعم العلمي</span><i class="sdot" id="dotAc" hidden></i></a>
+            <a href="#account" data-v="account" data-nid="account" data-hs="sh_nav_account" data-ho="nav:account"><b class="ic">👤</b><span class="lbl">حسابي</span></a>
         </nav>
     </aside>
 
     <main class="main">
         <section class="view" id="v-home">
-            <div class="hello"><h1><span id="greet"></span></h1><p id="quote"></p></div>
-            <div id="ann"></div>
-            <div class="stats">
-                <div class="sc a"><div><div class="n" id="sMine">0</div><div class="l">كورساتي الحالية</div></div><div class="i">📚</div></div>
-                <div class="sc b"><div><div class="n" id="sComp">0</div><div class="l">كورسات مكتملة</div></div><div class="i">🏁</div></div>
-                <div class="sc c"><div><div class="n" id="sDone">0</div><div class="l">دروس مكتملة</div></div><div class="i">✅</div></div>
-                <div class="sc d"><div><div class="n"><span id="sAvg">0</span>%</div><div class="l">متوسط درجات الاختبارات</div></div><div class="i">🏆</div></div>
+            <div class="hello" data-blk="hello" data-ho="home_blocks:hello" data-hs="sh_hello"><h1><span id="greet"></span></h1><p id="quote" data-hs="sh_quote"></p></div>
+            <div id="ann" data-blk="ann" data-ho="home_blocks:ann" data-hs="sh_ann"></div>
+            <div class="stats" data-blk="stats" data-ho="home_blocks:stats" data-hs="sh_stats">
+                <div class="sc a" data-hs="sh_st_a"><div><div class="n" id="sMine">0</div><div class="l" data-hk="st_a_l">كورساتي الحالية</div></div><div class="i" data-hk="st_a_i">📚</div></div>
+                <div class="sc b" data-hs="sh_st_b"><div><div class="n" id="sComp">0</div><div class="l" data-hk="st_b_l">كورسات مكتملة</div></div><div class="i" data-hk="st_b_i">🏁</div></div>
+                <div class="sc c" data-hs="sh_st_c"><div><div class="n" id="sDone">0</div><div class="l" data-hk="st_c_l">دروس مكتملة</div></div><div class="i" data-hk="st_c_i">✅</div></div>
+                <div class="sc d" data-hs="sh_st_d"><div><div class="n"><span id="sAvg">0</span>%</div><div class="l" data-hk="st_d_l">متوسط درجات الاختبارات</div></div><div class="i" data-hk="st_d_i">🏆</div></div>
             </div>
-            <div class="g2">
-                <div class="card cp"><h3>تقدمك في الدراسة</h3><div id="ringBox"></div><div class="sub" id="ringSub"></div></div>
-                <div class="card cp"><h3>نشاطك التعليمي</h3><div class="lg"><span><i style="background:#ef4444"></i>الأسبوع الحالي</span><span><i style="background:#10b981"></i>الأسبوع الماضي</span></div><div id="lineBox"></div><div class="sub">عدد الدروس اللي خلّصتها في كل يوم</div></div>
+            <div class="g2" data-blk="ch1" data-ho="home_blocks:ch1">
+                <div class="card cp" data-hs="sh_ch_ring"><h3 data-hk="ch_ring_t">تقدمك في الدراسة</h3><div id="ringBox"></div><div class="sub" id="ringSub"></div></div>
+                <div class="card cp" data-hs="sh_ch_line"><h3 data-hk="ch_line_t">نشاطك التعليمي</h3><div class="lg"><span><i style="background:var(--ln1,#ef4444)"></i><b style="font-weight:inherit" data-hk="ch_line_l1">الأسبوع الحالي</b></span><span><i style="background:var(--ln2,#10b981)"></i><b style="font-weight:inherit" data-hk="ch_line_l2">الأسبوع الماضي</b></span></div><div id="lineBox"></div><div class="sub" data-hk="ch_line_sub">عدد الدروس اللي خلّصتها في كل يوم</div></div>
             </div>
-            <div class="g3">
-                <div class="card cp"><h3>درجاتك في الاختبارات</h3><div id="barBox"></div></div>
-                <div class="card cp"><h3>نسبة إنجاز الدروس</h3><div id="pieBox"></div></div>
+            <div class="g3" data-blk="ch2" data-ho="home_blocks:ch2">
+                <div class="card cp" data-hs="sh_ch_bars"><h3 data-hk="ch_bars_t">درجاتك في الاختبارات</h3><div id="barBox"></div></div>
+                <div class="card cp" data-hs="sh_ch_pie"><h3 data-hk="ch_pie_t">نسبة إنجاز الدروس</h3><div id="pieBox"></div></div>
             </div>
-            <div class="sec"><h3>الكورسات اللي مشترك فيها</h3><a href="#courses">عرض الكل ←</a></div>
-            <div class="grid" id="mineGrid"><div class="skel"></div><div class="skel"></div></div>
-            <div class="sec"><h3>كورسات متاحة لصفك</h3></div>
-            <div class="grid" id="openGrid"></div>
-            <div class="sec"><h3>عندك كود تفعيل؟</h3></div>
-            <div class="redeem"><div><b>🎟️ فعّل كورسك بالكود</b><span>اكتب الكود اللي وصلك واشترك فوراً</span></div>
-                <form id="redeemForm"><input id="codeIn" dir="ltr" placeholder="XXXX-XXXX-XXXX" maxlength="14" autocomplete="off" required><button class="btn scan" type="button" id="scanBtn" title="امسح الباركود اللي على الكارت بالكاميرا" aria-label="مسح الباركود بالكاميرا">📷</button><button class="btn main" type="submit" id="redeemBtn">تفعيل</button></form>
-                <div class="scanhint">📷 معاك كارت فيه باركود؟ دوس على الكاميرا والكود هيتكتب لوحده، وبعدها دوس «تفعيل».</div></div>
+            <div data-blk="mine" data-ho="home_blocks:mine" data-hs="sh_mine">
+                <div class="sec"><h3 data-hk="mine_t">الكورسات اللي مشترك فيها</h3><a href="#courses" data-hk="mine_all" data-hs="sh_mine_all">عرض الكل ←</a></div>
+                <div class="grid" id="mineGrid"><div class="skel"></div><div class="skel"></div></div>
+            </div>
+            <div data-blk="open" data-ho="home_blocks:open" data-hs="sh_open">
+                <div class="sec"><h3 data-hk="open_t">كورسات متاحة لصفك</h3></div>
+                <div class="grid" id="openGrid"></div>
+            </div>
+            <div data-blk="redeem" data-ho="home_blocks:redeem" data-hs="sh_redeem">
+                <div class="sec" data-hs="sh_redeem_sec"><h3 data-hk="redeem_sec">عندك كود تفعيل؟</h3></div>
+                <div class="redeem"><div><b data-hk="redeem_t">🎟️ فعّل كورسك بالكود</b><span data-hk="redeem_s">اكتب الكود اللي وصلك واشترك فوراً</span></div>
+                    <form id="redeemForm"><input id="codeIn" dir="ltr" placeholder="XXXX-XXXX-XXXX" data-hp="redeem_ph" maxlength="14" autocomplete="off" required><button class="btn scan" type="button" id="scanBtn" data-hs="sh_redeem_scan" title="امسح الباركود اللي على الكارت بالكاميرا" aria-label="مسح الباركود بالكاميرا">📷</button><button class="btn main" type="submit" id="redeemBtn" data-hk="redeem_btn">تفعيل</button></form>
+                    <div class="scanhint" data-hs="sh_redeem_scan" data-hk="redeem_hint">📷 معاك كارت فيه باركود؟ دوس على الكاميرا والكود هيتكتب لوحده، وبعدها دوس «تفعيل».</div></div>
+            </div>
         </section>
 
         <section class="view" id="v-courses">
-            <div class="sec" style="margin-top:0"><h3>الكورسات</h3><div class="tabs"><button class="tab on" type="button" data-f="all">كل الكورسات</button><button class="tab" type="button" data-f="mine">كورساتي</button></div></div>
+            <div class="sec" style="margin-top:0"><h3 data-hk="courses_t">الكورسات</h3><div class="tabs" data-hs="sh_tabs"><button class="tab on" type="button" data-f="all" data-hk="tab_all">كل الكورسات</button><button class="tab" type="button" data-f="mine" data-hk="tab_mine">كورساتي</button></div></div>
             <div class="grid" id="grid"></div>
         </section>
 
         <section class="view" id="v-exams">
-            <div class="sec" style="margin-top:0"><h3>اختبارات متاحة</h3></div><div id="quizList"></div>
-            <div class="note" style="margin-top:16px">🏅 نتايجك وتفاصيل إجاباتك كلها في تبويب <a href="#results" style="font-weight:800;color:var(--brand)">«نتائجي»</a>.</div><div id="attemptList" hidden></div>
+            <div class="sec" style="margin-top:0"><h3 data-hk="ex_t">اختبارات متاحة</h3></div><div id="quizList"></div>
+            <div class="note" style="margin-top:16px" data-hs="sh_ex_note"><span data-hk="ex_note1">🏅 نتايجك وتفاصيل إجاباتك كلها في تبويب</span> <a href="#results" style="font-weight:800;color:var(--brand)" data-hk="ex_note2">«نتائجي»</a><span data-hk="ex_note3">.</span></div><div id="attemptList" hidden></div>
         </section>
 
         <section class="view" id="v-results">
-            <div class="sec" style="margin-top:0"><h3>نتائجي</h3></div>
-            <div class="note" style="margin:0 0 16px">🏅 هنا نتايجك في كل محاضرة: كام صح وكام غلط والنسبة، ومن «تفاصيل الإجابات» تشوف كل سؤال والإجابة الصحيحة.</div>
+            <div class="sec" style="margin-top:0"><h3 data-hk="rs_t">نتائجي</h3></div>
+            <div class="note" style="margin:0 0 16px" data-hs="sh_rs_note" data-hk="rs_note">🏅 هنا نتايجك في كل محاضرة: كام صح وكام غلط والنسبة، ومن «تفاصيل الإجابات» تشوف كل سؤال والإجابة الصحيحة.</div>
             <div id="resultsList"></div>
         </section>
 
         <section class="view" id="v-level">
-            <div class="note" style="margin:0 0 16px">📈 ده مستواك الحالي: تقدمك في الكورسات، أضعف الدروس عندك، وأوسمتك. بيتحسب من بياناتك وقت ما تفتح الصفحة.</div>
+            <div class="note" style="margin:0 0 16px" data-hs="sh_lv_note" data-hk="lv_note">📈 ده مستواك الحالي: تقدمك في الكورسات، أضعف الدروس عندك، وأوسمتك. بيتحسب من بياناتك وقت ما تفتح الصفحة.</div>
             <div id="levelBox"></div>
         </section>
 
         <section class="view" id="v-mistakes">
-            <div class="note" style="margin:0 0 16px">🧠 هنا كل الأسئلة اللي غلطت فيها في الاختبارات مع الإجابة الصحيحة، راجعها كويس عشان متكررش الغلطة.</div>
-            <a class="btn main" href="/quiz?mode=mistakes" style="margin-bottom:16px">🎯 ابدأ امتحان من أخطائي</a>
+            <div class="note" style="margin:0 0 16px" data-hs="sh_mi_note" data-hk="mi_note">🧠 هنا كل الأسئلة اللي غلطت فيها في الاختبارات مع الإجابة الصحيحة، راجعها كويس عشان متكررش الغلطة.</div>
+            <a class="btn main" href="/quiz?mode=mistakes" style="margin-bottom:16px" data-hs="sh_mi_btn" data-hk="mi_btn">🎯 ابدأ امتحان من أخطائي</a>
             <div id="mistakeList"></div>
         </section>
 
         <section class="view" id="v-support">
-            <div class="note" style="margin:0 0 16px">🔧 الدعم الفني: لو عندك مشكلة في المنصة (دخول، فيديو، امتحان مش بيفتح…) اكتب مشكلتك وابعت صورة لو محتاج — محادثتك محفوظة وبنرد عليك هنا.</div>
+            <div class="note" style="margin:0 0 16px" data-hs="sh_sp_note" data-hk="sp_note">🔧 الدعم الفني: لو عندك مشكلة في المنصة (دخول، فيديو، امتحان مش بيفتح…) اكتب مشكلتك وابعت صورة لو محتاج — محادثتك محفوظة وبنرد عليك هنا.</div>
             <div id="spTab"></div>
         </section>
 
         <section class="view" id="v-academic">
-            <div class="note" style="margin:0 0 16px">📘 الدعم العلمي: اسأل في أي نقطة في المادة (قاعدة، درس، سؤال امتحان) وهيرد عليك المدرس أو فريق المادة هنا.</div>
+            <div class="note" style="margin:0 0 16px" data-hs="sh_ac_note" data-hk="ac_note">📘 الدعم العلمي: اسأل في أي نقطة في المادة (قاعدة، درس، سؤال امتحان) وهيرد عليك المدرس أو فريق المادة هنا.</div>
             <div id="acTab"></div>
         </section>
 
         <section class="view" id="v-account">
-            <div class="card pf"><div class="av" id="avatar2">؟</div><div><h3 id="fullName" style="font-size:21px"></h3><span class="chip" id="yearChip"></span></div></div>
-            <div class="card info" id="infoGrid"></div>
-            <div class="note">🔒 حسابك يعمل على <b>جهاز واحد فقط</b> في نفس الوقت، ولو سجّلت الدخول من جهاز آخر يتم إخراجك من هذا الجهاز تلقائياً.</div>
-            <div style="margin-top:16px"><button class="btn main" type="button" onclick="askLogout()">🚪 تسجيل الخروج</button></div>
+            <div class="card pf" data-hs="sh_acct_card"><div class="av" id="avatar2">؟</div><div><h3 id="fullName" style="font-size:21px"></h3><span class="chip" id="yearChip" data-hs="sh_acct_chip"></span></div></div>
+            <div class="card info" id="infoGrid" data-hs="sh_acct_info"></div>
+            <div class="note" data-hs="sh_acct_note"><span data-hk="acct_n1">🔒 حسابك يعمل على</span> <b data-hk="acct_n2">جهاز واحد فقط</b> <span data-hk="acct_n3">في نفس الوقت، ولو سجّلت الدخول من جهاز آخر يتم إخراجك من هذا الجهاز تلقائياً.</span></div>
+            <div style="margin-top:16px" data-hs="sh_acct_logout"><button class="btn main" type="button" onclick="askLogout()" data-hk="acct_logout">🚪 تسجيل الخروج</button></div>
         </section>
     </main>
 </div>
 
-<div id="sfHome"></div>
+<div id="sfHome" data-hs="sh_footer"></div>
 
-<nav class="bottom">
-    <a href="#home" data-v="home"><span>🏠</span>الرئيسية</a><a href="#courses" data-v="courses"><span>📚</span>كورسات</a><a href="#exams" data-v="exams"><span>📝</span>اختبارات</a><a href="#results" data-v="results"><span>🏅</span>نتائجي</a><a href="#mistakes" data-v="mistakes"><span>🧠</span>أخطائي</a><a href="/quiz?mode=mistakes"><span>🎯</span>تدريب</a><a href="#support" data-v="support"><span>🔧</span>فني</a><a href="#academic" data-v="academic"><span>📘</span>علمي</a><a href="#account" data-v="account"><span>👤</span>حسابي</a>
+<nav class="bottom" data-hs="sh_bottom">
+    <a href="#home" data-v="home" data-nid="home" data-hs="sh_nav_home" data-ho="nav:home"><span class="bi">🏠</span><i class="bl">الرئيسية</i></a><a href="#courses" data-v="courses" data-nid="courses" data-hs="sh_nav_courses" data-ho="nav:courses"><span class="bi">📚</span><i class="bl">كورسات</i></a><a href="#exams" data-v="exams" data-nid="exams" data-hs="sh_nav_exams" data-ho="nav:exams"><span class="bi">📝</span><i class="bl">اختبارات</i></a><a href="#results" data-v="results" data-nid="results" data-hs="sh_nav_results" data-ho="nav:results"><span class="bi">🏅</span><i class="bl">نتائجي</i></a><a href="#level" data-v="level" data-nid="level" data-hs="sh_nav_level sh_bn_level" data-ho="nav:level"><span class="bi">📈</span><i class="bl">مستواي</i></a><a href="#mistakes" data-v="mistakes" data-nid="mistakes" data-hs="sh_nav_mistakes" data-ho="nav:mistakes"><span class="bi">🧠</span><i class="bl">أخطائي</i></a><a href="/quiz?mode=mistakes" data-nid="practice" data-hs="sh_nav_practice" data-ho="nav:practice"><span class="bi">🎯</span><i class="bl">تدريب</i></a><a href="#support" data-v="support" data-nid="support" data-hs="sh_nav_support" data-ho="nav:support"><span class="bi">🔧</span><i class="bl">فني</i></a><a href="#academic" data-v="academic" data-nid="academic" data-hs="sh_nav_academic" data-ho="nav:academic"><span class="bi">📘</span><i class="bl">علمي</i></a><a href="#account" data-v="account" data-nid="account" data-hs="sh_nav_account" data-ho="nav:account"><span class="bi">👤</span><i class="bl">حسابي</i></a>
 </nav>
 
-<div class="modal" id="logoutModal"><div class="box"><i>🚪</i><h3>تسجيل الخروج</h3><p>هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟</p>
-    <div class="acts"><button class="btn out" type="button" id="yesOut">نعم، تسجيل الخروج</button><button class="btn" type="button" onclick="closeLogout()">إلغاء</button></div></div></div>
+<div class="modal" id="logoutModal"><div class="box"><i data-hk="lo_i">🚪</i><h3 data-hk="lo_t">تسجيل الخروج</h3><p data-hk="lo_p">هل أنت متأكد أنك تريد تسجيل الخروج من حسابك؟</p>
+    <div class="acts"><button class="btn out" type="button" id="yesOut" data-hk="lo_yes">نعم، تسجيل الخروج</button><button class="btn" type="button" onclick="closeLogout()" data-hk="lo_no">إلغاء</button></div></div></div>
 <canvas id="confetti"></canvas><div id="toasts"></div>
 
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
@@ -256,11 +270,16 @@
 (function () {
     const SUPABASE_URL = 'https://cxtmvsoxgfsormhcklfx.supabase.co';
     const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImN4dG12c294Z2Zzb3JtaGNrbGZ4Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTAyNzI4MjQsImV4cCI6MjEwNTg0ODgyNH0.9zsPxYkMvHuRoe1R-XW8xOEUsE3IvoPP_r-iYXU_5s8';
-    window.supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+    window.supabaseClient = window.HM_PREVIEW && window.HM_STUB ? window.HM_STUB : supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
     document.documentElement.style.visibility = 'hidden';
 
-    (async () => { try {
+    if (window.HM_PREVIEW && window.HM_STUB) {      // معاينة لوحة التحكم: بيانات تجريبية بس، من غير أي اتصال
+        window.isAdmin = false; window.currentUser = { id: 'preview' }; window.currentProfile = window.HM_PROFILE;
+        document.documentElement.style.visibility = 'visible';
+        setTimeout(() => document.dispatchEvent(new CustomEvent('auth-ready')), 0);
+    }
+    if (!(window.HM_PREVIEW && window.HM_STUB)) (async () => { try {
         const { data } = await supabaseClient.auth.getSession();
         const session = data && data.session;
         if (!session) { location.replace('/signin.html'); return; }
@@ -339,6 +358,7 @@
     const S = { all: [], enrolled: new Set(), done: {}, prog: [], attempts: [], quizzes: [], mistakes: null, filter: 'all' };
     const TITLES = { home: 1, courses: 1, exams: 1, results: 1, level: 1, mistakes: 1, account: 1, support: 1, academic: 1 };
     const empty = (i, t) => '<div class="empty"><i>' + i + '</i>' + t + '</div>';
+    const HE = (k, v) => HM.e(k, v), HT = (k, v) => HM.t(k, v), emptyK = (i, k, v) => empty(i, HM.b(k, v));
     const fdate = d => new Date(d).toLocaleDateString('ar-EG', { year: 'numeric', month: 'long', day: 'numeric' });
     const lessonsOf = c => (c.lessons && c.lessons[0] && c.lessons[0].count) || 0;
     let YEAR = '';
@@ -350,12 +370,13 @@
     document.addEventListener('click', e => { if (!e.target.closest('.dd')) $$('.dd').forEach(x => x.classList.remove('open')); });
     function toast(m) { const e = document.createElement('div'); e.className = 'toast'; e.textContent = m; $('#toasts').appendChild(e); setTimeout(() => e.remove(), 3200); }
     function confetti() {
+        if (!HM.on('sh_confetti')) return;
         const c = $('#confetti'), x = c.getContext('2d'); c.width = innerWidth; c.height = innerHeight;
         const cols = ['#ef4444', '#ec4899', '#fbbf24', '#22d3ee', '#a78bfa', '#22c55e'];
         const ps = Array.from({ length: 130 }, () => ({ x: innerWidth / 2, y: innerHeight * .6, vx: (Math.random() - .5) * 18, vy: Math.random() * -16 - 4, r: Math.random() * 6 + 3, c: cols[Math.random() * 6 | 0], a: 1 }));
         (function f() { x.clearRect(0, 0, c.width, c.height); let live = false; ps.forEach(p => { p.x += p.vx; p.y += p.vy; p.vy += .36; p.a -= .008; if (p.a > 0) { live = true; x.globalAlpha = p.a; x.fillStyle = p.c; x.fillRect(p.x, p.y, p.r, p.r * 1.6); } }); if (live) requestAnimationFrame(f); else x.clearRect(0, 0, c.width, c.height); })();
     }
-    function countUp(el, to) { const s = performance.now(); (function t(n) { const k = Math.min((n - s) / 900, 1); el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(t); })(s); }
+    function countUp(el, to) { if (window.HM_PREVIEW) { el.textContent = to; return; } const s = performance.now(); (function t(n) { const k = Math.min((n - s) / 900, 1); el.textContent = Math.round(to * (1 - Math.pow(1 - k, 3))); if (k < 1) requestAnimationFrame(t); })(s); }
 
     function askLogout() { $$('.dd').forEach(x => x.classList.remove('open')); $('#logoutModal').classList.add('on'); }
     function closeLogout() { $('#logoutModal').classList.remove('on'); }
@@ -363,7 +384,8 @@
     $('#logoutModal').addEventListener('click', e => { if (e.target.id === 'logoutModal') closeLogout(); });
 
     function route() {
-        const v = (location.hash || '#home').slice(1), n = TITLES[v] ? v : 'home';
+        const v = (location.hash || '#home').slice(1); let n = TITLES[v] ? v : 'home';
+        if (n !== 'home' && !HM.on('sh_nav_' + n)) { n = 'home'; try { history.replaceState(null, '', '#home'); } catch (e) {} }
         $$('.view').forEach(x => x.classList.toggle('on', x.id === 'v-' + n));
         $$('[data-v]').forEach(a => a.classList.toggle('on', a.dataset.v === n));
         if (n === 'support' || n === 'academic') { const m = () => window.spMount ? window.spMount($(n === 'academic' ? '#acTab' : '#spTab'), n === 'academic' ? 'academic' : 'tech') : setTimeout(m, 300); m(); } else if (window.spUnmount) window.spUnmount();
@@ -404,24 +426,24 @@
     // ===== رسومات =====
     function ring(p) { const r = 54, c = (2 * Math.PI * r).toFixed(1); return '<svg class="ring" viewBox="0 0 140 140"><circle class="rbg" cx="70" cy="70" r="' + r + '"/><circle class="rfg" cx="70" cy="70" r="' + r + '" stroke-dasharray="' + c + '" stroke-dashoffset="' + (c * (1 - p / 100)).toFixed(1) + '" style="--c:' + c + '" transform="rotate(-90 70 70)"/><text class="rt" x="70" y="80" text-anchor="middle">' + p + '%</text></svg>'; }
     function lineChart(a, b) {
-        const days = ['السبت', 'الأحد', 'الاثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة'], W = 560, H = 210, L = 30, R = 20, T = 14, B = 34, mx = Math.max(4, Math.ceil(Math.max(...a, ...b) / 4) * 4), st = (W - L - R) / 6;
+        const dp = HT('ch_days').split('|').map(s => s.trim()), days = [0, 1, 2, 3, 4, 5, 6].map(i => dp[i] || ''), W = 560, H = 210, L = 30, R = 20, T = 14, B = 34, mx = Math.max(4, Math.ceil(Math.max(...a, ...b) / 4) * 4), st = (W - L - R) / 6;
         const X = i => W - R - i * st, Y = v => T + (H - T - B) * (1 - v / mx);
         const pts = s => s.map((v, i) => X(i).toFixed(1) + ',' + Y(v).toFixed(1)).join(' ');
         let g = '';
         for (let i = 0; i <= 4; i++) { const y = T + (H - T - B) * i / 4; g += '<line class="gl" x1="' + L + '" x2="' + (W - R) + '" y1="' + y + '" y2="' + y + '"/><text x="' + (L - 6) + '" y="' + (y + 4) + '" text-anchor="end">' + mx * (1 - i / 4) + '</text>'; }
         const xl = days.map((d, i) => '<text x="' + X(i) + '" y="' + (H - 10) + '" text-anchor="middle">' + d + '</text>').join('');
-        const dots = (s, c) => s.map((v, i) => '<circle cx="' + X(i) + '" cy="' + Y(v) + '" r="4" fill="' + c + '"/>').join('');
-        return '<svg class="line" viewBox="0 0 ' + W + ' ' + H + '">' + g + xl + '<polyline points="' + pts(b) + '" fill="none" stroke="#10b981" stroke-width="3" stroke-dasharray="6 6" stroke-linecap="round"/><polyline points="' + pts(a) + '" fill="none" stroke="#ef4444" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>' + dots(b, '#10b981') + dots(a, '#ef4444') + '</svg>';
+        const dots = (s, c) => s.map((v, i) => '<circle cx="' + X(i) + '" cy="' + Y(v) + '" r="4" style="fill:' + c + '"/>').join('');
+        return '<svg class="line" viewBox="0 0 ' + W + ' ' + H + '">' + g + xl + '<polyline points="' + pts(b) + '" fill="none" style="stroke:var(--ln2,#10b981)" stroke-width="3" stroke-dasharray="6 6" stroke-linecap="round"/><polyline points="' + pts(a) + '" fill="none" style="stroke:var(--ln1,#ef4444)" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>' + dots(b, 'var(--ln2,#10b981)') + dots(a, 'var(--ln1,#ef4444)') + '</svg>';
     }
     function barChart(list) {
-        if (!list.length) return empty('📊', 'ابدأ أول اختبار عشان نبدأ نقيس تقدمك');
-        const l = list.slice(0, 8);
-        return '<div class="bars">' + l.map(x => '<div class="b2"><em>' + x.p + '%</em><i class="' + (x.p < 50 ? 'lo' : '') + '" data-h="' + x.p + '"></i></div>').join('') + '</div><div class="xl">' + l.map(x => '<span title="' + esc(x.t) + '">' + esc(x.t) + '</span>').join('') + '</div>';
+        if (!list.length) return emptyK('📊', 'ch_bars_empty');
+        const l = list.slice(0, HM.n('ch_bars_n')), low = HM.n('ch_bar_low');
+        return '<div class="bars">' + l.map(x => '<div class="b2"><em>' + x.p + '%</em><i class="' + (x.p < low ? 'lo' : '') + '" data-h="' + x.p + '"></i></div>').join('') + '</div><div class="xl">' + l.map(x => '<span title="' + esc(x.t) + '">' + esc(x.t) + '</span>').join('') + '</div>';
     }
     function pieChart(done, tot) {
-        if (!tot) return empty('🎬', 'اشترك في كورس وابدأ أول درس');
+        if (!tot) return emptyK('🎬', 'ch_pie_empty');
         const p = Math.round(done / tot * 100);
-        return '<div class="pie" style="background:conic-gradient(#22c55e 0 ' + p + '%,#ef4444 ' + p + '% 100%)"><b>' + p + '%</b></div><div class="lg" style="justify-content:center"><span><i style="background:#22c55e"></i>تم إنجازه (' + done + ')</span><span><i style="background:#ef4444"></i>متبقي (' + (tot - done) + ')</span></div>';
+        return '<div class="pie" style="background:conic-gradient(var(--pc1,#22c55e) 0 ' + p + '%,var(--pc2,#ef4444) ' + p + '% 100%)"><b>' + p + '%</b></div><div class="lg" style="justify-content:center"><span><i style="background:var(--pc1,#22c55e)"></i>' + HE('ch_pie_done', { n: done }) + '</span><span><i style="background:var(--pc2,#ef4444)"></i>' + HE('ch_pie_left', { n: tot - done }) + '</span></div>';
     }
     function fillBars() { requestAnimationFrame(() => { $$('.bar i').forEach(b => b.style.width = b.dataset.w + '%'); $$('.b2 i').forEach(b => b.style.height = b.dataset.h + '%'); }); }
 
@@ -430,38 +452,40 @@
         const total = lessonsOf(c), on = S.enrolled.has(c.id), done = Math.min(S.done[c.id] || 0, total);
         const pct = total ? Math.round(done / total * 100) : 0, free = Number(c.price) === 0;
         const img = c.thumbnail_url && /^https:\/\//.test(c.thumbnail_url) ? '<img src="' + esc(c.thumbnail_url) + '" alt="">' : '';
-        return '<article class="card cc" style="--i:' + i + '"><div class="th">📚' + img + '<span class="tag r">' + (free ? 'مجاني' : esc(c.price) + ' ج.م') + '</span>' + (on ? '<span class="tag l">✓ مشترك</span>' : '') + '</div>'
-            + '<div class="cb"><h4>' + esc(c.title) + '</h4><p>' + esc(c.description) + '</p><div class="meta">🎬 ' + total + ' درس' + (on ? ' • أنجزت ' + done + ' (' + pct + '%)' : '') + '</div>'
-            + (on ? '<div class="bar"><i style="width:0" data-w="' + pct + '"></i></div>' : '')
-            + '<div class="acts"><a class="btn main sm" href="' + courseHref(c) + '">' + (on ? 'الدخول للكورس' : 'عرض التفاصيل') + '</a>'
-            + (!on && free ? '<button class="btn sm" type="button" data-enroll="' + esc(c.id) + '">اشترك مجاناً</button>' : '') + '</div></div></article>';
+        return '<article class="card cc" style="--i:' + i + '">'
+            + (HM.on('sh_cc_thumb') ? '<div class="th">' + HE('cc_emoji') + img + (HM.on('sh_cc_price') ? '<span class="tag r">' + (free ? HE('cc_free') : HE('cc_price', { p: c.price })) + '</span>' : '') + (on && HM.on('sh_cc_enrolled') ? '<span class="tag l">' + HE('cc_enrolled') + '</span>' : '') + '</div>' : '')
+            + '<div class="cb"><h4>' + esc(c.title) + '</h4>' + (HM.on('sh_cc_desc') ? '<p>' + esc(c.description) + '</p>' : '')
+            + (HM.on('sh_cc_meta') ? '<div class="meta">' + HE('cc_meta', { n: total }) + (on ? HE('cc_meta_prog', { d: done, p: pct }) : '') + '</div>' : '')
+            + (on && HM.on('sh_cc_bar') ? '<div class="bar"><i style="width:0" data-w="' + pct + '"></i></div>' : '')
+            + '<div class="acts"><a class="btn main sm" href="' + courseHref(c) + '">' + (on ? HE('cc_enter') : HE('cc_details')) + '</a>'
+            + (!on && free && HM.on('sh_cc_enroll') ? '<button class="btn sm" type="button" data-enroll="' + esc(c.id) + '">' + HE('cc_enroll') + '</button>' : '') + '</div></div></article>';
     }
     const visible = () => S.all.filter(c => c.academic_year === YEAR || S.enrolled.has(c.id));
     function renderCourses() {
         const v = visible(), mine = v.filter(c => S.enrolled.has(c.id)), open = v.filter(c => !S.enrolled.has(c.id) && c.academic_year === YEAR);
-        const list = S.filter === 'all' ? v : mine;
-        $('#grid').innerHTML = list.length ? list.map(card).join('') : (S.filter === 'mine' ? empty('🎒', 'لسه مشتركتش في أي كورس.<br>اختار كورس وابدأ دلوقتي!') : empty('🚀', 'الكورسات الجديدة قريباً جداً!'));
-        $('#mineGrid').innerHTML = mine.length ? mine.map(card).join('') : empty('🎒', 'لسه مشتركتش في أي كورس، اختار كورس من الأسفل أو فعّل كود.');
-        $('#openGrid').innerHTML = open.length ? open.slice(0, 3).map(card).join('') : empty('🚀', 'مفيش كورسات جديدة متاحة حالياً.');
+        const list = S.filter === 'all' ? v : mine, mn = HM.n('mine_n');
+        $('#grid').innerHTML = list.length ? list.map(card).join('') : (S.filter === 'mine' ? emptyK('🎒', 'courses_empty_mine') : emptyK('🚀', 'courses_empty_all'));
+        $('#mineGrid').innerHTML = mine.length ? (mn > 0 ? mine.slice(0, mn) : mine).map(card).join('') : emptyK('🎒', 'mine_empty');
+        $('#openGrid').innerHTML = open.length ? open.slice(0, HM.n('open_n')).map(card).join('') : emptyK('🚀', 'open_empty');
         fillBars();
     }
     async function enroll(id, btn) {
         btn.disabled = true;
         const { error } = await supabaseClient.from('enrollments').insert({ student_id: currentUser.id, course_id: id });
-        if (error && error.code !== '23505') { toast('تعذر الاشتراك، حاول مرة أخرى'); btn.disabled = false; return; }
-        S.enrolled.add(id); confetti(); toast('مبروك! تم اشتراكك في الكورس 🎉'); refresh();
+        if (error && error.code !== '23505') { toast(HT('tt_enroll_fail')); btn.disabled = false; return; }
+        S.enrolled.add(id); confetti(); toast(HT('tt_enroll_ok')); refresh();
     }
     function loadQR() { return window.QRX ? Promise.resolve() : new Promise((res, rej) => { const s = document.createElement('script'); s.src = '/qr.js'; s.onload = res; s.onerror = () => rej(new Error('qr')); document.head.appendChild(s); }); }
     async function scanInto(inp) {
-        try { await loadQR(); } catch (e) { return toast('تعذّر تحميل قارئ الباركود — اكتب الكود بإيدك'); }
-        QRX.scan(raw => { const c = QRX.toCode(raw); if (!c) return toast('ده مش باركود كارت اشتراك — اتأكد إنه باركود الكارت'); inp.value = c; inp.dispatchEvent(new Event('input')); inp.focus(); toast('تم كتابة الكود ✅ — دوس «تفعيل»'); });
+        try { await loadQR(); } catch (e) { return toast(HT('tt_qr_lib')); }
+        QRX.scan(raw => { const c = QRX.toCode(raw); if (!c) return toast(HT('tt_qr_bad')); inp.value = c; inp.dispatchEvent(new Event('input')); inp.focus(); toast(HT('tt_qr_ok')); });
     }
     async function redeem(e) {
         e.preventDefault(); const btn = $('#redeemBtn'); btn.disabled = true;
         const { data, error } = await supabaseClient.rpc('redeem_code', { p_code: $('#codeIn').value.trim() });
         btn.disabled = false;
-        if (error) { const m = error.message || ''; toast(m.includes('invalid_code') ? 'الكود غير صحيح أو انتهت صلاحيته (الكود صالح 72 ساعة بس) — تأكد منه أو اطلب كود جديد' : m.includes('too_many') ? 'محاولات كتير غلط، استنى شوية وحاول تاني' : m.includes('code_used') ? 'الكود ده اتستخدم قبل كده' : 'تعذر تفعيل الكود، حاول مرة أخرى'); return; }
-        S.enrolled.add(data); $('#codeIn').value = ''; confetti(); toast('تم تفعيل الكورس بنجاح 🎉'); refresh(); location.hash = '#courses';
+        if (error) { const m = error.message || ''; toast(HT(m.includes('invalid_code') ? 'tt_code_bad' : m.includes('too_many') ? 'tt_code_many' : m.includes('code_used') ? 'tt_code_used' : 'tt_code_fail')); return; }
+        S.enrolled.add(data); $('#codeIn').value = ''; confetti(); toast(HT('tt_code_ok')); refresh(); location.hash = '#courses';
     }
 
     // ===== الاختبارات والأخطاء =====
@@ -473,12 +497,12 @@
         const mine = (S.attempts || []).filter(a => a.quiz_id === q.id).sort((x, y) => new Date(y.created_at) - new Date(x.created_at));
         if (mine.length) {   // خلّص الامتحان قبل كده: «عرض التفاصيل» (ومحاولة جديدة لو لسه فاضل محاولات)
             const last = mine[0], again = !o && !c && (q.max_attempts == null || +q.max_attempts === 0 || mine.length < q.max_attempts);
-            return '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' + (last.hidden ? '<span class="badge">🕒 تم التسليم — النتيجة لسه ما ظهرتش</span>' : '<a class="btn main sm" href="/quiz?review=' + encodeURIComponent(last.id) + '">👁 عرض التفاصيل</a>') + (again ? '<a class="btn sm" href="' + quizHref(q) + '">🔁 محاولة جديدة</a>' : '') + '</div>';
+            return '<div style="display:flex;gap:6px;flex-wrap:wrap;justify-content:flex-end">' + (last.hidden ? '<span class="badge">' + HE('ex_submitted') + '</span>' : '<a class="btn main sm" href="/quiz?review=' + encodeURIComponent(last.id) + '">' + HE('ex_details') + '</a>') + (again && HM.on('sh_ex_again') ? '<a class="btn sm" href="' + quizHref(q) + '">' + HE('ex_again') + '</a>' : '') + '</div>';
         }
-        return o ? '<span class="badge" style="background:var(--muted)">يفتح ' + new Date(q.opens_at).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }) + '</span>' : c ? '<span class="badge f">انتهى</span>' : '<a class="btn main sm" href="' + quizHref(q) + '">ابدأ الاختبار</a>';
+        return o ? '<span class="badge" style="background:var(--muted)">' + HE('ex_opens', { d: new Date(q.opens_at).toLocaleString('ar-EG', { dateStyle: 'short', timeStyle: 'short' }) }) + '</span>' : c ? '<span class="badge f">' + HE('ex_closed') + '</span>' : '<a class="btn main sm" href="' + quizHref(q) + '">' + HE('ex_start') + '</a>';
     }
     function renderExams() {
-        $('#quizList').innerHTML = S.quizzes.length ? S.quizzes.map(q => { const g = S.asg && S.asg[q.id]; return '<div class="card row"' + (g ? ' style="border-color:#f59e0b"' : '') + '><div class="ic">' + (g ? '🧭' : '📝') + '</div><div class="grow"><b>' + esc(q.title) + '</b><small>' + esc((q.courses && q.courses.title) || 'امتحان شامل') + '</small>' + (g ? '<small style="color:#d97706;font-weight:800">🧭 موجّه ليك' + (g.note ? ' — ' + esc(g.note) : '') + (g.from_title ? ' (بدل «' + esc(g.from_title) + '»)' : '') + '</small>' : '') + '</div>' + qbtn(q) + '</div>'; }).join('') : empty('📝', 'لا توجد اختبارات متاحة حالياً');
+        $('#quizList').innerHTML = S.quizzes.length ? S.quizzes.map(q => { const g = S.asg && S.asg[q.id]; return '<div class="card row"' + (g ? ' style="border-color:#f59e0b"' : '') + '><div class="ic">' + (g ? '🧭' : '📝') + '</div><div class="grow"><b>' + esc(q.title) + '</b><small>' + (q.courses && q.courses.title ? esc(q.courses.title) : HE('ex_comp')) + '</small>' + (g ? '<small style="color:#d97706;font-weight:800">' + HE('ex_guided') + (g.note ? ' — ' + esc(g.note) : '') + (g.from_title ? HE('ex_guided_from', { t: g.from_title }) : '') + '</small>' : '') + '</div>' + qbtn(q) + '</div>'; }).join('') : emptyK('📝', 'ex_empty');
         $('#attemptList').innerHTML = S.attempts.length ? S.attempts.map(a => {
             if (a.hidden) return '<div class="card row"><div class="ic">🕒</div><div class="grow"><b>' + esc(a.quizzes && a.quizzes.title) + '</b><small>' + fdate(a.created_at) + ' • تم التسليم — النتيجة لسه ما ظهرتش</small></div></div>';
             const p = a.total ? Math.round(a.score / a.total * 100) : 0, ok = !!a.ov || p >= ((a.quizzes && a.quizzes.pass_percent) || 50);
@@ -489,12 +513,12 @@
     async function loadResults() {
         const box = $('#resultsList'); if (!S.results) box.innerHTML = '<div class="skel"></div>';
         const { data, error } = await supabaseClient.rpc('my_results');
-        if (error) { box.innerHTML = empty('⚠️', 'تعذر تحميل النتائج، حدّث الصفحة وحاول مرة أخرى.'); return; }
+        if (error) { box.innerHTML = emptyK('⚠️', 'rs_err'); return; }
         S.results = data || []; renderResults();
     }
     function renderResults() {
         const box = $('#resultsList'), rs = S.results;
-        if (!rs.length) { box.innerHTML = empty('🏅', 'لسه ما أجريتش أي اختبار.<br>أول ما تخلّص امتحان هتلاقي نتيجته هنا.'); return; }
+        if (!rs.length) { box.innerHTML = emptyK('🏅', 'rs_empty'); return; }
         const byQ = {}; rs.forEach(r => { (byQ[r.quiz_id] = byQ[r.quiz_id] || []).push(r); });
         const items = Object.values(byQ).map(a => a.slice().sort((x, y) => new Date(y.created_at) - new Date(x.created_at))[0]);
         const G = {};
@@ -503,19 +527,21 @@
             (G[key] = G[key] || { course: r.course_title || 'امتحانات شاملة', lesson: r.lesson_id ? r.lesson_title : (r.course_id ? 'امتحانات الكورس' : 'الامتحانات الشاملة'), pos: r.lesson_id ? (r.lesson_position || 0) : 9999, num: r.lesson_id ? r.lesson_position : '📝', items: [] }).items.push(r);
         });
         const isC = g => g.course === 'امتحانات شاملة' ? 1 : 0, groups = Object.values(G).sort((a, b) => isC(a) - isC(b) || a.course.localeCompare(b.course, 'ar') || a.pos - b.pos);
+        const cN = c => c === 'امتحانات شاملة' ? HT('rs_comp') : c, lN = l => l === 'امتحانات الكورس' ? HT('rs_course_ex') : l === 'الامتحانات الشاملة' ? HT('rs_comp_ex') : l;
         const pc = r => r.total ? Math.round(r.score / r.total * 100) : 0;
+        const cell = (key, cls, val, st) => HM.on('sh_rs_' + key) ? '<div' + (cls ? ' class="' + cls + '"' : '') + '><small>' + HE('rs_l_' + key) + '</small><b' + (st ? ' style="' + st + '"' : '') + '>' + val + '</b></div>' : '';
         let last = null, html = '';
         groups.forEach((g, gi) => {
-            if (g.course !== last) { last = g.course; html += '<div class="rs-cs">📚 ' + esc(g.course) + '</div>'; }
+            if (g.course !== last) { last = g.course; html += '<div class="rs-cs">📚 ' + esc(cN(g.course)) + '</div>'; }
             const vis = g.items.filter(r => !r.hidden), avg = vis.length ? Math.round(vis.reduce((s, r) => s + pc(r), 0) / vis.length) : null;
-            html += '<div class="card rs-card' + (gi === 0 ? ' open' : '') + '"><div class="rs-h"><span class="n">' + esc(g.num) + '</span><span class="g"><b>' + esc(g.lesson) + '</b><small>' + g.items.length + ' اختبار' + (avg == null ? '' : ' • المتوسط <bdi>' + avg + '%</bdi>') + '</small></span><span class="ar">‹</span></div><div class="rs-b">'
+            html += '<div class="card rs-card' + (gi === 0 ? ' open' : '') + '"><div class="rs-h"><span class="n">' + esc(g.num) + '</span><span class="g"><b>' + esc(lN(g.lesson)) + '</b><small>' + HE('rs_cnt', { n: g.items.length }) + (avg == null ? '' : esc(HT('rs_avg', { p: '\u0001' })).replace('\u0001', '<bdi>' + avg + '%</bdi>')) + '</small></span><span class="ar">‹</span></div><div class="rs-b">'
                 + g.items.map(r => {
-                    if (r.hidden) return '<div class="rs-q"><h5>' + esc(r.quiz_title) + '</h5><small>' + fdate(r.created_at) + '</small><p style="margin:10px 0;font-weight:700;line-height:1.9">✅ تم التسليم. ' + (r.hidden_reason === 'grading' ? 'النتيجة هتظهر بعد تصحيح الأسئلة المقالية.' : r.hidden_reason === 'manual' ? 'النتيجة هتظهر لما المدرس يعتمدها.' : 'النتيجة هتظهر بعد انتهاء وقت الامتحان.') + '</p></div>';
+                    if (r.hidden) return '<div class="rs-q"><h5>' + esc(r.quiz_title) + '</h5><small>' + fdate(r.created_at) + '</small><p style="margin:10px 0;font-weight:700;line-height:1.9">' + HE('rs_h0') + ' ' + HE(r.hidden_reason === 'grading' ? 'rs_h_grading' : r.hidden_reason === 'manual' ? 'rs_h_manual' : 'rs_h_time') + '</p></div>';
                     const p = pc(r), pend = (r.n_essay_pending || 0) > 0, ok = !!r.pass_override || p >= (r.pass_percent == null ? 50 : r.pass_percent), left = Math.max((r.max_attempts || 1) - (r.attempts_used || 1), 0);
                     return '<div class="rs-q"><h5>' + esc(r.quiz_title) + '</h5><small>' + fdate(r.created_at) + '</small>'
-                        + '<div class="rs-g"><div><small>عدد الأسئلة</small><b>' + (r.n_questions == null ? '—' : r.n_questions) + '</b></div><div class="ok"><small>صحيحة</small><b>' + (r.n_correct == null ? '—' : r.n_correct) + '</b></div><div class="no"><small>خاطئة</small><b>' + (r.n_wrong == null ? '—' : r.n_wrong) + '</b></div><div><small>بدون إجابة</small><b>' + (r.n_unanswered == null ? '—' : r.n_unanswered) + '</b></div>'
-                        + '<div><small>الدرجة</small><b>' + r.score + '/' + r.total + '</b></div><div><small>النسبة</small><b>' + p + '%</b></div><div><small>النتيجة</small><b style="font-size:15px;color:' + (pend ? '#6366f1' : ok ? 'var(--ok)' : 'var(--bad)') + '">' + (pend ? 'قيد التصحيح' : ok ? 'ناجح' : 'راسب') + '</b></div><div><small>المحاولات</small><b>' + r.attempts_used + '/' + r.max_attempts + '</b></div></div>'
-                        + '<div class="rs-a"><a class="btn main sm" href="/quiz?review=' + esc(r.attempt_id) + '">👁 تفاصيل الإجابات</a>' + (left > 0 ? '<a class="btn sm" href="/quiz?id=' + esc(r.quiz_id) + '">🔁 محاولة جديدة</a>' : '') + '</div></div>';
+                        + '<div class="rs-g">' + cell('n', '', r.n_questions == null ? '—' : r.n_questions) + cell('ok', 'ok', r.n_correct == null ? '—' : r.n_correct) + cell('no', 'no', r.n_wrong == null ? '—' : r.n_wrong) + cell('un', '', r.n_unanswered == null ? '—' : r.n_unanswered)
+                        + cell('score', '', r.score + '/' + r.total) + cell('pct', '', p + '%') + cell('res', '', HE(pend ? 'rs_pend' : ok ? 'rs_pass' : 'rs_fail'), 'font-size:15px;color:' + (pend ? '#6366f1' : ok ? 'var(--ok)' : 'var(--bad)')) + cell('att', '', r.attempts_used + '/' + r.max_attempts) + '</div>'
+                        + '<div class="rs-a"><a class="btn main sm" href="/quiz?review=' + esc(r.attempt_id) + '">' + HE('rs_b_det') + '</a>' + (left > 0 && HM.on('sh_rs_b_again') ? '<a class="btn sm" href="/quiz?id=' + esc(r.quiz_id) + '">' + HE('rs_b_again') + '</a>' : '') + '</div></div>';
                 }).join('') + '</div></div>';
         });
         box.innerHTML = html;
@@ -535,36 +561,36 @@
         ['⏱️', 'متابع شاطر', 'شاهدت أكتر من ساعتين فيديو', t => t.watch_minutes >= 120],
         ['🧠', 'بتتعلم من غلطك', 'راجعت أخطاءك وحليت أكتر من 10 اختبارات', t => t.attempts >= 10 && t.mistakes > 0]
     ];
-    const fmtWatch = sec => { sec = Math.max(0, Math.round(+sec || 0)); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), c = sec % 60; return h ? h + ' س ' + m + ' د' : m ? m + ' د' + (c && m < 10 ? ' ' + c + ' ث' : '') : c + ' ث'; };
+    const fmtWatch = sec => { sec = Math.max(0, Math.round(+sec || 0)); const h = Math.floor(sec / 3600), m = Math.floor(sec % 3600 / 60), c = sec % 60, uh = HT('lv_u_h'), um = HT('lv_u_m'), us = HT('lv_u_s'); return h ? h + ' ' + uh + ' ' + m + ' ' + um : m ? m + ' ' + um + (c && m < 10 ? ' ' + c + ' ' + us : '') : c + ' ' + us; };
     const fmtMS = sec => { sec = Math.max(0, Math.floor(+sec || 0)); return Math.floor(sec / 60) + ':' + String(sec % 60).padStart(2, '0'); };
     let lvBusy = false;
     async function loadLevel() {
         const box = $('#levelBox'); if (lvBusy) return; lvBusy = true;
-        box.innerHTML = '<div class="empty"><i>⏳</i>بنحسب مستواك…</div>';
+        box.innerHTML = '<div class="empty"><i>⏳</i>' + HE('lv_loading') + '</div>';
         try {
             const { data, error } = await supabaseClient.rpc('my_level');
             if (error || !data) throw error || new Error('x');
             const t = data.totals || {}, cs = data.courses || [], ex = data.exams || [], wk = data.weak || [];
-            const stat = (n, l) => '<div class="lv-s"><b>' + n + '</b><small>' + l + '</small></div>';
-            let h = '<div class="lv-g">' + stat(data.streak || 0, '🔥 أيام متتالية') + stat(data.best_streak || 0, 'أطول سلسلة') + stat(t.attempts || 0, 'اختبار اتحل') + stat((t.avg_pct == null ? '—' : Math.round(t.avg_pct) + '%'), 'متوسط درجاتك') + stat(t.lessons_done || 0, 'درس مكتمل') + stat(fmtWatch(t.watch_seconds != null ? t.watch_seconds : (t.watch_minutes || 0) * 60), '⏱️ مدة المشاهدة') + stat(t.videos_heard || 0, '🎬 فيديو اتسمع') + '</div>';
-            h += '<div class="lv-c"><h4>📚 تقدمك في الكورسات</h4>' + (cs.length ? cs.map(c => { const tot = (+c.items || 0) || (+c.lessons || 0), dn = (+c.items || 0) ? (+c.items_done || 0) : (+c.lessons_done || 0), p = tot ? Math.min(100, Math.round(dn * 100 / tot)) : 0; return '<div class="lv-r"><div class="t"><span>' + esc(c.title) + '</span><em>' + p + '% • ' + dn + '/' + tot + '</em></div><div class="lv-bar"><i class="' + (p >= 100 ? 'g' : '') + '" style="width:' + p + '%"></i></div>' + ((+c.videos || 0) ? '<small style="color:var(--muted);font-size:12px">🎧 سمعت ' + fmtWatch(c.heard_sec) + ' من ' + fmtWatch(c.dur_sec) + ' • ' + (c.videos_heard || 0) + '/' + c.videos + ' فيديو اتسمع</small>' : '') + '</div>'; }).join('') : empty('📚', 'لسه مشتركتش في كورسات.')) + '</div>';
+            const sv = [data.streak || 0, data.best_streak || 0, t.attempts || 0, (t.avg_pct == null ? '—' : Math.round(t.avg_pct) + '%'), t.lessons_done || 0, fmtWatch(t.watch_seconds != null ? t.watch_seconds : (t.watch_minutes || 0) * 60), t.videos_heard || 0];
+            let h = '<div class="lv-g">' + sv.map((n, i) => HM.on('sh_lv_s' + i) ? '<div class="lv-s"><b>' + n + '</b><small>' + HE('lv_s' + i) + '</small></div>' : '').join('') + '</div>';
+            if (HM.on('sh_lv_courses')) h += '<div class="lv-c"><h4>' + HE('lv_h_courses') + '</h4>' + (cs.length ? cs.map(c => { const tot = (+c.items || 0) || (+c.lessons || 0), dn = (+c.items || 0) ? (+c.items_done || 0) : (+c.lessons_done || 0), p = tot ? Math.min(100, Math.round(dn * 100 / tot)) : 0; return '<div class="lv-r"><div class="t"><span>' + esc(c.title) + '</span><em>' + p + '% • ' + dn + '/' + tot + '</em></div><div class="lv-bar"><i class="' + (p >= 100 ? 'g' : '') + '" style="width:' + p + '%"></i></div>' + ((+c.videos || 0) ? '<small style="color:var(--muted);font-size:12px">' + HE('lv_heard', { h: fmtWatch(c.heard_sec), d: fmtWatch(c.dur_sec), a: c.videos_heard || 0, b: c.videos }) + '</small>' : '') + '</div>'; }).join('') : emptyK('📚', 'lv_e_courses')) + '</div>';
             const vs = data.videos || [];
-            h += '<div class="lv-c"><h4>🎧 الفيديوهات اللي سمعتها</h4>' + (vs.length ? vs.map(v => '<div class="lv-r"><div class="t"><span dir="auto">' + esc(v.title) + '<small style="display:block;font-weight:600;color:var(--muted);font-size:12px">' + esc(v.course) + ' • ' + esc(v.lesson) + '</small></span><em>' + Math.round(v.pct) + '% • ' + fmtMS(v.heard) + ' من ' + fmtMS(v.dur) + '</em></div><div class="lv-bar"><i class="' + (v.pct >= 90 ? 'g' : '') + '" style="width:' + Math.min(100, Math.round(v.pct)) + '%"></i></div></div>').join('') : empty('🎧', data.preview ? 'أنت داخل بحساب فريق (معاينة): مشاهدتك مش بتتسجّل. جرّب بحساب طالب.' : 'لسه ماسمعتش فيديو. افتح أي محاضرة وشغّل الفيديو وهتتسجل هنا.')) + '</div>';
-            h += '<div class="lv-c"><h4>🎯 أضعف الدروس عندك</h4>' + (wk.length ? wk.map(w => '<div class="lv-wk"><span dir="auto">' + esc(w.lesson) + '<small>' + esc(w.course) + '</small></span><div style="flex:1 1 140px;min-width:120px"><div class="lv-r" style="margin:0"><div class="t"><em style="margin-inline-start:auto">' + Math.round(w.pct) + '%</em></div><div class="lv-bar"><i class="' + (w.pct < 60 ? 'w' : w.pct >= 85 ? 'g' : '') + '" style="width:' + Math.round(w.pct) + '%"></i></div></div></div></div>').join('') + '<p class="nt" style="margin:10px 0 0;color:var(--muted);font-size:13px">راجع الدروس اللي نسبتها أقل، وجرّب «امتحان من أخطائي».</p>' : empty('🎯', 'حل اختبارات على الدروس وهنوريك نقاط ضعفك هنا.')) + '</div>';
-            h += '<div class="lv-c"><h4>🏆 أوسمتك</h4><div class="lv-bd">' + BADGES.map(b => { let on = false; try { on = !!b[3](t, data); } catch (e) {} return '<div class="lv-b' + (on ? ' on' : '') + '"><i>' + b[0] + '</i><b>' + b[1] + '</b><small>' + b[2] + '</small></div>'; }).join('') + '</div></div>';
-            if (ex.length) h += '<div class="lv-c"><h4>📝 آخر اختباراتك (أفضل نتيجة)</h4>' + ex.slice(0, 8).map(e => '<div class="lv-r"><div class="t"><span dir="auto">' + esc(e.title) + '</span><em>' + (e.best == null ? '—' : Math.round(e.best) + '%') + ' • ' + e.tries + ' محاولة</em></div><div class="lv-bar"><i class="' + (e.best >= 85 ? 'g' : e.best < 60 ? 'w' : '') + '" style="width:' + Math.round(e.best || 0) + '%"></i></div></div>').join('') + '</div>';
+            if (HM.on('sh_lv_videos')) h += '<div class="lv-c"><h4>' + HE('lv_h_videos') + '</h4>' + (vs.length ? vs.map(v => '<div class="lv-r"><div class="t"><span dir="auto">' + esc(v.title) + '<small style="display:block;font-weight:600;color:var(--muted);font-size:12px">' + esc(v.course) + ' • ' + esc(v.lesson) + '</small></span><em>' + Math.round(v.pct) + '% • ' + fmtMS(v.heard) + ' ' + HE('lv_of') + ' ' + fmtMS(v.dur) + '</em></div><div class="lv-bar"><i class="' + (v.pct >= 90 ? 'g' : '') + '" style="width:' + Math.min(100, Math.round(v.pct)) + '%"></i></div></div>').join('') : emptyK('🎧', data.preview ? 'lv_e_videos_prev' : 'lv_e_videos')) + '</div>';
+            if (HM.on('sh_lv_weak')) h += '<div class="lv-c"><h4>' + HE('lv_h_weak') + '</h4>' + (wk.length ? wk.map(w => '<div class="lv-wk"><span dir="auto">' + esc(w.lesson) + '<small>' + esc(w.course) + '</small></span><div style="flex:1 1 140px;min-width:120px"><div class="lv-r" style="margin:0"><div class="t"><em style="margin-inline-start:auto">' + Math.round(w.pct) + '%</em></div><div class="lv-bar"><i class="' + (w.pct < 60 ? 'w' : w.pct >= 85 ? 'g' : '') + '" style="width:' + Math.round(w.pct) + '%"></i></div></div></div></div>').join('') + '<p class="nt" style="margin:10px 0 0;color:var(--muted);font-size:13px">' + HE('lv_weak_tip') + '</p>' : emptyK('🎯', 'lv_e_weak')) + '</div>';
+            if (HM.on('sh_lv_badges')) h += '<div class="lv-c"><h4>' + HE('lv_h_badges') + '</h4><div class="lv-bd">' + BADGES.map((b, i) => { if (!HM.on('sh_bd_' + i)) return ''; let on = false; try { on = !!b[3](t, data); } catch (e) {} return '<div class="lv-b' + (on ? ' on' : '') + '"><i>' + HE('bd_' + i + '_i') + '</i><b>' + HE('bd_' + i + '_n') + '</b><small>' + HE('bd_' + i + '_d') + '</small></div>'; }).join('') + '</div></div>';
+            if (ex.length && HM.on('sh_lv_exams')) h += '<div class="lv-c"><h4>' + HE('lv_h_exams') + '</h4>' + ex.slice(0, 8).map(e => '<div class="lv-r"><div class="t"><span dir="auto">' + esc(e.title) + '</span><em>' + (e.best == null ? '—' : Math.round(e.best) + '%') + HE('lv_tries', { n: e.tries }) + '</em></div><div class="lv-bar"><i class="' + (e.best >= 85 ? 'g' : e.best < 60 ? 'w' : '') + '" style="width:' + Math.round(e.best || 0) + '%"></i></div></div>').join('') + '</div>';
             box.innerHTML = h;
-        } catch (e) { box.innerHTML = empty('⚠️', 'تعذر تحميل مستواك، حدّث الصفحة.'); }
+        } catch (e) { box.innerHTML = emptyK('⚠️', 'lv_err'); }
         lvBusy = false;
     }
 
     async function loadMistakes() {
         if (S.mistakes) return;
         const { data, error } = await supabaseClient.rpc('my_mistakes');
-        if (error) { $('#mistakeList').innerHTML = empty('⚠️', 'تعذر تحميل الأخطاء، حدّث الصفحة.'); return; }
+        if (error) { $('#mistakeList').innerHTML = emptyK('⚠️', 'mi_err'); return; }
         S.mistakes = data || [];
         $('#mistakeList').innerHTML = S.mistakes.length ? S.mistakes.map(m => '<div class="card mq"><small>' + esc(m.quiz_title) + ' • ' + fdate(m.created_at) + '</small><h5 dir="auto">' + esc(m.question) + '</h5>'
-            + (m.options || []).map((o, i) => '<div class="op ' + (i === m.correct_index ? 'right' : i === m.chosen_index ? 'wrong' : '') + '">' + esc(o) + (i === m.correct_index ? ' ✓' : '') + '</div>').join('') + '</div>').join('') : empty('🎉', 'ولا غلطة! أداء ممتاز، كمّل كده.');
+            + (m.options || []).map((o, i) => '<div class="op ' + (i === m.correct_index ? 'right' : i === m.chosen_index ? 'wrong' : '') + '">' + esc(o) + (i === m.correct_index ? ' ✓' : '') + '</div>').join('') + '</div>').join('') : emptyK('🎉', 'mi_empty');
     }
 
     // ===== الرئيسية والحساب =====
@@ -572,7 +598,7 @@
         const d = derive(), best = bestByQuiz(), w = weekSeries(), avg = best.length ? Math.round(best.reduce((s, x) => s + x.p, 0) / best.length) : 0;
         countUp($('#sMine'), S.enrolled.size); countUp($('#sComp'), d.completed); countUp($('#sDone'), d.done); countUp($('#sAvg'), avg);
         $('#ringBox').innerHTML = ring(d.pct);
-        $('#ringSub').textContent = d.tot ? 'أنجزت ' + d.done + ' درس من ' + d.tot + ' في كورساتك الحالية' : 'اشترك في كورس وابدأ أول درس عشان نحسب تقدمك';
+        $('#ringSub').textContent = d.tot ? HT('ring_sub', { d: d.done, t: d.tot }) : HT('ring_sub0');
         $('#lineBox').innerHTML = lineChart(w.a, w.b);
         $('#barBox').innerHTML = barChart(best);
         $('#pieBox').innerHTML = pieChart(d.done, d.tot);
@@ -580,22 +606,27 @@
         try { supabaseClient.rpc('my_assignments').then(r => { if (r && Array.isArray(r.data) && r.data.length) { S.asg = {}; r.data.forEach(x => S.asg[x.quiz_id] = x); renderExams(); } }); } catch (e) {}
     }
     function renderAccount(p) {
-        $('#fullName').textContent = [p.first_name, p.middle_name, p.last_name].join(' '); $('#yearChip').textContent = '🎓 ' + p.academic_year;
-        const rows = [['البريد الإلكتروني', p.email, 1], ['رقم الهاتف', p.phone_number, 1], ['رقم ولي الأمر', p.parent_phone, 1], ['السنة الدراسية', p.academic_year], ['تاريخ الانضمام', fdate(p.created_at)], ['رقم الطالب', String(p.id).slice(0, 8).toUpperCase(), 1]];
-        $('#infoGrid').innerHTML = rows.map(r => '<div><small>' + r[0] + '</small><b' + (r[2] ? ' dir="ltr" style="display:block;text-align:right"' : '') + '>' + esc(r[1]) + '</b></div>').join('');
+        $('#fullName').textContent = [p.first_name, p.middle_name, p.last_name].join(' '); $('#yearChip').textContent = HT('ac_chip', { y: p.academic_year });
+        const rows = [['email', p.email, 1], ['phone', p.phone_number, 1], ['parent', p.parent_phone, 1], ['year', p.academic_year], ['joined', fdate(p.created_at)], ['id', String(p.id).slice(0, 8).toUpperCase(), 1]];
+        $('#infoGrid').innerHTML = rows.filter(r => HM.on('sh_ar_' + r[0])).map(r => '<div><small>' + HE('ar_' + r[0]) + '</small><b' + (r[2] ? ' dir="ltr" style="display:block;text-align:right"' : '') + '>' + esc(r[1]) + '</b></div>').join('');
     }
     function renderFooter() {
         if (!window.SiteFooter) return;
         SiteFooter.mount($('#sfHome'), { pages: [{ label: 'الرئيسية', href: '#home' }, { label: 'الكورسات', href: '#courses' }, { label: 'الاختبارات', href: '#exams' }, { label: 'حسابي', href: '#account' }], loggedIn: true });
     }
-    const quotes = ['Practice makes perfect! 💪', 'Every day is a new lesson ✨', "Speak up, don't be shy! 🗣️", 'Small steps, big results 🚀', 'You are getting better every day 🔥'];
-    function rotate() { const q = $('#quote'); let i = 0; q.textContent = quotes[0]; setInterval(() => { q.style.opacity = 0; setTimeout(() => { i = (i + 1) % quotes.length; q.textContent = quotes[i]; q.style.opacity = 1; }, 400); }, 3800); }
+    let qSig = '', qTimer = null;
+    function rotate() {
+        const q = $('#quote'), L = HM.l('quotes'), ms = HM.n('quote_ms'), sig = JSON.stringify([L, ms]); if (!q || sig === qSig) return; qSig = sig; clearInterval(qTimer);
+        let i = 0; q.textContent = L[0];
+        if (L.length > 1) qTimer = setInterval(() => { q.style.opacity = 0; setTimeout(() => { i = (i + 1) % L.length; q.textContent = L[i]; q.style.opacity = 1; }, 400); }, ms);
+    }
+    function greetNow(p) { const h = new Date().getHours(), k = h < HM.n('greet_noon_h') ? 'greet_m' : h < HM.n('greet_eve_h') ? 'greet_n' : 'greet_e'; $('#greet').textContent = HT(k, { name: (p && p.first_name) || '' }); }
 
     async function init() {
-        const p = window.currentProfile, first = p.first_name || '', h = new Date().getHours(); YEAR = p.academic_year;
+        const p = window.currentProfile, first = p.first_name || ''; YEAR = p.academic_year;
         $('#avatar').textContent = $('#avatar2').textContent = first.charAt(0) || '؟';
         $('#hiName').textContent = first + ' ' + (p.middle_name || ''); $('#hiYear').textContent = p.academic_year;
-        $('#greet').textContent = (h < 12 ? 'صباح الخير ☀️ ' : h < 18 ? 'نهارك سعيد 🌤️ ' : 'مساء الخير 🌙 ') + first;
+        greetNow(p);
         renderAccount(p); renderFooter(); rotate(); route();
         try { if (window.UI) UI.banners.init(supabaseClient, 'home', null, { barIn: '.main' }); else window.addEventListener('load', () => window.UI && UI.banners.init(supabaseClient, 'home', null, { barIn: '.main' })); } catch (e) {}
 
@@ -609,7 +640,7 @@
             (async () => { let q = await supabaseClient.from('announcements').select('title,body,academic_year').eq('is_active', true).order('created_at', { ascending: false }).limit(30); if (q.error) q = await supabaseClient.from('announcements').select('title,body').eq('is_active', true).order('created_at', { ascending: false }).limit(5); return q; })(),
             supabaseClient.rpc('my_quiz_extensions').then(r => (r && !r.error && Array.isArray(r.data)) ? r.data : [], () => [])
         ]);
-        if (c.error) { $('#mineGrid').innerHTML = empty('⚠️', 'تعذر تحميل البيانات، حدّث الصفحة وحاول مرة أخرى.'); return; }
+        if (c.error) { $('#mineGrid').innerHTML = emptyK('⚠️', 'load_err'); return; }
         S.all = c.data || []; S.enrolled = new Set((e.data || []).map(r => r.course_id));
         S.prog = pr.data || []; S.prog.forEach(r => { const id = r.lessons && r.lessons.course_id; if (id) S.done[id] = (S.done[id] || 0) + 1; });
         S.attempts = at.data || []; S.quizzes = qz.data || [];
@@ -617,22 +648,23 @@
         try { if (await finP > 0) { const r2 = await supabaseClient.rpc('my_attempts_basic'); if (!r2.error && Array.isArray(r2.data)) S.attempts = r2.data.map(a => ({ id: a.id, quiz_id: a.quiz_id, score: a.score, total: a.total, created_at: a.created_at, hidden: !a.visible, ov: !!a.pass_override, quizzes: { title: a.title, pass_percent: a.pass_percent } })); } } catch (e) {}
         await loadNotifs(an);
         refresh();
+        try { document.dispatchEvent(new CustomEvent('hm-inited')); if (window.hmReady) hmReady(); } catch (e) {}
     }
 
 
     /* ===== الإشعارات (مقروء / غير مقروء) ===== */
     const NT = { list: [] };
     const nIcon = k => ({ essay: '📝', lesson: '🎬', course: '📚', exam: '🧪', homework: '📒', announcement: '📢' }[k] || '🔔');
-    const nAgo = d => { const m = Math.max(1, Math.round((Date.now() - new Date(d)) / 60000)); return m < 60 ? 'من ' + m + ' دقيقة' : m < 1440 ? 'من ' + Math.round(m / 60) + ' ساعة' : 'من ' + Math.round(m / 1440) + ' يوم'; };
+    const nAgo = d => { const m = Math.max(1, Math.round((Date.now() - new Date(d)) / 60000)); return m < 60 ? HT('nt_ago_m', { n: m }) : m < 1440 ? HT('nt_ago_h', { n: Math.round(m / 60) }) : HT('nt_ago_d', { n: Math.round(m / 1440) }); };
     function drawNotifs() {
         const un = NT.list.filter(n => !n.read), box = $('#bellList');
         $('#bellDot').style.display = un.length ? 'block' : 'none';
         $('#bellDot').textContent = un.length > 9 ? '9+' : (un.length || '');
-        box.innerHTML = '<div class="hi nh">الإشعارات' + (un.length ? '<button type="button" id="ntAll">تعليم الكل كمقروء</button>' : '') + '</div>'
-            + (NT.list.length ? '<div class="nl">' + NT.list.map((n, i) => '<div class="nt' + (n.read ? '' : ' un') + '" data-i="' + i + '"><span class="ni">' + nIcon(n.kind) + '</span><div><b>' + esc(n.title) + '</b>' + (n.body ? '<small>' + esc(n.body) + '</small>' : '') + '<em>' + nAgo(n.created_at) + '</em></div></div>').join('') + '</div>' : '<div class="nt">لا توجد إشعارات 👌</div>');
+        box.innerHTML = '<div class="hi nh">' + HE('bell_title') + (un.length ? '<button type="button" id="ntAll">' + HE('bell_all') + '</button>' : '') + '</div>'
+            + (NT.list.length ? '<div class="nl">' + NT.list.map((n, i) => '<div class="nt' + (n.read ? '' : ' un') + '" data-i="' + i + '"><span class="ni">' + nIcon(n.kind) + '</span><div><b>' + esc(n.title) + '</b>' + (n.body ? '<small>' + esc(n.body) + '</small>' : '') + '<em>' + nAgo(n.created_at) + '</em></div></div>').join('') + '</div>' : '<div class="nt">' + HE('bell_empty') + '</div>');
         // الإعلانات بتفضل ظاهرة (آخر 14 يوم) لحد ما الطالب يقفلها بنفسه ✕ — مش بتختفي بمجرد قراءة الإشعار أو تحديث الصفحة
         const annDis = r => { try { return localStorage.getItem('ann_x_' + r) === '1'; } catch (e) { return false; } };
-        const ann = NT.list.filter(n => n.kind === 'announcement' && !annDis(n.ref) && (n.legacy || Date.now() - new Date(n.created_at) < 14 * 864e5)).slice(0, 3);
+        const ann = NT.list.filter(n => n.kind === 'announcement' && !annDis(n.ref) && (n.legacy || Date.now() - new Date(n.created_at) < HM.n('ann_days') * 864e5)).slice(0, HM.n('ann_max'));
         $('#ann').innerHTML = ann.map(a => '<div class="ann" style="position:relative"><span>📢</span><div>' + esc(a.title) + (a.body ? '<small>' + esc(a.body) + '</small>' : '') + '</div><button type="button" data-annx="' + esc(a.ref) + '" aria-label="إغلاق" style="position:absolute;top:6px;left:8px;border:0;background:transparent;color:inherit;opacity:.6;font-size:15px;cursor:pointer;width:auto;padding:2px 6px">✕</button></div>').join('');
     }
     async function loadNotifs(oldAnn) {
@@ -662,10 +694,22 @@
     document.addEventListener('click', e => { const b = e.target.closest('[data-enroll]'); if (b) enroll(b.dataset.enroll, b); });
     $('#redeemForm').addEventListener('submit', redeem);
     $('#scanBtn').addEventListener('click', () => scanInto($('#codeIn')));
-    if (window.currentProfile) init(); else document.addEventListener('auth-ready', init);
+    window.hmRerender = () => {
+        try {
+            const p = window.currentProfile; if (!p) return;
+            renderAccount(p); greetNow(p); rotate(); drawNotifs(); refresh();
+            const n = (location.hash || '#home').slice(1);
+            if (n !== 'home' && TITLES[n] && !HM.on('sh_nav_' + n)) route();
+            else if (n === 'results' && S.results) renderResults();
+            else if (n === 'level') { lvBusy = false; loadLevel(); }
+            else if (n === 'mistakes') { S.mistakes = null; loadMistakes(); }
+        } catch (e) { try { console.warn('hmRerender', e); } catch (x) {} }
+    };
+    document.addEventListener('hm-changed', () => window.hmRerender());
+    const hmLoad = () => { if (!window.HM_PREVIEW) HM.fetch(supabaseClient); };
+    if (window.currentProfile) { init(); hmLoad(); } else document.addEventListener('auth-ready', () => { init(); hmLoad(); });
 </script>
 <script src="/ui.js" defer></script>
-<script src="/support-widget.js" defer></script>
-<script src="/pwa.js" defer></script>
+<script>if(!window.HM_PREVIEW)document.write('<script src="/support-widget.js" defer><\/script><script src="/pwa.js" defer><\/script>')</script>
 </body>
 </html>

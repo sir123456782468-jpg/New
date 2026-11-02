@@ -1842,3 +1842,185 @@ Object.assign(ACT, {
 Object.assign(ACTPERM, { luSkin: ['@admin'], luColorsRs: ['@admin'], luPage: ['@admin'], luDev: ['@admin'], luMode: ['@admin'], luSave: ['@admin'], luReset: ['@admin'] });
 (function () { if (!NAV.some(n => n[0] === 'xlessonui')) { const i = NAV.findIndex(n => n[0] === 'xlanding'); NAV.splice(i >= 0 ? i + 1 : 0, 0, ['xlessonui', '🎬', 'شكل المحاضرات']); } })();
 })();
+// ---------------------------------------------------------------- تبويب «الصفحة الرئيسية للطالب»: تحكم كامل في home.html + معاينة حيّة
+(function () {
+'use strict';
+const SC = () => window.HM_SCHEMA || { groups: [], by: {} };
+const H = { cfg: {}, saved: '{}', open: 'look', dev: 'desktop', theme: 'light', ready: false, timer: null, q: '' };
+const MAPS = ['t', 's', 'c', 'cd', 'n', 'x', 'l', 'o'];
+const own = (o, k) => o && Object.prototype.hasOwnProperty.call(o, k);
+const norm = c => { const o = {}; MAPS.forEach(m => { if (c && c[m] && typeof c[m] === 'object' && Object.keys(c[m]).length) o[m] = c[m]; }); return o; };
+const ser = () => JSON.stringify(norm(H.cfg));
+const dirty = () => ser() !== H.saved;
+const hErr = e => { const m = (e && e.message) || String(e || ''); const T = [['does not exist', 'شغّل ملف db_50_home_ui.sql في Supabase الأول'], ['schema cache', 'شغّل ملف db_50_home_ui.sql في Supabase الأول'], ['forbidden', 'مفيش صلاحية'], ['too_big', 'الإعدادات كبيرة قوي'], ['bad_cfg', 'إعدادات غير صالحة']]; for (const t of T) if (m.includes(t[0])) return t[1]; return m; };
+const mget = (m, k) => (H.cfg[m] && own(H.cfg[m], k)) ? H.cfg[m][k] : undefined;
+function mset(m, k, v, def) {
+  if (!H.cfg[m]) H.cfg[m] = {};
+  if (v === undefined || JSON.stringify(v) === JSON.stringify(def)) delete H.cfg[m][k]; else H.cfg[m][k] = v;
+}
+const F = k => SC().by[k] || {};
+const curTxt = f => { const v = mget('t', f.k); return v === undefined ? f.d : v; };
+const curShow = f => { const v = mget('s', f.k); return v === undefined ? f.d !== false : v; };
+const curCol = (f, dark) => { const v = mget(dark ? 'cd' : 'c', f.k); return v === undefined ? (dark ? f.dd : f.d) : v; };
+const curNum = f => { const v = mget('n', f.k); return v === undefined ? f.d : v; };
+const curSel = f => { const v = mget('x', f.k); return v === undefined ? f.d : v; };
+const curList = f => { const v = mget('l', f.k); return v === undefined ? f.d : v; };
+function curOrder(f) { const cur = mget('o', f.k) || [], base = f.d.slice(); const out = cur.filter((id, i) => base.indexOf(id) >= 0 && cur.indexOf(id) === i); base.forEach(id => { if (out.indexOf(id) < 0) out.push(id); }); return out; }
+const isDef = f => {
+  switch (f.t) {
+    case 'txt': return mget('t', f.k) === undefined; case 'show': return mget('s', f.k) === undefined;
+    case 'col': return mget('c', f.k) === undefined && mget('cd', f.k) === undefined; case 'num': return mget('n', f.k) === undefined;
+    case 'sel': return mget('x', f.k) === undefined; case 'list': return mget('l', f.k) === undefined;
+    case 'order': return mget('o', f.k) === undefined && !(f.showPrefix ? f.items.some(i => mget('s', f.showPrefix + i[0]) !== undefined) : Object.values(f.showKeys || {}).some(k => mget('s', k) !== undefined));
+  } return true;
+};
+function resetField(f) {
+  if (!f.k) return;
+  ['t', 's', 'c', 'cd', 'n', 'x', 'l', 'o'].forEach(m => { if (H.cfg[m]) delete H.cfg[m][f.k]; });
+  if (f.t === 'order') (f.showPrefix ? f.items.map(i => f.showPrefix + i[0]) : Object.values(f.showKeys || {})).forEach(k => { if (H.cfg.s) delete H.cfg.s[k]; });
+}
+const hex6 = v => /^#[0-9a-fA-F]{6}/.test(v) ? v.slice(0, 7).toLowerCase() : '#000000';
+const alphaOf = v => /^#[0-9a-fA-F]{8}$/.test(v) ? Math.round(parseInt(v.slice(7, 9), 16) / 255 * 100) : 100;
+const mkCol = (rgb, al) => al >= 100 ? rgb : rgb + Math.round(al / 100 * 255).toString(16).padStart(2, '0');
+const PRESETS = [
+  ['🌹 الأصلي (أحمر + وردي)', null],
+  ['🌊 أزرق', { c: { brand: '#2563eb', g1: '#2563eb', g2: '#06b6d4', nav_on1: '#2563eb', nav_on2: '#06b6d4', ring1: '#2563eb', ring2: '#06b6d4', hdr_b1: '#2563eb', hdr_b2: '#06b6d4', cc_bd: '#2563eb', bot_on: '#2563eb', ln1: '#2563eb' }, cd: { brand: '#60a5fa', cc_bd: '#60a5fa', bot_on: '#60a5fa' } }],
+  ['🌿 أخضر', { c: { brand: '#059669', g1: '#10b981', g2: '#84cc16', nav_on1: '#10b981', nav_on2: '#84cc16', ring1: '#10b981', ring2: '#84cc16', hdr_b1: '#10b981', hdr_b2: '#84cc16', cc_bd: '#059669', bot_on: '#059669', ln1: '#059669' }, cd: { brand: '#34d399', cc_bd: '#34d399', bot_on: '#34d399' } }],
+  ['🔥 برتقالي', { c: { brand: '#ea580c', g1: '#f97316', g2: '#ef4444', nav_on1: '#f97316', nav_on2: '#ef4444', ring1: '#f97316', ring2: '#ef4444', hdr_b1: '#f97316', hdr_b2: '#ef4444', cc_bd: '#ea580c', bot_on: '#ea580c', ln1: '#ea580c' }, cd: { brand: '#fb923c', cc_bd: '#fb923c', bot_on: '#fb923c' } }],
+  ['💜 بنفسجي', { c: { brand: '#7c3aed', g1: '#7c3aed', g2: '#ec4899', nav_on1: '#7c3aed', nav_on2: '#ec4899', ring1: '#7c3aed', ring2: '#ec4899', hdr_b1: '#7c3aed', hdr_b2: '#ec4899', cc_bd: '#7c3aed', bot_on: '#7c3aed', ln1: '#7c3aed' }, cd: { brand: '#a78bfa', cc_bd: '#a78bfa', bot_on: '#a78bfa' } }]
+];
+// ——— رسم الحقول
+const lbl = f => '<div class="hml"><span>' + esc(f.l) + '</span>' + (isDef(f) ? '' : ' <b class="hmmod" title="معدّل عن الأصل">●</b>') + (f.v && f.t === 'txt' ? '' : '') + ' <button type="button" class="hmrs" data-act="hmRs" data-id="' + f.k + '" title="رجوع للأصل">↺</button></div>';
+function colCtl(f, dark) {
+  const v = curCol(f, dark), id = f.k + (dark ? '|cd' : '|c');
+  return '<div class="hmcc"><span class="hmm">' + (dark ? '🌙 داكن' : '☀️ فاتح') + '</span><input type="color" data-hc="' + id + '" value="' + hex6(v) + '"><input class="hmhx" data-hh="' + id + '" value="' + esc(v) + '" dir="ltr" maxlength="9"><label class="hmal">شفافية <input type="range" min="0" max="100" data-ha="' + id + '" value="' + alphaOf(v) + '"></label></div>';
+}
+function field(f) {
+  if (f.t === 'h') return '<div class="hmh">' + esc(f.l) + '</div>';
+  const sk = esc((f.l || '') + ' ' + (f.k || '') + ' ' + (f.t === 'order' ? f.items.map(i => i[1]).join(' ') : '')).toLowerCase();
+  const W = (inner) => '<div class="hmf" data-fk="' + (f.k || '') + '" data-sk="' + sk + '">' + inner + '</div>';
+  switch (f.t) {
+    case 'txt': return W(lbl(f) + (f.area ? '<textarea data-t="' + f.k + '" rows="3">' + esc(curTxt(f)) + '</textarea>' : '<input data-t="' + f.k + '" value="' + esc(curTxt(f)) + '"' + (f.short ? ' maxlength="12" style="max-width:120px"' : '') + '>') + (f.v ? '<small class="hmv">' + esc(f.v) + '</small>' : ''));
+    case 'show': return W('<label class="hmck"><input type="checkbox" data-s="' + f.k + '"' + (curShow(f) ? ' checked' : '') + '> <span>' + esc(f.l) + '</span>' + (isDef(f) ? '' : ' <b class="hmmod">●</b>') + ' <button type="button" class="hmrs" data-act="hmRs" data-id="' + f.k + '" title="رجوع للأصل">↺</button></label>');
+    case 'col': return W(lbl(f) + '<div class="hmcr">' + colCtl(f, false) + colCtl(f, true) + '</div>');
+    case 'num': return W(lbl(f) + '<div class="hmnr"><input type="range" data-n="' + f.k + '" min="' + f.min + '" max="' + f.max + '" step="' + (f.step || 1) + '" value="' + curNum(f) + '"><input type="number" class="hmnb" data-nb="' + f.k + '" min="' + f.min + '" max="' + f.max + '" step="' + (f.step || 1) + '" value="' + curNum(f) + '"><span class="hmu">' + esc(f.u || '') + '</span></div>');
+    case 'sel': return W(lbl(f) + '<select data-x="' + f.k + '">' + f.o.map(o => '<option value="' + o[0] + '"' + (curSel(f) === o[0] ? ' selected' : '') + '>' + esc(o[1]) + '</option>').join('') + '</select>');
+    case 'list': return W(lbl(f) + '<textarea data-l="' + f.k + '" rows="' + Math.min(8, Math.max(3, curList(f).length + 1)) + '">' + esc(curList(f).join('\n')) + '</textarea>');
+    case 'order': {
+      const o = curOrder(f), sk2 = id => f.showPrefix ? f.showPrefix + id : (f.showKeys || {})[id];
+      return W(lbl(f) + '<div class="hmol">' + o.map((id, i) => { const it = f.items.find(x => x[0] === id), k2 = sk2(id); if (!it) return ''; const on = k2 ? (mget('s', k2) === undefined ? F(k2).d !== false : mget('s', k2)) : true;
+        return '<div class="hmoi">' + (k2 ? '<input type="checkbox" data-s="' + k2 + '"' + (on ? ' checked' : '') + '>' : '<span style="width:18px"></span>') + '<span class="hmon">' + (it[2] ? it[2] + ' ' : '') + esc(it[1]) + '</span><button type="button" class="btn s g" data-act="hmOMv" data-id="' + f.k + '|' + i + '|-1">▲</button><button type="button" class="btn s g" data-act="hmOMv" data-id="' + f.k + '|' + i + '|1">▼</button></div>'; }).join('') + '</div>');
+    }
+  }
+  return '';
+}
+const CSS = '<style>.hmw{display:grid;grid-template-columns:minmax(340px,470px) 1fr;gap:16px;align-items:start}@media(max-width:1000px){.hmw{grid-template-columns:1fr}.hmprev{order:-1;position:static!important}}'
+  + '.hmside{display:flex;flex-direction:column;gap:10px}.hmg{background:var(--card);border:1px solid var(--line);border-radius:16px;overflow:hidden}.hmg>summary{cursor:pointer;padding:13px 16px;font-weight:800;list-style:none;display:flex;gap:10px;align-items:center}.hmg>summary::-webkit-details-marker{display:none}.hmg>summary:after{content:"▾";margin-inline-start:auto;color:var(--muted);transition:.2s}.hmg[open]>summary:after{transform:rotate(180deg)}.hmg[open]>summary{border-bottom:1px solid var(--line)}'
+  + '.hmgb{padding:14px 16px;display:flex;flex-direction:column;gap:13px}.hmf{display:flex;flex-direction:column;gap:5px}.hml{display:flex;gap:6px;align-items:center;font-weight:700;font-size:13.5px}.hml span{flex:0 1 auto}.hmmod{color:#f59e0b;font-size:11px}.hmrs{border:0;background:none;color:var(--muted);cursor:pointer;font-size:14px;padding:0 4px;margin-inline-start:auto}.hmrs:hover{color:#ef4444}'
+  + '.hmf input:not([type=checkbox]):not([type=range]):not([type=color]),.hmf textarea,.hmf select{width:100%}.hmck{display:flex;gap:9px;align-items:center;cursor:pointer;font-weight:700;font-size:13.5px}.hmck input{width:auto!important}.hmv{color:var(--muted);font-size:12px}.hmh{font-weight:900;font-size:13px;color:var(--brand,#ef4444);border-bottom:1px dashed var(--line);padding-bottom:4px;margin-top:6px}'
+  + '.hmcr{display:flex;flex-direction:column;gap:7px}.hmcc{display:flex;gap:8px;align-items:center;flex-wrap:wrap}.hmm{width:62px;font-size:12px;font-weight:700;color:var(--muted)}.hmcc input[type=color]{width:42px;height:36px;padding:2px;border-radius:9px;border:1px solid var(--line);background:var(--card);flex:none}.hmhx{width:104px!important;text-align:left}.hmal{display:flex;gap:5px;align-items:center;font-size:11.5px;color:var(--muted);margin:0}.hmal input{width:70px!important}'
+  + '.hmnr{display:flex;gap:8px;align-items:center}.hmnr input[type=range]{flex:1}.hmnb{width:84px!important}.hmu{color:var(--muted);font-size:12px;min-width:26px}'
+  + '.hmol{display:flex;flex-direction:column;gap:6px}.hmoi{display:flex;gap:8px;align-items:center;padding:7px 10px;border:1px solid var(--line);border-radius:10px;background:var(--bg)}.hmoi input{width:auto}.hmon{flex:1;font-weight:700;font-size:14px}'
+  + '.hmprev{position:sticky;top:76px}.hmbar{display:flex;gap:8px;align-items:center;flex-wrap:wrap;margin-bottom:10px}#hmBox{position:relative;border:1px solid var(--line);border-radius:16px;overflow:hidden;background:#e5e7eb}#hmFrame{border:0;background:#fff;position:absolute;top:0;right:0;display:block}'
+  + '.hmdev.on,.hmth.on{background:var(--brand,#ef4444)!important;color:#fff!important}.hmq{max-width:340px}.hmgr{margin:0 0 10px;display:flex;gap:8px;flex-wrap:wrap}</style>';
+function groupHtml(g) {
+  return '<details class="hmg" data-g="' + g.id + '"' + (H.open === g.id ? ' open' : '') + '><summary>' + g.ico + ' ' + esc(g.t) + '</summary><div class="hmgb" data-gb="' + g.id + '">'
+    + '<div class="hmgr"><button type="button" class="btn s g" data-act="hmGRs" data-id="' + g.id + '">↺ رجّع المجموعة دي للأصل</button></div>' + (g.help ? '<p class="nt" style="margin:0">' + esc(g.help) + '</p>' : '') + g.f.map(field).join('') + '</div></details>';
+}
+const formHtml = () => SC().groups.map(groupHtml).join('');
+function redrawGroup(id) { const g = SC().groups.find(x => x.id === id), b = document.querySelector('[data-gb="' + id + '"]'); if (g && b) { b.innerHTML = '<div class="hmgr"><button type="button" class="btn s g" data-act="hmGRs" data-id="' + g.id + '">↺ رجّع المجموعة دي للأصل</button></div>' + (g.help ? '<p class="nt" style="margin:0">' + esc(g.help) + '</p>' : '') + g.f.map(field).join(''); filt(); } }
+function mark() { const b = document.getElementById('hmDirty'); if (b) { const d = dirty(); b.textContent = d ? '● فيه تعديلات لسه ما اتحفظتش' : '✓ كل التعديلات محفوظة ومنشورة'; b.style.color = d ? '#d97706' : '#16a34a'; } }
+function filt() {
+  const q = H.q.trim().toLowerCase(), root = document.getElementById('hmForm'); if (!root) return;
+  root.querySelectorAll('.hmg').forEach(d => {
+    let any = false;
+    d.querySelectorAll('.hmf').forEach(f => { const m = !q || (f.dataset.sk || '').indexOf(q) >= 0; f.hidden = !m; if (m) any = true; });
+    d.querySelectorAll('.hmh').forEach(h => { h.hidden = !!q; });
+    d.hidden = !!q && !any; if (q && any) d.open = true;
+  });
+}
+function gOf(id) { const g = SC().groups.find(x => x.id === (id || H.open)); return g; }
+function push(scroll) {
+  clearTimeout(H.timer); H.timer = setTimeout(() => {
+    const f = document.getElementById('hmFrame'); if (!f || !f.contentWindow || !H.ready) return;
+    const g = gOf(); f.contentWindow.postMessage({ type: 'hm-preview', cfg: norm(H.cfg), view: g ? g.view : 'home', theme: H.theme, scroll: scroll === undefined ? (g && g.blk) : scroll }, location.origin);
+  }, 90); mark();
+}
+function fit() {
+  const box = document.getElementById('hmBox'), f = document.getElementById('hmFrame'); if (!box || !f) return;
+  const w = H.dev === 'mobile' ? 390 : 1280, av = box.clientWidth, sc = Math.min(1, av / w);
+  f.style.width = w + 'px'; f.style.transform = 'scale(' + sc + ')'; f.style.transformOrigin = 'top right';
+  const h = Math.max(520, Math.round(innerHeight * 0.78)); box.style.height = h + 'px'; f.style.height = Math.round(h / sc) + 'px';
+}
+window.addEventListener('resize', () => { try { fit(); } catch (e) {} });
+window.addEventListener('message', e => { if (e.origin === location.origin && e.data && e.data.type === 'hm-ready') { H.ready = true; push(); } });
+
+VIEWS.xhome = ['الصفحة الرئيسية للطالب', async () => {
+  const r = await sb.rpc('home_ui_admin'); if (r.error) throw new Error(hErr(r.error));
+  H.cfg = {}; const c = (r.data && r.data.cfg) || {}; MAPS.forEach(m => { if (c[m] && typeof c[m] === 'object') H.cfg[m] = JSON.parse(JSON.stringify(c[m])); });
+  H.saved = ser(); H.ready = false; H.q = '';
+  setTimeout(() => { fit(); mark(); }, 30);
+  const n = SC().groups.reduce((s, g) => s + g.f.filter(f => f.k).length, 0);
+  return CSS + '<div class="note" style="margin:0 0 12px">🏠 هنا بتتحكم في <b>الصفحة الرئيسية اللي الطالب بيشوفها بعد ما يسجّل دخول</b> (home): كل لون (فاتح وداكن)، كل كلمة، إظهار وإخفاء أي جزء، ترتيب الأقسام والقوائم، الأشكال والأحجام. فيه <b>' + n + '</b> إعداد. أي تعديل بتشوفه فوراً في المعاينة، ومابيظهرش للطلاب غير لما تدوس «حفظ ونشر».</div>'
+    + '<div class="card" style="margin-bottom:12px"><div class="bar" style="flex-wrap:wrap;gap:8px;margin:0"><button class="btn" data-act="hmSave">💾 حفظ ونشر</button><button class="btn s g" data-act="hmOpen">↗ فتح الصفحة الحقيقية</button><button class="btn s r" data-act="hmReset">↩ رجوع كل حاجة للأصل</button><button class="btn s g" data-act="hmExp">📋 نسخ الإعدادات</button><button class="btn s g" data-act="hmImpBox">📥 استيراد</button><span id="hmDirty" style="font-weight:800;font-size:13.5px"></span></div>'
+    + '<div id="hmImp" hidden style="margin-top:10px"><textarea id="hmImpTx" rows="5" dir="ltr" placeholder="الصق الإعدادات هنا ثم دوس «تطبيق»" style="width:100%"></textarea><div style="margin-top:6px;display:flex;gap:8px"><button class="btn s" data-act="hmImp">تطبيق (من غير حفظ)</button><button class="btn s g" data-act="hmImpBox">إغلاق</button></div></div>'
+    + '<div style="margin-top:10px"><input id="hmQ" class="hmq" placeholder="🔎 دوّر على أي إعداد (مثلاً: زرار، لون، مستواي، الإحصاء…)"></div>'
+    + '<div class="hmgr" style="margin-top:10px">' + PRESETS.map((p, i) => '<button type="button" class="btn s g" data-act="hmPre" data-id="' + i + '">' + esc(p[0]) + '</button>').join('') + '<span class="nt" style="margin:0;align-self:center">ألوان جاهزة (بتغيّر ألوان التدرّج والتمييز بس)</span></div></div>'
+    + '<div class="hmw"><div class="hmside" id="hmForm">' + formHtml() + '</div><div class="hmprev"><div class="hmbar"><b>👁 معاينة حيّة (بيانات تجريبية)</b><button class="btn s g hmdev on" data-act="hmDev" data-id="desktop">💻 كمبيوتر</button><button class="btn s g hmdev" data-act="hmDev" data-id="mobile">📱 موبايل</button><button class="btn s g hmth on" data-act="hmTh" data-id="light">☀️</button><button class="btn s g hmth" data-act="hmTh" data-id="dark">🌙</button></div><div id="hmBox"><iframe id="hmFrame" src="/home.html?hmpreview=1" title="معاينة الصفحة الرئيسية للطالب"></iframe></div><p class="nt" style="margin:8px 0 0">المعاينة بتفتح التبويب المناسب للمجموعة اللي فاتحها. الأرقام والكورسات هنا تجريبية وليست بيانات حقيقية.</p></div></div>';
+}];
+VPERM.xhome = ['@admin'];
+
+// ——— تحرير القيم
+document.addEventListener('input', e => {
+  const t = e.target; if (!t.closest || !t.closest('#hmForm')) { if (t.id === 'hmQ') { H.q = t.value; filt(); } return; }
+  const d = t.dataset;
+  if (d.t) { const f = F(d.t); mset('t', d.t, t.value, f.d); return push(); }
+  if (d.l) { const f = F(d.l); mset('l', d.l, t.value.split('\n').map(s => s.trim()).filter(Boolean), f.d); return push(); }
+  if (d.n || d.nb) { const k = d.n || d.nb, f = F(k); let v = +t.value; if (!isFinite(v)) return; v = Math.max(f.min, Math.min(f.max, v)); mset('n', k, v, f.d); const o = d.n ? t.parentElement.querySelector('[data-nb]') : t.parentElement.querySelector('[data-n]'); if (o) o.value = v; return push(); }
+  if (d.hc || d.hh || d.ha) {
+    const id = d.hc || d.hh || d.ha, [k, m] = id.split('|'), f = F(k), dark = m === 'cd', row = t.closest('.hmcc'); let cur = curCol(f, dark), rgb = hex6(cur), al = alphaOf(cur);
+    if (d.hc) rgb = t.value.toLowerCase(); else if (d.ha) al = +t.value; else { const v = t.value.trim(); if (!/^#[0-9a-fA-F]{6}([0-9a-fA-F]{2})?$/.test(v)) return; rgb = hex6(v); al = alphaOf(v); }
+    const nv = mkCol(rgb, al); mset(dark ? 'cd' : 'c', k, nv.toLowerCase(), dark ? f.dd : f.d);
+    row.querySelector('[data-hc]').value = rgb; if (!d.hh) row.querySelector('[data-hh]').value = nv; if (!d.ha) row.querySelector('[data-ha]').value = al;
+    return push();
+  }
+});
+document.addEventListener('change', e => {
+  const t = e.target; if (!t.closest || !t.closest('#hmForm')) return; const d = t.dataset;
+  if (d.s) { const f = F(d.s); mset('s', d.s, t.checked, f.d !== false); document.querySelectorAll('#hmForm [data-s="' + d.s + '"]').forEach(x => { if (x !== t) x.checked = t.checked; }); return push(); }
+  if (d.x) { const f = F(d.x); mset('x', d.x, t.value, f.d); return push(); }
+});
+document.addEventListener('toggle', e => {
+  const d = e.target; if (!d.classList || !d.classList.contains('hmg') || !d.open || H.q) return;
+  document.querySelectorAll('#hmForm details.hmg[open]').forEach(x => { if (x !== d) x.open = false; });
+  H.open = d.dataset.g; push();
+}, true);
+Object.assign(ACT, {
+  hmSave: async () => {
+    const r = await sb.rpc('home_ui_save', { p_cfg: norm(H.cfg) }); if (r.error) throw new Error(hErr(r.error));
+    H.cfg = {}; MAPS.forEach(m => { if (r.data && r.data[m] && Object.keys(r.data[m]).length) H.cfg[m] = r.data[m]; }); H.saved = ser();
+    try { localStorage.removeItem('hm_cfg_v1'); } catch (e) {} mark(); toast('✅ تم الحفظ والنشر — الطلاب هيشوفوا التعديلات فوراً');
+  },
+  hmOpen: () => { window.open('/home.html', '_blank', 'noopener'); },
+  hmReset: async () => {
+    if (!confirm('ترجّع كل إعدادات الصفحة الرئيسية للطالب للشكل الأصلي؟')) return;
+    const r = await sb.rpc('home_ui_reset'); if (r.error) throw new Error(hErr(r.error)); try { localStorage.removeItem('hm_cfg_v1'); } catch (e) {} toast('اتعمل رجوع للأصل'); go('xhome');
+  },
+  hmDev: id => { H.dev = id; document.querySelectorAll('.hmdev').forEach(b => b.classList.toggle('on', b.dataset.id === id)); fit(); },
+  hmTh: id => { H.theme = id; document.querySelectorAll('.hmth').forEach(b => b.classList.toggle('on', b.dataset.id === id)); push(); },
+  hmRs: id => { const f = F(id); resetField(f.t === 'order' || f.k ? f : { k: id }); const g = SC().groups.find(x => x.f.some(y => y.k === id)); if (g) redrawGroup(g.id); push(); },
+  hmGRs: id => { const g = SC().groups.find(x => x.id === id); if (!g) return; if (!confirm('ترجّع كل إعدادات «' + g.t + '» للأصل؟')) return; g.f.forEach(resetField); redrawGroup(id); push(); },
+  hmOMv: id => { const [k, i, d] = id.split('|'), f = F(k), o = curOrder(f), a = +i, b = a + +d; if (b < 0 || b >= o.length) return; [o[a], o[b]] = [o[b], o[a]]; mset('o', k, o, f.d); const g = SC().groups.find(x => x.f.some(y => y.k === k)); if (g) redrawGroup(g.id); push(); },
+  hmPre: id => { const p = PRESETS[+id]; if (!p) return; const keys = new Set(); PRESETS.forEach(q => q[1] && ['c', 'cd'].forEach(m => Object.keys(q[1][m] || {}).forEach(k => keys.add(k + '|' + m)))); keys.forEach(x => { const [k, m] = x.split('|'); if (H.cfg[m]) delete H.cfg[m][k]; }); if (p[1]) ['c', 'cd'].forEach(m => { if (p[1][m]) { H.cfg[m] = H.cfg[m] || {}; Object.assign(H.cfg[m], p[1][m]); } }); ['look', 'nav', 'header', 'stats', 'charts', 'coursecard'].forEach(redrawGroup); push(); },
+  hmExp: async () => { const s = JSON.stringify(norm(H.cfg)); try { await navigator.clipboard.writeText(s); toast('✅ اتنسخت الإعدادات — احتفظ بيها كنسخة احتياطية'); } catch (e) { const b = document.getElementById('hmImp'), x = document.getElementById('hmImpTx'); if (b && x) { b.hidden = false; x.value = s; x.select(); } toast('انسخ النص من المربع'); } },
+  hmImpBox: () => { const b = document.getElementById('hmImp'); if (b) b.hidden = !b.hidden; },
+  hmImp: () => {
+    const x = document.getElementById('hmImpTx'); let j; try { j = JSON.parse(x.value); } catch (e) { return toast('النص مش JSON صالح', true); }
+    if (!j || typeof j !== 'object' || Array.isArray(j)) return toast('إعدادات غير صالحة', true);
+    H.cfg = {}; MAPS.forEach(m => { if (j[m] && typeof j[m] === 'object' && !Array.isArray(j[m])) H.cfg[m] = JSON.parse(JSON.stringify(j[m])); });
+    const f = document.getElementById('hmForm'); if (f) f.innerHTML = formHtml(); filt(); push(); toast('اتطبّقت في المعاينة — دوس «حفظ ونشر» لو عايز تنشرها');
+  }
+});
+Object.assign(ACTPERM, { hmSave: ['@admin'], hmOpen: ['@admin'], hmReset: ['@admin'], hmDev: ['@admin'], hmTh: ['@admin'], hmRs: ['@admin'], hmGRs: ['@admin'], hmOMv: ['@admin'], hmPre: ['@admin'], hmExp: ['@admin'], hmImpBox: ['@admin'], hmImp: ['@admin'] });
+(function () { if (!NAV.some(n => n[0] === 'xhome')) { const i = NAV.findIndex(n => n[0] === 'xlanding'); NAV.splice(i >= 0 ? i + 1 : 0, 0, ['xhome', '🎓', 'الصفحة الرئيسية للطالب']); } })();
+})();
