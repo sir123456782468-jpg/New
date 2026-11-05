@@ -39,10 +39,27 @@
       + '.sf-soon{font-size:13.5px;font-weight:700;opacity:.8}'
       + '.sf-cp{margin-top:28px;border-top:1px solid ' + line + ';padding:15px 20px 6px;text-align:center;font-size:12.5px;font-weight:700}'
       + '.sf-dev{text-align:center;direction:ltr;padding:2px 20px 30px;font-family:"Lora","Cairo",serif;font-style:italic;font-weight:700;font-size:15px;letter-spacing:.4px;background:' + grad + ';-webkit-background-clip:text;background-clip:text;color:transparent}'
+      + '.sf-botw{max-width:1120px;margin:26px auto 0;padding:0 20px}'
+      + '.sfbot{display:flex;align-items:center;gap:14px;text-decoration:none!important;color:' + ink + '!important;background:linear-gradient(135deg,rgba(34,158,217,.14),rgba(34,158,217,.05));border:1.5px solid rgba(34,158,217,.45);border-radius:18px;padding:13px 16px;transition:transform .2s,box-shadow .2s,border-color .2s;text-align:right;direction:rtl;font-family:inherit}'
+      + '.sfbot:hover{transform:translateY(-2px);border-color:#229ED9;box-shadow:0 14px 28px -16px rgba(34,158,217,.8)}'
+      + '.sfbot .sbi{width:46px;height:46px;border-radius:14px;background:#229ED9;color:#fff;display:grid;place-items:center;flex:0 0 46px;box-shadow:0 8px 18px -10px #229ED9}.sfbot .sbi svg{width:24px;height:24px;display:block}'
+      + '.sfbot .sbt{flex:1;min-width:0}.sfbot .sbt b{display:block;font-size:15px;font-weight:900;line-height:1.55;color:inherit}.sfbot .sbt span{display:block;font-size:12.8px;font-weight:700;line-height:1.7;opacity:.82;color:inherit}'
+      + '.sfbot .sbg{background:#229ED9;color:#fff;border-radius:50px;padding:7px 15px;font-size:13px;font-weight:800;white-space:nowrap;flex:0 0 auto}'
+      + '.sfbot.onauth{margin:12px auto 0;max-width:520px}'
+      + ':root[data-d="3"] .sfbot.onauth{background:rgba(255,255,255,.14);border-color:rgba(255,255,255,.4);color:#fff!important;backdrop-filter:blur(8px)}'
+      + '@media(max-width:480px){.sfbot{flex-wrap:wrap}.sfbot .sbg{width:100%;text-align:center}}'
       + '@media(max-width:780px){.sf-in,.sf-in.n2{grid-template-columns:1fr;gap:26px}.sf{margin-top:40px}}';
     document.head.appendChild(st);
   }
 
+  var BOT_URL = 'https://t.me/leader_english_help_bot';
+  function bot(o) {
+    css(); o = o || {};
+    return '<a class="sfbot' + (o.auth ? ' onauth' : '') + '" href="' + BOT_URL + '" target="_blank" rel="noopener noreferrer" aria-label="مساعد منصة The Leader In English على تليجرام">'
+      + '<span class="sbi"><svg viewBox="0 0 24 24" ' + S + '><path d="M21 3L3 10.4l6 2.4 2.4 6L21 3z"/><path d="M9 12.8L21 3"/></svg></span>'
+      + '<span class="sbt"><b>مساعد منصة The Leader In English</b><span>ردود فورية 24 ساعة + فيديوهات شرح</span></span>'
+      + '<span class="sbg">افتح البوت ←</span></a>';
+  }
   function pagesOf(c, o) {
     var onIdx = !!o.onIndex, out = [], pg = o.pages;
     if (!pg) {
@@ -62,6 +79,7 @@
     var h = '<div class="sf-in' + cls + '"><div><div class="sf-b"><img src="' + esc(logo) + '" alt="" onerror="this.style.display=\'none\'"><div><b>' + esc(name) + '</b>' + ((c.footer_text || o.teacher) ? '<p>' + esc(c.footer_text || ('منصة تعلّم اللغة الإنجليزية مع ' + o.teacher)) + '</p>' : '') + '</div></div></div>';
     if (pg.length) h += '<div><h4>' + esc(c.foot_pages_title || 'الصفحات') + '</h4><div class="sf-l">' + pg.map(function (p) { return '<a class="pg" href="' + esc(p.href) + '">' + esc(p.label) + '</a>'; }).join('') + '</div></div>';
     h += '<div><h4>' + esc(c.foot_contact_title || 'تواصل معنا') + '</h4>' + (soc.length ? '<div class="sf-l">' + soc.map(function (s) { return '<a href="' + esc(safe(s.u)) + '" target="_blank" rel="noopener noreferrer"><span class="sf-ic" style="background:' + s.bg + '">' + s.ic + '</span>' + esc(s.n) + '</a>'; }).join('') + '</div>' : '<div class="sf-soon">قريباً 🔗</div>') + '</div></div>';
+    if (!o.noBot) h += '<div class="sf-botw">' + bot() + '</div>';
     h += '<div class="sf-cp"><span dir="auto" style="unicode-bidi:plaintext">' + esc(c.copyright) + '</span></div>' + (c.dev_sign ? '<div class="sf-dev">' + esc(c.dev_sign) + '</div>' : '');
     return '<footer class="sf">' + h + '</footer>';
   }
@@ -77,5 +95,5 @@
     var c0 = cached(); draw(c0);
     fresh().then(function (d) { if (d && JSON.stringify(d.cfg || {}) !== JSON.stringify((c0 && c0.cfg) || {})) draw(d); }).catch(function () {});
   }
-  window.SiteFooter = { html: html, mount: mount, merge: merge };
+  window.SiteFooter = { html: html, mount: mount, merge: merge, bot: bot, BOT_URL: BOT_URL };
 })();

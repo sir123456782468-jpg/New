@@ -295,3 +295,6 @@ img.zi,.zoomable img,img[data-zoom]{cursor:zoom-in}
   document.addEventListener('DOMContentLoaded', () => UI.initTheme());
   if (document.readyState !== 'loading') UI.initTheme();
 })();
+
+/* أرقام الأخطاء: بيحمّل err-ui.js مرة واحدة */
+(function () { try { if (window.LE_ERR || document.getElementById('leErrJs')) return; var s = document.createElement('script'); s.id = 'leErrJs'; s.src = '/err-ui.js'; s.defer = true; (document.head || document.documentElement).appendChild(s); } catch (e) {} })();

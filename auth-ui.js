@@ -44,7 +44,10 @@
     document.querySelectorAll('[data-pn]').forEach(function (e) { e.textContent = nm; });
     document.querySelectorAll('[data-tn]').forEach(function (e) { e.textContent = tn; });
     var hs = $('#helpBox'); if (hs) hs.style.display = (raw.auth_show_help === false || c.show_support === false) ? 'none' : '';
-    var sf = $('#sf'); if (sf && window.SiteFooter) sf.innerHTML = SiteFooter.html(c, { name: nm, teacher: tn, loggedIn: false });
+    var hb = $('#helpBox'), bc = $('#botCard');
+    if (hb && window.SiteFooter && SiteFooter.bot && !bc) { bc = document.createElement('div'); bc.id = 'botCard'; bc.innerHTML = SiteFooter.bot({ auth: true }); hb.insertAdjacentElement('afterend', bc); }
+    if (bc) bc.style.display = raw.auth_show_bot === false ? 'none' : '';
+    var sf = $('#sf'); if (sf && window.SiteFooter) sf.innerHTML = SiteFooter.html(c, { name: nm, teacher: tn, loggedIn: false, noBot: !!(bc && bc.style.display !== 'none') });
     var vl = $('#vlist'); if (vl) vl.style.display = raw.auth_show_points === false ? 'none' : '';
     return c;
   }
@@ -104,3 +107,6 @@
 
   document.addEventListener('DOMContentLoaded', function () { var t = $('#themeBtn'); if (t) t.addEventListener('click', A.toggleTheme); setTheme(theme()); });
 })();
+
+/* أرقام الأخطاء: بيحمّل err-ui.js مرة واحدة */
+(function () { try { if (window.LE_ERR || document.getElementById('leErrJs')) return; var s = document.createElement('script'); s.id = 'leErrJs'; s.src = '/err-ui.js'; s.defer = true; (document.head || document.documentElement).appendChild(s); } catch (e) {} })();

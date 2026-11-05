@@ -2024,3 +2024,71 @@ Object.assign(ACT, {
 Object.assign(ACTPERM, { hmSave: ['@admin'], hmOpen: ['@admin'], hmReset: ['@admin'], hmDev: ['@admin'], hmTh: ['@admin'], hmRs: ['@admin'], hmGRs: ['@admin'], hmOMv: ['@admin'], hmPre: ['@admin'], hmExp: ['@admin'], hmImpBox: ['@admin'], hmImp: ['@admin'] });
 (function () { if (!NAV.some(n => n[0] === 'xhome')) { const i = NAV.findIndex(n => n[0] === 'xlanding'); NAV.splice(i >= 0 ? i + 1 : 0, 0, ['xhome', '🎓', 'الصفحة الرئيسية للطالب']); } })();
 })();
+// ---------------------------------------------------------------- تبويب «🧯 أرقام الأخطاء» — كل رقم خطأ بيظهر للطالب: السبب + حل الطالب + إجراء الأدمن
+(function () {
+'use strict';
+const X = { area: 'all', q: '' };
+const LE = () => window.LE_ERR || { list: [], areas: {}, by: {}, url: c => '#', BOT_URL: '#' };
+const CSSX = '<style>.erw .erbar{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}.erw .erchip{border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:50px;padding:6px 14px;font-weight:800;font-size:12.5px;cursor:pointer}.erw .erchip.on{background:#229ED9;border-color:#229ED9;color:#fff}'
+  + '.erw .erq{flex:1;min-width:200px;padding:10px 14px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;font:inherit;font-weight:700}'
+  + '.erw .erlk{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.erw .erlk input{width:130px;padding:10px 12px;border:1px solid var(--line);background:var(--card);color:var(--ink);border-radius:12px;font:800 18px ui-monospace,monospace;letter-spacing:2px;text-align:center;direction:ltr}'
+  + '.erw .erc{border:1px solid var(--line);background:var(--card);border-radius:16px;padding:14px 16px;margin-bottom:10px}.erw .erh{display:flex;gap:10px;align-items:center;flex-wrap:wrap}.erw .ern{font:900 17px ui-monospace,monospace;background:rgba(239,68,68,.14);color:#ef4444;border-radius:10px;padding:2px 12px;direction:ltr}'
+  + '.erw .ert{font-weight:900;font-size:14.5px;flex:1;min-width:160px}.erw .erg{display:grid;grid-template-columns:repeat(auto-fit,minmax(240px,1fr));gap:10px;margin-top:10px}.erw .erg div{background:rgba(127,127,127,.08);border-radius:12px;padding:10px 12px;font-size:13px;line-height:1.85;font-weight:600}.erw .erg b{display:block;font-size:12px;opacity:.75;margin-bottom:2px}'
+  + '.erw .erm{font-size:12px;opacity:.7;font-weight:700;margin-top:8px}.erw .erf{outline:2px solid #229ED9}</style>';
+
+function card(e) {
+  return '<div class="erc" id="er' + esc(e.c) + '"><div class="erh"><span class="ern">' + esc(e.c) + '</span><span class="ert">' + esc(e.t) + '</span>'
+    + '<button class="btn s g" data-act="errCopy" data-id="' + esc(e.c) + '">📋 نسخ رد للطالب</button>'
+    + '<a class="btn s g" href="' + esc(LE().url(e.c)) + '" target="_blank" rel="noopener">🤖 افتحه في البوت</a></div>'
+    + '<div class="erg"><div><b>🧠 السبب</b>' + esc(e.s) + '</div><div><b>🙋 حل الطالب</b>' + esc(e.f) + '</div><div><b>🛠️ إجراء الأدمن</b>' + esc(e.d) + '</div></div>'
+    + '<div class="erm">📍 بيظهر في: ' + esc(e.w) + '</div></div>';
+}
+function listHtml() {
+  const q = LE().nrm(X.q).toLowerCase(), L = LE().list;
+  const rows = L.filter(e => (X.area === 'all' || e.a === X.area) && (!q || LE().nrm([e.c, e.t, e.s, e.f, e.d, e.w].join(' ')).toLowerCase().includes(q)))
+    .sort((a, b) => a.c.localeCompare(b.c));
+  if (!rows.length) return '<div class="empty">مفيش رقم خطأ بالبحث ده. جرّب كلمة تانية أو الرقم اللي بعته الطالب.</div>';
+  return rows.map(card).join('');
+}
+function redraw() { const b = document.getElementById('erList'); if (b) b.innerHTML = listHtml(); const n = document.getElementById('erN'); if (n) n.textContent = document.querySelectorAll('#erList .erc').length; }
+function lookup(v) {
+  const c = String(v || '').replace(/\D/g, '').slice(0, 4), out = document.getElementById('erLkOut'); if (!out) return;
+  if (c.length < 4) { out.innerHTML = ''; return; }
+  const e = LE().by[c];
+  out.innerHTML = e ? card(e) : '<div class="note" style="margin:10px 0 0">الرقم <b>' + esc(c) + '</b> مش في الكتالوج. اطلب من الطالب نص الرسالة كامل أو screenshot.</div>';
+  if (e) { const el = out.firstChild; el.classList.add('erf'); }
+}
+async function clip(t) {
+  try { await navigator.clipboard.writeText(t); return true; } catch (e) {}
+  try { const x = document.createElement('textarea'); x.value = t; x.style.cssText = 'position:fixed;opacity:0'; document.body.appendChild(x); x.focus(); x.select(); const ok = document.execCommand('copy'); x.remove(); return !!ok; } catch (e) { return false; }
+}
+
+VIEWS.xerr = ['أرقام الأخطاء', async () => {
+  if (!window.LE_ERR) throw new Error('ملف err-ui.js مش متحمّل — ارفعه على Vercel بجوار باقي الملفات.');
+  X.area = 'all'; X.q = '';
+  const A = LE().areas, chips = '<button class="erchip on" data-act="errArea" data-id="all">الكل (' + LE().list.length + ')</button>'
+    + Object.keys(A).map(k => '<button class="erchip" data-act="errArea" data-id="' + k + '">' + A[k][1] + ' ' + A[k][0] + ' ' + esc(A[k][2]) + ' (' + LE().list.filter(e => e.a === k).length + ')</button>').join('');
+  return CSSX + '<div class="erw"><div class="note" style="margin:0 0 12px">🧯 أي مشكلة بتظهر للطالب في المنصة بيظهر معاها <b>«رقم الخطأ»</b> وزرار «إيه الحل؟» بيفتح بوت تليجرام على نفس الرقم. هنا تلاقي كل رقم: <b>إيه سببه</b> وإيه اللي يقوله الطالب وإيه اللي تعمله انت.</div>'
+    + '<div class="card" style="margin-bottom:12px"><b>🔎 الطالب بعتلك رقم؟ اكتبه هنا</b><div class="erlk" style="margin-top:8px"><input id="erLk" inputmode="numeric" maxlength="4" placeholder="0000" autocomplete="off"><span class="nt" style="margin:0">هتظهرلك التفاصيل كاملة فوراً</span></div><div id="erLkOut"></div></div>'
+    + '<div class="erbar">' + chips + '</div>'
+    + '<div class="erbar"><input id="erQ" class="erq" placeholder="🔎 دوّر بكلمة (مثلاً: فيديو، كود، امتحان، Cloudflare)"><span class="nt" style="margin:0">المعروض: <b id="erN">' + LE().list.length + '</b></span></div>'
+    + '<div id="erList">' + listHtml() + '</div></div>';
+}];
+VPERM.xerr = ['support.view'];
+
+document.addEventListener('input', e => {
+  const t = e.target; if (!t || !t.id) return;
+  if (t.id === 'erQ') { X.q = t.value; redraw(); }
+  else if (t.id === 'erLk') { t.value = t.value.replace(/\D/g, '').slice(0, 4); lookup(t.value); }
+});
+Object.assign(ACT, {
+  errArea: id => { X.area = id; document.querySelectorAll('.erchip').forEach(b => b.classList.toggle('on', b.dataset.id === id)); redraw(); },
+  errCopy: async id => {
+    const e = LE().by[id]; if (!e) return;
+    const t = 'رقم الخطأ ' + e.c + ' — ' + e.t + '\n\nالحل: ' + e.f + '\n\nولو لسه المشكلة موجودة اضغط هنا وهيساعدك البوت فوراً:\n' + LE().url(e.c);
+    const ok = await clip(t); toast(ok ? 'اتنسخ الرد — الصقه للطالب' : 'مقدرتش أنسخ، حدّد النص بإيدك', !ok);
+  }
+});
+Object.assign(ACTPERM, { errArea: ['support.view'], errCopy: ['support.view'] });
+(function () { if (!NAV.some(n => n[0] === 'xerr')) { const i = NAV.findIndex(n => n[0] === 'support'); NAV.splice(i >= 0 ? i + 1 : NAV.length, 0, ['xerr', '🧯', 'أرقام الأخطاء']); } })();
+})();
